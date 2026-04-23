@@ -457,20 +457,31 @@ async function downloadCSV(code) {
    외부 에셋
    ==================================================================== */
 async function loadExternalAssets() {
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8z4eMwA6UaQLgnZTtj7Xk7-EzBagOfK8YDGUvfogcIa1RV_3h07ggcI2nbN93JbFFdciC9A6uph_4/pub?output=csv";
-  try {
-    const response = await fetch(`${SHEET_CSV_URL}&_=${Date.now()}`, { cache: "no-store" });
-    const csvText = await response.text();
-    if (!app.lesson.assets) app.lesson.assets = {};
-    parseCSV(csvText).forEach(columns => {
-      if (columns.length < 4) return;
-      const key = columns[1].trim();
-      const url = columns[3].trim();
-      if (!key || !url || key === "JSON 상 호칭") return;
-      app.lesson.assets[key] = url;
-    });
-  } catch (err) {
-    console.warn("Failed to load external assets:", err);
+  const SHEET_URLS = [
+    // 1. 수업용 에셋 (CTn 계열)
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8z4eMwA6UaQLgnZTtj7Xk7-EzBagOfK8YDGUvfogcIa1RV_3h07ggcI2nbN93JbFFdciC9A6uph_4/pub?output=csv",
+    // 2. 시험문제 에셋 (날짜[과목] 계열)
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQYkmQF4OJAcQN2FXGrmjYZP1Kr4geSX3t3O2ArB0_ntOqbvfgRzuoRwKSG--c3czenNUzyBVpW_f1R/pub?output=csv"
+  ];
+
+  if (!app.lesson.assets) app.lesson.assets = {};
+
+  for (const url of SHEET_URLS) {
+    try {
+      const response = await fetch(`${url}&_=${Date.now()}`, { cache: "no-store" });
+      const csvText = await response.text();
+      
+      parseCSV(csvText).forEach(columns => {
+        if (columns.length < 4) return;
+        const key = columns[1].trim();   // B열: 키 (CT1, 260305[사문] 등)
+        const assetUrl = columns[3].trim(); // D열: 실제 URL
+        
+        if (!key || !assetUrl || key === "JSON 상 호칭" || key === "JSON 코드") return;
+        app.lesson.assets[key] = assetUrl;
+      });
+    } catch (err) {
+      console.warn(`Failed to load external assets from ${url}:`, err);
+    }
   }
 }
 
@@ -737,16 +748,10 @@ function renderQuestion(block, blockIdx) {
   const sectionId = app.lesson.sections[app.currentIdx]?.id || `sec${app.currentIdx}`;
   const bIdx = (blockIdx !== undefined) ? blockIdx : 0;
 
-  // 각 prompt마다 [질문 블록 + 댓글창] 쌍을 래퍼로 묶어 반환
-  // prompt가 하나일 때도, 여러 개일 때도 구조가 동일
-  const outer = document.createElement("div");
-  outer.className = "question-with-comments block";
-
   const div = document.createElement("div");
-  div.className = "callout question";
+  div.className = "block callout question";
   div.innerHTML = `<div class="callout__label">🗨️ 생각해볼 문제</div>`;
 
-  // 댓글창들을 나중에 outer에 붙이기 위해 모아둠
   const commentSections = [];
 
   block.prompts.forEach((pr, promptIdx) => {
@@ -758,8 +763,10 @@ function renderQuestion(block, blockIdx) {
 
     if (pr.answer) div.appendChild(buildAnswer({ text: pr.answer }, "답 보기"));
 
-    const commentKey = `${lessonId}__${sectionId}__b${bIdx}__p${promptIdx}`;
-    commentSections.push({ key: commentKey, label: block.prompts.length > 1 ? `💬 Q${promptIdx + 1} 학생 답변 보기` : "💬 학생 답변 보기" });
+    if (block.comments) {
+      const commentKey = `${lessonId}__${sectionId}__b${bIdx}__p${promptIdx}`;
+      commentSections.push({ key: commentKey, label: block.prompts.length > 1 ? `💬 Q${promptIdx + 1} 학생 답변 보기` : "💬 학생 답변 보기" });
+    }
   });
 
   if (block.imagePair) div.appendChild(buildImagePair(block.imagePair));
@@ -770,9 +777,13 @@ function renderQuestion(block, blockIdx) {
     div.appendChild(concl);
   }
 
+  if (!block.comments) return div;
+
+  const outer = document.createElement("div");
+  outer.className = "question-with-comments";
+  div.classList.remove("block"); // block 마진은 wrapper가 담당
   outer.appendChild(div);
 
-  // 댓글창을 question 박스 바깥 하단에 붙임
   commentSections.forEach(({ key, label }) => {
     const cs = buildCommentSection(key, "question");
     cs.querySelector(".comment-section__toggle").textContent = label;
@@ -1158,6 +1169,15 @@ function buildImagePair(paths) {
 function buildImage(key, alt = "") {
   let resolved = key;
   if (app.lesson.assets?.[key]) resolved = app.lesson.assets[key];
+
+  // 구글 드라이브 링크 자동 변환 로직 추가
+  if (typeof resolved === "string" && resolved.includes("drive.google.com")) {
+    const driveIdMatch = resolved.match(/\/d\/([^/]+)/) || resolved.match(/id=([^&]+)/);
+    if (driveIdMatch && driveIdMatch[1]) {
+      resolved = `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+    }
+  }
+
   if (typeof resolved === "string" && resolved.startsWith("text:")) return buildTextCutout(resolved.slice(5), alt);
 
   const videoId = extractYouTubeId(resolved);
@@ -1173,6 +1193,10 @@ function buildImage(key, alt = "") {
   const src = /^https?:\/\//.test(resolved) ? resolved : app.lesson.imageBase + resolved;
   const img = document.createElement("img");
   img.src = src; img.alt = alt; img.loading = "lazy";
+  
+  // 전체화면 보기 이벤트 추가
+  img.addEventListener("click", () => openImageLightbox(src));
+
   img.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = `이미지: ${key}`; img.replaceWith(ph); };
   return img;
 }
@@ -1202,6 +1226,47 @@ function escapeHtml(s) {
 }
 
 /* ====================================================================
+   이미지 라이트박스 (전체화면 보기)
+   ==================================================================== */
+function openImageLightbox(src) {
+  closeImageLightbox();
+  const lightbox = document.createElement("div");
+  lightbox.className = "image-lightbox";
+  lightbox.id = "image-lightbox";
+  
+  const img = document.createElement("img");
+  img.src = src;
+  img.className = "image-lightbox__img";
+  
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "image-lightbox__close";
+  closeBtn.innerHTML = "✕";
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeImageLightbox();
+  });
+
+  lightbox.appendChild(img);
+  lightbox.appendChild(closeBtn);
+  
+  lightbox.addEventListener("click", () => closeImageLightbox());
+  img.addEventListener("click", (e) => e.stopPropagation());
+
+  document.body.appendChild(lightbox);
+  document.body.classList.add("is-focus-locked");
+  
+  requestAnimationFrame(() => lightbox.classList.add("is-open"));
+}
+
+function closeImageLightbox() {
+  const lightbox = document.getElementById("image-lightbox");
+  if (!lightbox) return;
+  lightbox.classList.remove("is-open");
+  document.body.classList.remove("is-focus-locked");
+  setTimeout(() => lightbox.remove(), 250);
+}
+
+/* ====================================================================
    하단 네비 / 키보드
    ==================================================================== */
 function renderNavFooter() {
@@ -1220,10 +1285,21 @@ function renderNavFooter() {
 function bindKeyboard() {
   document.addEventListener("keydown", e => {
     if (e.target.matches("input, textarea")) return;
-    if (document.getElementById("focus-overlay")) {
-      if (e.key === "Escape") { e.preventDefault(); closeFocusOverlay(); }
-      return;
+    
+    // 라이트박스/포커스 오버레이 닫기
+    if (e.key === "Escape") {
+      if (document.getElementById("image-lightbox")) {
+        e.preventDefault(); closeImageLightbox();
+        return;
+      }
+      if (document.getElementById("focus-overlay")) {
+        e.preventDefault(); closeFocusOverlay();
+        return;
+      }
     }
+
+    if (document.getElementById("focus-overlay") || document.getElementById("image-lightbox")) return;
+
     if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(app.currentIdx + 1); }
     else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); goTo(app.currentIdx - 1); }
     else if (e.key === " " || e.key === "Enter") {

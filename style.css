@@ -1291,3 +1291,533 @@ body.is-focus-locked {
     font-size: 1.2rem;
   }
 }
+/* ====================================================================
+   수업 코드 게이트 화면
+   ==================================================================== */
+.gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-soft);
+  padding: 2rem;
+}
+
+.gate__box {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.gate__logo {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+
+.gate__title {
+  font-family: var(--font-sans);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.gate__subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.gate__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.gate__section-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-top: 0.25rem;
+}
+
+.gate__section-label--secondary {
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.gate__input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--text);
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.gate__input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(27, 107, 255, 0.12);
+}
+
+.gate__input--secondary {
+  border-color: var(--border);
+}
+
+.gate__btn {
+  width: 100%;
+  padding: 0.85rem;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+  margin-top: 0.25rem;
+}
+
+.gate__btn:hover:not(:disabled) { background: var(--brand-deep); }
+.gate__btn:active:not(:disabled) { transform: translateY(1px); }
+.gate__btn:disabled { opacity: 0.5; cursor: default; }
+
+.gate__btn--secondary {
+  background: #fff;
+  color: var(--text);
+  border: 1.5px solid var(--border-strong);
+}
+
+.gate__btn--secondary:hover:not(:disabled) {
+  background: var(--bg-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.gate__error {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--accent);
+  min-height: 1.2em;
+}
+
+.gate__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 0.25rem;
+  color: var(--text-faint);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+}
+
+.gate__divider::before,
+.gate__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ====================================================================
+   세션 배지 (수업 진입 후)
+   ==================================================================== */
+.teacher-badge,
+.student-badge {
+  position: fixed;
+  top: 0.75rem;
+  right: 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  z-index: 500;
+  box-shadow: var(--shadow-md);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.teacher-badge {
+  background: var(--accent);
+  color: #fff;
+}
+
+.student-badge {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* ====================================================================
+   사이드바 QR 버튼
+   ==================================================================== */
+.sidebar__qr-btn {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.75rem;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  border: 1.5px solid var(--brand);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar__qr-btn:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* ====================================================================
+   QR 패널 (교사용 — 우측 슬라이드인)
+   ==================================================================== */
+.qr-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 320px;
+  background: #fff;
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 24px rgba(17, 20, 24, 0.1);
+  z-index: 400;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.qr-panel.is-open {
+  transform: translateX(0);
+}
+
+.qr-panel__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.qr-panel__header {
+  text-align: center;
+}
+
+.qr-panel__code-label {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.qr-panel__code {
+  font-family: var(--font-sans);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--brand);
+  letter-spacing: -0.01em;
+}
+
+.qr-panel__qr {
+  background: #fff;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.qr-panel__qr-img {
+  width: 200px;
+  height: 200px;
+  display: block;
+}
+
+.qr-panel__url {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  color: var(--text-faint);
+  word-break: break-all;
+  text-align: center;
+  line-height: 1.5;
+  padding: 0 0.5rem;
+}
+
+.qr-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.qr-panel__btn {
+  width: 100%;
+  padding: 0.7rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.05s;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+}
+
+.qr-panel__btn:hover { background: var(--brand-deep); }
+.qr-panel__btn:active { transform: translateY(1px); }
+
+.qr-panel__btn--close {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.qr-panel__btn--close:hover {
+  background: var(--bg-soft);
+}
+
+/* ====================================================================
+   댓글 시스템
+   ==================================================================== */
+.comment-section {
+  margin-top: 1.25rem;
+  border-top: 1px dashed rgba(27, 107, 255, 0.25);
+  padding-top: 1rem;
+}
+
+.comment-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brand);
+  padding: 0.4rem 0.85rem;
+  border: 1.5px solid var(--brand);
+  border-radius: 999px;
+  background: rgba(27, 107, 255, 0.06);
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.comment-toggle:hover,
+.comment-toggle.is-open {
+  background: var(--brand);
+  color: #fff;
+}
+
+.comment-toggle::after {
+  content: "▼";
+  font-size: 0.6rem;
+  opacity: 0.8;
+  transition: transform 0.2s;
+}
+
+.comment-toggle.is-open::after { transform: rotate(180deg); }
+
+.comment-body {
+  display: none;
+  margin-top: 1rem;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.comment-body.is-open { display: block; }
+
+.comment-list {
+  padding: 0.75rem 1rem;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.comment-loading,
+.comment-empty {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 1.25rem 0;
+}
+
+.comment-item {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.9rem;
+  animation: comment-in 0.22s ease-out both;
+}
+
+@keyframes comment-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.comment-item__header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.comment-item__name {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--brand-ink);
+}
+
+.comment-item__time {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.comment-item__text {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comment-item__delete {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-item:hover .comment-item__delete { opacity: 1; }
+.comment-item__delete:hover { background: var(--accent); color: #fff; }
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+}
+
+.comment-form__name {
+  width: 160px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.comment-form__name:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(27, 107, 255, 0.12);
+}
+
+.comment-form__text {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  background: #fff;
+  color: var(--text);
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.comment-form__text:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(27, 107, 255, 0.12);
+}
+
+.comment-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comment-form__counter {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.comment-form__submit {
+  padding: 0.5rem 1.1rem;
+  background: var(--brand);
+  color: #fff;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+
+.comment-form__submit:hover:not(:disabled) { background: var(--brand-deep); }
+.comment-form__submit:active:not(:disabled) { transform: translateY(1px); }
+.comment-form__submit:disabled { opacity: 0.55; cursor: default; }
+
+.comment-form__error {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--accent);
+  padding: 0.3rem 0;
+}
+
+.focus-overlay .comment-section { display: none; }

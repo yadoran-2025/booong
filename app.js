@@ -1,48 +1,301 @@
 /* ====================================================================
    수업용 프리젠터 — 애플리케이션 로직
+   Firebase Realtime Database + 수업 코드 + QR 입장
    ==================================================================== */
 
+import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase, ref, push, set, get, remove,
+  onChildAdded, onChildRemoved, serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* ── Firebase 설정 ── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyB_wsXQ_THiDLIvlaQAKEJCzIlz5M5dbDY",
+  authDomain:        "yadoran-2025.firebaseapp.com",
+  databaseURL:       "https://yadoran-2025-default-rtdb.firebaseio.com",
+  projectId:         "yadoran-2025",
+  storageBucket:     "yadoran-2025.firebasestorage.app",
+  messagingSenderId: "266288546185",
+  appId:             "1:266288546185:web:727060b22ce9643d0c2158",
+  measurementId:     "G-7MX74KVJCE",
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db          = getDatabase(firebaseApp);
+
+/* ── Firebase key 정규화 (. # $ [ ] / 금지) ── */
+function toFbKey(str) {
+  return str.replace(/[.#$[\]/]/g, "_");
+}
+
+/* ── 활성 Firebase 리스너 해제 관리 ── */
+const activeUnsubscribers = [];
+function clearListeners() {
+  while (activeUnsubscribers.length) activeUnsubscribers.pop()();
+}
+
+/* ====================================================================
+   앱 상태
+   ==================================================================== */
 const DEFAULT_LESSON = "rat-disc-1";
 
 const app = {
-  lesson: null,
+  lesson:     null,
   currentIdx: 0,
+  isTeacher:  false,
+  sessionCode: null,   // 현재 수업 코드
 };
 
-/* ---------- 초기화 ---------- */
+/* ====================================================================
+   진입점 — 수업 코드 게이팅
+   ==================================================================== */
 async function init() {
-  const params = new URLSearchParams(location.search);
-  const lessonId = params.get("lesson") || DEFAULT_LESSON;
+  const params     = new URLSearchParams(location.search);
+  const lessonId   = params.get("lesson") || DEFAULT_LESSON;
+  app.isTeacher    = params.get("teacher") === "1";
+  const codeInUrl  = params.get("code") || "";
 
+  // 레슨 데이터 로드
   try {
-    // 캐시 버스팅: JSON 수정 후 새로고침하면 즉시 반영되도록
     const res = await fetch(`lessons/${lessonId}.json?_=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`${res.status}`);
     app.lesson = await res.json();
-
-    // 구글 시트에서 외부 에셋(이미지 링크 등) 불러오기
     await loadExternalAssets();
   } catch (err) {
     document.body.innerHTML = `
-      <div style="padding: 3rem; font-family: sans-serif;">
+      <div style="padding:3rem;font-family:sans-serif;">
         <h1>수업 자료를 불러오지 못했습니다</h1>
         <p>파일: <code>lessons/${lessonId}.json</code></p>
         <p>오류: ${err.message}</p>
-        <p style="color: #888; margin-top: 2rem;">
-          로컬에서 열 때는 <code>file://</code>가 아니라 로컬 서버를 띄워야 합니다.<br>
-          터미널에서: <code>python3 -m http.server</code>
-        </p>
       </div>`;
-    console.error(err);
     return;
   }
 
+  // QR로 코드가 URL에 있으면 바로 입장
+  if (codeInUrl) {
+    enterSession(codeInUrl.trim());
+    return;
+  }
+
+  // 교사 모드: 세션 관리 화면
+  if (app.isTeacher) {
+    showTeacherGate();
+    return;
+  }
+
+  // 학생 모드: 코드 입력 화면
+  showStudentGate();
+}
+
+/* ====================================================================
+   게이트 화면 — 학생
+   ==================================================================== */
+function showStudentGate() {
+  document.body.innerHTML = "";
+  const gate = buildGateShell("학생 입장", "선생님이 알려준 수업 코드를 입력하세요");
+
+  const input = document.createElement("input");
+  input.type        = "text";
+  input.placeholder = "예) 잠원중3반";
+  input.className   = "gate__input";
+  input.autofocus   = true;
+
+  const btn = document.createElement("button");
+  btn.className   = "gate__btn";
+  btn.textContent = "입장하기 →";
+
+  const err = document.createElement("div");
+  err.className = "gate__error";
+
+  const enter = async () => {
+    const code = input.value.trim();
+    if (!code) { showGateError(err, "수업 코드를 입력해주세요."); return; }
+    btn.disabled    = true;
+    btn.textContent = "확인 중…";
+    // 학생은 코드 존재 여부 확인 없이 그냥 입장 (코드=방 이름)
+    enterSession(code);
+  };
+
+  btn.addEventListener("click", enter);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") enter(); });
+
+  gate.form.appendChild(input);
+  gate.form.appendChild(err);
+  gate.form.appendChild(btn);
+  document.body.appendChild(gate.el);
+  input.focus();
+}
+
+/* ====================================================================
+   게이트 화면 — 교사
+   ==================================================================== */
+function showTeacherGate() {
+  document.body.innerHTML = "";
+  const gate = buildGateShell("교사 모드", "수업 코드를 만들거나 기존 코드로 입장하세요");
+
+  // 새 수업 코드 생성 섹션
+  const createLabel = document.createElement("div");
+  createLabel.className   = "gate__section-label";
+  createLabel.textContent = "새 수업 코드 만들기";
+
+  const createInput = document.createElement("input");
+  createInput.type        = "text";
+  createInput.placeholder = "예) 잠원중3반";
+  createInput.className   = "gate__input";
+
+  const createBtn = document.createElement("button");
+  createBtn.className   = "gate__btn";
+  createBtn.textContent = "코드 생성 →";
+
+  const createErr = document.createElement("div");
+  createErr.className = "gate__error";
+
+  createBtn.addEventListener("click", async () => {
+    const code = createInput.value.trim();
+    if (!code) { showGateError(createErr, "코드를 입력해주세요."); return; }
+
+    createBtn.disabled    = true;
+    createBtn.textContent = "확인 중…";
+
+    // 중복 체크
+    const snap = await get(ref(db, `sessions/${toFbKey(code)}`));
+    if (snap.exists()) {
+      createBtn.disabled    = false;
+      createBtn.textContent = "코드 생성 →";
+      showGateError(createErr, "이미 사용 중인 코드입니다. 다른 코드를 입력해주세요.");
+      return;
+    }
+
+    // Firebase에 세션 등록
+    await set(ref(db, `sessions/${toFbKey(code)}`), {
+      code,
+      createdAt: new Date().toISOString(),
+    });
+
+    enterSession(code);
+  });
+
+  // 기존 코드로 입장 섹션
+  const joinLabel = document.createElement("div");
+  joinLabel.className   = "gate__section-label gate__section-label--secondary";
+  joinLabel.textContent = "기존 코드로 입장";
+
+  const joinInput = document.createElement("input");
+  joinInput.type        = "text";
+  joinInput.placeholder = "기존 수업 코드";
+  joinInput.className   = "gate__input gate__input--secondary";
+
+  const joinBtn = document.createElement("button");
+  joinBtn.className   = "gate__btn gate__btn--secondary";
+  joinBtn.textContent = "입장하기 →";
+
+  const joinErr = document.createElement("div");
+  joinErr.className = "gate__error";
+
+  const joinEnter = async () => {
+    const code = joinInput.value.trim();
+    if (!code) { showGateError(joinErr, "코드를 입력해주세요."); return; }
+    joinBtn.disabled    = true;
+    joinBtn.textContent = "확인 중…";
+    const snap = await get(ref(db, `sessions/${toFbKey(code)}`));
+    if (!snap.exists()) {
+      joinBtn.disabled    = false;
+      joinBtn.textContent = "입장하기 →";
+      showGateError(joinErr, "존재하지 않는 코드입니다.");
+      return;
+    }
+    enterSession(code);
+  };
+
+  joinBtn.addEventListener("click", joinEnter);
+  joinInput.addEventListener("keydown", e => { if (e.key === "Enter") joinEnter(); });
+
+  gate.form.appendChild(createLabel);
+  gate.form.appendChild(createInput);
+  gate.form.appendChild(createErr);
+  gate.form.appendChild(createBtn);
+
+  const divider = document.createElement("div");
+  divider.className = "gate__divider";
+  divider.innerHTML = "<span>또는</span>";
+  gate.form.appendChild(divider);
+
+  gate.form.appendChild(joinLabel);
+  gate.form.appendChild(joinInput);
+  gate.form.appendChild(joinErr);
+  gate.form.appendChild(joinBtn);
+
+  document.body.appendChild(gate.el);
+  createInput.focus();
+}
+
+function buildGateShell(title, subtitle) {
+  const el = document.createElement("div");
+  el.className = "gate";
+
+  const box = document.createElement("div");
+  box.className = "gate__box";
+
+  const logo = document.createElement("div");
+  logo.className   = "gate__logo";
+  logo.textContent = "🎓";
+
+  const h1 = document.createElement("h1");
+  h1.className   = "gate__title";
+  h1.textContent = title;
+
+  const sub = document.createElement("p");
+  sub.className   = "gate__subtitle";
+  sub.textContent = subtitle;
+
+  const form = document.createElement("div");
+  form.className = "gate__form";
+
+  box.appendChild(logo);
+  box.appendChild(h1);
+  box.appendChild(sub);
+  box.appendChild(form);
+  el.appendChild(box);
+
+  return { el, form };
+}
+
+function showGateError(el, msg) {
+  el.textContent = msg;
+  setTimeout(() => { el.textContent = ""; }, 4000);
+}
+
+/* ====================================================================
+   수업 입장 — 공통
+   ==================================================================== */
+function enterSession(code) {
+  app.sessionCode = code;
+
+  // 코드를 localStorage에 저장 (새로고침 시 재입력 불필요)
+  localStorage.setItem("session-code", code);
+
+  document.body.innerHTML = "";
+  document.body.style.cssText = "";
+
+  buildAppShell();
   renderSidebar();
   renderNavFooter();
 
-  // URL 해시로 초기 섹션 결정
+  if (app.isTeacher) {
+    showQRPanel(code);
+    const badge = document.createElement("div");
+    badge.className   = "teacher-badge";
+    badge.textContent = `👩‍🏫 교사 모드 · ${code}`;
+    document.body.appendChild(badge);
+  } else {
+    const badge = document.createElement("div");
+    badge.className   = "student-badge";
+    badge.textContent = `📚 ${code}`;
+    document.body.appendChild(badge);
+  }
+
   const hash = location.hash.replace("#", "");
-  const idx = app.lesson.sections.findIndex(s => s.id === hash);
+  const idx  = app.lesson.sections.findIndex(s => s.id === hash);
   goTo(idx >= 0 ? idx : 0);
 
   bindKeyboard();
@@ -55,178 +308,268 @@ async function init() {
   document.title = `${app.lesson.title} — ${app.lesson.lessonGroup || "수업 자료"}`;
 }
 
-/**
- * 구글 스프레드시트에서 이미지/에셋 맵을 가져와 app.lesson.assets에 저장
- */
+function buildAppShell() {
+  const appDiv = document.createElement("div");
+  appDiv.className = "app";
+
+  const aside = document.createElement("aside");
+  aside.className = "sidebar";
+  aside.innerHTML = `
+    <div class="sidebar__group" id="sidebar-group"></div>
+    <h1 class="sidebar__title" id="sidebar-title"></h1>
+    <div class="sidebar__subtitle" id="sidebar-subtitle"></div>
+    <nav id="sidebar-sections"></nav>
+    <div class="sidebar__lesson-links" id="sidebar-lesson-links"></div>
+    <div class="sidebar__hotkeys">
+      <div><kbd>←</kbd> <kbd>→</kbd> 섹션 이동</div>
+      <div><kbd>Space</kbd> 답 열기/닫기</div>
+      <div><kbd>Click</kbd> 목차 점프</div>
+    </div>
+    <div class="sidebar__guide">
+      <div class="sidebar__guide-label">📋 수업 지도안</div>
+      <a class="sidebar__guide-link"
+         href="https://booong.notion.site/rational-discrimination?source=copy_link"
+         target="_blank" rel="noopener">지도안 열기</a>
+    </div>
+  `;
+
+  const main = document.createElement("main");
+  main.className = "main";
+  main.innerHTML = `
+    <div class="main__inner">
+      <div id="main-content"></div>
+      <div class="nav-footer">
+        <button id="nav-prev">← 이전 섹션</button>
+        <div class="nav-footer__progress" id="nav-progress"></div>
+        <button id="nav-next">다음 섹션 →</button>
+      </div>
+    </div>
+  `;
+
+  appDiv.appendChild(aside);
+  appDiv.appendChild(main);
+  document.body.appendChild(appDiv);
+}
+
+/* ====================================================================
+   QR 패널 (교사용)
+   ==================================================================== */
+function showQRPanel(code) {
+  const params   = new URLSearchParams(location.search);
+  const lessonId = params.get("lesson") || DEFAULT_LESSON;
+  const baseUrl  = `${location.origin}${location.pathname}`;
+  const studentUrl = `${baseUrl}?lesson=${lessonId}&code=${encodeURIComponent(code)}`;
+
+  const panel = document.createElement("div");
+  panel.className = "qr-panel";
+  panel.id        = "qr-panel";
+
+  panel.innerHTML = `
+    <div class="qr-panel__inner">
+      <div class="qr-panel__header">
+        <div class="qr-panel__code-label">수업 코드</div>
+        <div class="qr-panel__code">${escapeHtml(code)}</div>
+      </div>
+      <div class="qr-panel__qr" id="qr-image"></div>
+      <div class="qr-panel__url">${escapeHtml(studentUrl)}</div>
+      <div class="qr-panel__actions">
+        <button class="qr-panel__btn" id="qr-download-csv">📥 CSV 다운로드</button>
+        <button class="qr-panel__btn qr-panel__btn--close" id="qr-close">닫기</button>
+      </div>
+    </div>
+  `;
+
+  // QR 이미지 생성 (Google Charts API — 외부 의존성 없이)
+  const qrImg = document.createElement("img");
+  qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentUrl)}`;
+  qrImg.alt = "QR 코드";
+  qrImg.className = "qr-panel__qr-img";
+  panel.querySelector("#qr-image").appendChild(qrImg);
+
+  panel.querySelector("#qr-close").addEventListener("click", () => {
+    panel.classList.remove("is-open");
+  });
+
+  panel.querySelector("#qr-download-csv").addEventListener("click", () => {
+    downloadCSV(code);
+  });
+
+  document.body.appendChild(panel);
+
+  // QR 버튼을 사이드바에 추가
+  const qrBtn = document.createElement("button");
+  qrBtn.className   = "sidebar__qr-btn";
+  qrBtn.textContent = "📱 QR / 다운로드";
+  qrBtn.addEventListener("click", () => panel.classList.toggle("is-open"));
+
+  const guide = document.querySelector(".sidebar__guide");
+  if (guide) guide.before(qrBtn);
+
+  // 처음엔 열어서 보여줌
+  requestAnimationFrame(() => panel.classList.add("is-open"));
+}
+
+/* ====================================================================
+   CSV 다운로드
+   ==================================================================== */
+async function downloadCSV(code) {
+  const snap = await get(ref(db, `comments/${toFbKey(code)}`));
+  if (!snap.exists()) {
+    alert("저장된 답변이 없습니다.");
+    return;
+  }
+
+  const rows = [["섹션", "질문번호", "이름", "답변", "시간"]];
+
+  snap.forEach(sectionSnap => {
+    const rawKey = sectionSnap.key; // e.g. "rat-disc-1__1-1__0"
+    sectionSnap.forEach(commentSnap => {
+      const c = commentSnap.val();
+      // key에서 섹션ID / promptIdx 파싱
+      const parts     = (c.key || rawKey).split("__");
+      const sectionId = parts[1] || rawKey;
+      const promptIdx = parts[2] !== undefined ? `Q${Number(parts[2]) + 1}` : "";
+      const time      = c.createdAt
+        ? new Date(c.createdAt).toLocaleString("ko-KR")
+        : "";
+      rows.push([sectionId, promptIdx, c.name || "", c.text || "", time]);
+    });
+  });
+
+  const csv = rows.map(r =>
+    r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+  ).join("\n");
+
+  const bom  = "\uFEFF"; // Excel UTF-8 BOM
+  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `${code}_answers.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ====================================================================
+   외부 에셋
+   ==================================================================== */
 async function loadExternalAssets() {
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8z4eMwA6UaQLgnZTtj7Xk7-EzBagOfK8YDGUvfogcIa1RV_3h07ggcI2nbN93JbFFdciC9A6uph_4/pub?output=csv";
-
   try {
-    // 캐시 버스팅: 매 호출마다 다른 URL로 만들어 브라우저/CDN 캐시 우회
-    // (구글 published CSV는 캐시 수명이 길어, 시트 수정 후 새로고침해도 옛 값이 보이는 현상 방지)
-    const bustUrl = `${SHEET_CSV_URL}&_=${Date.now()}`;
-    const response = await fetch(bustUrl, { cache: "no-store" });
-    const csvText = await response.text();
-
+    const response = await fetch(`${SHEET_CSV_URL}&_=${Date.now()}`, { cache: "no-store" });
+    const csvText  = await response.text();
     if (!app.lesson.assets) app.lesson.assets = {};
-
-    // 개선된 CSV 파서 사용
-    const rows = parseCSV(csvText);
-    rows.forEach(columns => {
+    parseCSV(csvText).forEach(columns => {
       if (columns.length < 4) return;
-
-      const key = columns[1].trim(); // B열: JSON 상 호칭
-      const url = columns[3].trim(); // D열: 링크
-
-      // 헤더 행이나 빈 값 건너뜀
+      const key = columns[1].trim();
+      const url = columns[3].trim();
       if (!key || !url || key === "JSON 상 호칭") return;
-
       app.lesson.assets[key] = url;
     });
-
-    console.log("External assets loaded:", app.lesson.assets);
   } catch (err) {
-    console.warn("Failed to load external assets from Google Sheets:", err);
+    console.warn("Failed to load external assets:", err);
   }
 }
 
-/**
- * CSV 전체 텍스트를 파싱하여 행(row) 배열의 배열을 반환한다.
- * 따옴표로 감싸진 셀 내부의 줄바꿈과 쉼표를 올바르게 처리한다.
- */
 function parseCSV(text) {
   const rows = [];
-  let currentRow = [];
-  let currentField = "";
-  let inQuotes = false;
-
+  let row = [], field = "", inQ = false;
   for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
-
-    if (char === '"') {
-      // 따옴표 내에서 연속된 따옴표 "" 는 리터럴 따옴표로 처리
-      if (inQuotes && nextChar === '"') {
-        currentField += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      currentRow.push(currentField);
-      currentField = "";
-    } else if ((char === '\r' || char === '\n') && !inQuotes) {
-      // \r\n (윈도우 줄바꿈) 대응
-      if (char === '\r' && nextChar === '\n') i++;
-      
-      // 현재 필드를 추가하고 행을 저장
-      currentRow.push(currentField);
-      rows.push(currentRow);
-      currentRow = [];
-      currentField = "";
-    } else {
-      currentField += char;
-    }
+    const c = text[i], n = text[i + 1];
+    if (c === '"') {
+      if (inQ && n === '"') { field += '"'; i++; } else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      row.push(field); field = "";
+    } else if ((c === '\r' || c === '\n') && !inQ) {
+      if (c === '\r' && n === '\n') i++;
+      row.push(field); rows.push(row);
+      row = []; field = "";
+    } else { field += c; }
   }
-
-  // 파일 끝에 도달했을 때 마지막에 남은 필드와 행 처리
-  if (currentRow.length > 0 || currentField !== "") {
-    currentRow.push(currentField);
-    rows.push(currentRow);
-  }
-
+  if (row.length || field) { row.push(field); rows.push(row); }
   return rows;
 }
 
-/* ---------- 사이드바 ---------- */
+/* ====================================================================
+   사이드바
+   ==================================================================== */
 function renderSidebar() {
   const groupEl = document.getElementById("sidebar-group");
   const titleEl = document.getElementById("sidebar-title");
-  const subEl = document.getElementById("sidebar-subtitle");
+  const subEl   = document.getElementById("sidebar-subtitle");
+  if (!titleEl) return;
 
   if (app.lesson.lessonGroup) {
-    groupEl.textContent = app.lesson.lessonGroup;
+    groupEl.textContent   = app.lesson.lessonGroup;
     groupEl.style.display = "block";
   } else {
     groupEl.style.display = "none";
   }
   titleEl.textContent = app.lesson.title;
-  subEl.textContent = app.lesson.subtitle || "";
+  subEl.textContent   = app.lesson.subtitle || "";
 
-  // 섹션 목차
   const container = document.getElementById("sidebar-sections");
   container.innerHTML = "";
-
   const list = document.createElement("ul");
   list.className = "sidebar__section-list";
-
   app.lesson.sections.forEach((sec, idx) => {
-    const li = document.createElement("li");
+    const li  = document.createElement("li");
     const btn = document.createElement("button");
-    btn.className = "sidebar__section";
+    btn.className   = "sidebar__section";
     btn.dataset.idx = idx;
-    btn.innerHTML = `<span class="sidebar__section-id">${sec.id}</span>${escapeHtml(sec.title)}`;
+    btn.innerHTML   = `<span class="sidebar__section-id">${sec.id}</span>${escapeHtml(sec.title)}`;
     btn.addEventListener("click", () => goTo(idx));
     li.appendChild(btn);
     list.appendChild(li);
   });
-
   container.appendChild(list);
-
   renderLessonLinks();
 }
 
 function renderLessonLinks() {
   const wrap = document.getElementById("sidebar-lesson-links");
+  if (!wrap) return;
   wrap.innerHTML = "";
-
   const { prev, next } = app.lesson;
-  if (!prev && !next) {
-    wrap.style.display = "none";
-    return;
-  }
+  if (!prev && !next) { wrap.style.display = "none"; return; }
   wrap.style.display = "flex";
-
   if (prev) {
     const a = document.createElement("a");
     a.className = "sidebar__lesson-link";
-    a.href = `?lesson=${prev}`;
+    a.href      = `?lesson=${prev}`;
     a.innerHTML = `<span class="sidebar__lesson-link-arrow">←</span> 이전 차시`;
     wrap.appendChild(a);
-  } else {
-    const spacer = document.createElement("span");
-    wrap.appendChild(spacer);
-  }
-
+  } else { wrap.appendChild(document.createElement("span")); }
   if (next) {
     const a = document.createElement("a");
     a.className = "sidebar__lesson-link";
-    a.href = `?lesson=${next}`;
+    a.href      = `?lesson=${next}`;
     a.innerHTML = `다음 차시 <span class="sidebar__lesson-link-arrow">→</span>`;
     wrap.appendChild(a);
   }
 }
 
-/* ---------- 섹션 이동 ---------- */
+/* ====================================================================
+   섹션 이동 / 렌더링
+   ==================================================================== */
 function goTo(idx) {
   if (idx < 0 || idx >= app.lesson.sections.length) return;
+  clearListeners();
   app.currentIdx = idx;
-  const sec = app.lesson.sections[idx];
+  const sec      = app.lesson.sections[idx];
 
   document.querySelectorAll(".sidebar__section").forEach(el => {
     el.classList.toggle("is-active", Number(el.dataset.idx) === idx);
   });
-
   renderSection(sec);
   renderNavFooter();
-
   history.replaceState(null, "", `#${sec.id}`);
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
-/* ---------- 섹션 렌더링 ---------- */
 function renderSection(sec) {
   const main = document.getElementById("main-content");
+  if (!main) return;
   main.innerHTML = "";
 
   const header = document.createElement("div");
@@ -240,92 +583,51 @@ function renderSection(sec) {
   sec.blocks.forEach((block, idx) => {
     const el = renderBlock(block);
     if (el) {
-      // 포커스 가능한 블록에 📺 버튼 주입 (divider 제외)
-      if (block.type !== "divider") {
-        attachFocusAffordance(el);
-      }
+      if (block.type !== "divider") attachFocusAffordance(el);
       main.appendChild(el);
     }
-
-    // 자동 구분선 로직: 예외 없이 모든 블록 사이에 추가
-    const nextBlock = sec.blocks[idx + 1];
-    if (nextBlock) {
-      main.appendChild(renderDivider());
-    }
+    if (sec.blocks[idx + 1]) main.appendChild(renderDivider());
   });
 }
 
-/* ---------- 블록 포커스 기능 ---------- */
-/**
- * 블록 우상단에 📺 버튼을 주입한다.
- * 버튼은 평소엔 투명(opacity: 0)이고 블록 hover 시 나타남 (CSS로 처리).
- * 클릭하면 해당 블록을 풀스크린 오버레이에 복제하여 띄움.
- */
+/* ====================================================================
+   포커스 오버레이
+   ==================================================================== */
 function attachFocusAffordance(blockEl) {
   blockEl.classList.add("block--focusable");
-
   const btn = document.createElement("button");
-  btn.className = "focus-btn";
-  btn.type = "button";
+  btn.className   = "focus-btn";
+  btn.type        = "button";
   btn.setAttribute("aria-label", "이 블록 화면 포커스");
   btn.setAttribute("title", "이 블록에 집중 (ESC로 닫기)");
   btn.textContent = "📺";
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    openFocusOverlay(blockEl);
-  });
+  btn.addEventListener("click", e => { e.stopPropagation(); openFocusOverlay(blockEl); });
   blockEl.appendChild(btn);
 }
 
-/**
- * 블록을 복제하여 풀스크린 오버레이에 띄운다.
- * 복제본의 토글 버튼들(answer, expandable)은 이벤트가 유실되므로 재연결.
- */
 function openFocusOverlay(originalBlockEl) {
-  // 기존 오버레이 제거 (중복 방지)
   closeFocusOverlay();
-
   const overlay = document.createElement("div");
   overlay.className = "focus-overlay";
-  overlay.id = "focus-overlay";
-
+  overlay.id        = "focus-overlay";
   const stage = document.createElement("div");
   stage.className = "focus-overlay__stage";
-
   const closeBtn = document.createElement("button");
-  closeBtn.className = "focus-overlay__close";
-  closeBtn.type = "button";
-  closeBtn.setAttribute("aria-label", "닫기");
+  closeBtn.className   = "focus-overlay__close";
+  closeBtn.type        = "button";
   closeBtn.textContent = "✕";
-  closeBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeFocusOverlay();
-  });
-
-  // 블록 복제 (얕은 복제가 아니라 deep clone)
+  closeBtn.addEventListener("click", e => { e.stopPropagation(); closeFocusOverlay(); });
   const clone = originalBlockEl.cloneNode(true);
   clone.classList.add("block--focused");
-
-  // 복제본의 📺 버튼 제거 (포커스 안에서 또 포커스는 의미 없음)
-  clone.querySelectorAll(".focus-btn").forEach(b => b.remove());
-
-  // 복제본의 토글 버튼 이벤트 재연결 (answer, expandable)
+  clone.querySelectorAll(".focus-btn, .comment-section").forEach(b => b.remove());
   rewireToggles(clone);
-
   stage.appendChild(closeBtn);
   stage.appendChild(clone);
   overlay.appendChild(stage);
-
-  // 배경 클릭으로 닫기 (stage 내부 클릭은 전파 차단)
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeFocusOverlay();
-  });
-  stage.addEventListener("click", (e) => e.stopPropagation());
-
+  overlay.addEventListener("click", e => { if (e.target === overlay) closeFocusOverlay(); });
+  stage.addEventListener("click", e => e.stopPropagation());
   document.body.appendChild(overlay);
   document.body.classList.add("is-focus-locked");
-
-  // 포커스 진입 애니메이션 트리거
   requestAnimationFrame(() => overlay.classList.add("is-open"));
 }
 
@@ -334,56 +636,46 @@ function closeFocusOverlay() {
   if (!overlay) return;
   overlay.classList.remove("is-open");
   document.body.classList.remove("is-focus-locked");
-  // 애니메이션 끝난 뒤 제거
   setTimeout(() => overlay.remove(), 200);
 }
 
-/**
- * 복제본 안의 토글 버튼들에 이벤트 재연결.
- * cloneNode는 DOM은 복제하지만 addEventListener로 붙인 리스너는 복제 안 됨.
- */
 function rewireToggles(root) {
-  // answer (답 보기)
   root.querySelectorAll(".answer").forEach(ans => {
-    const toggle = ans.querySelector(".answer__toggle");
-    if (toggle) {
-      toggle.addEventListener("click", () => ans.classList.toggle("is-open"));
-    }
+    const t = ans.querySelector(".answer__toggle");
+    if (t) t.addEventListener("click", () => ans.classList.toggle("is-open"));
   });
-  // expandable
   root.querySelectorAll(".expandable").forEach(exp => {
-    const summary = exp.querySelector(".expandable__summary");
-    if (summary) {
-      summary.addEventListener("click", () => exp.classList.toggle("is-open"));
-    }
+    const s = exp.querySelector(".expandable__summary");
+    if (s) s.addEventListener("click", () => exp.classList.toggle("is-open"));
   });
 }
 
-/* ---------- 블록 렌더링 디스패처 ---------- */
+/* ====================================================================
+   블록 디스패처
+   ==================================================================== */
 function renderBlock(block) {
-  const render = {
-    paragraph: renderParagraph,
-    heading: renderHeading,
-    case: renderCase,
-    question: renderQuestion,
-    concept: renderConcept,
+  const map = {
+    paragraph:        renderParagraph,
+    heading:          renderHeading,
+    case:             renderCase,
+    question:         renderQuestion,
+    concept:          renderConcept,
     "figure-concept": renderFigureConcept,
-    "figure-quote": renderFigureQuote,
-    "image-row": renderImageRow,
-    expandable: renderExpandable,
-    summary: renderSummary,
-    media: renderMedia,
-    divider: renderDivider,
-  }[block.type];
-
-  if (!render) {
-    console.warn("Unknown block type:", block.type);
-    return null;
-  }
-  return render(block);
+    "figure-quote":   renderFigureQuote,
+    "image-row":      renderImageRow,
+    expandable:       renderExpandable,
+    summary:          renderSummary,
+    media:            renderMedia,
+    divider:          renderDivider,
+  };
+  const fn = map[block.type];
+  if (!fn) { console.warn("Unknown block type:", block.type); return null; }
+  return fn(block);
 }
 
-/* ---------- 개별 블록 렌더러 ---------- */
+/* ====================================================================
+   블록 렌더러
+   ==================================================================== */
 function renderParagraph(block) {
   const p = document.createElement("p");
   p.className = "block paragraph";
@@ -418,10 +710,7 @@ function renderCase(block) {
   html += `<div class="case__text">${formatInline(block.text)}</div>`;
   if (block.sub) html += `<div class="case__sub">${formatInline(block.sub)}</div>`;
   div.innerHTML = html;
-
-  if (block.answer) {
-    div.appendChild(buildAnswer(block.answer));
-  }
+  if (block.answer) div.appendChild(buildAnswer(block.answer));
   return div;
 }
 
@@ -430,30 +719,29 @@ function renderQuestion(block) {
   div.className = "block callout question";
   div.innerHTML = `<div class="callout__label">🗨️ 생각해볼 문제</div>`;
 
-  block.prompts.forEach(pr => {
+  const sectionId = app.lesson.sections[app.currentIdx]?.id || "unknown";
+
+  block.prompts.forEach((pr, promptIdx) => {
     const p = document.createElement("div");
     p.className = "question__prompt";
     p.innerHTML = `Q. ${formatInline(pr.q)}`;
     if (pr.note) p.innerHTML += `<div class="question__note">${formatInline(pr.note)}</div>`;
     div.appendChild(p);
 
-    if (pr.answer) {
-      const ans = buildAnswer({ text: pr.answer }, "답 보기");
-      div.appendChild(ans);
-    }
+    if (pr.answer) div.appendChild(buildAnswer({ text: pr.answer }, "답 보기"));
+
+    // 댓글 key: "lessonId__sectionId__promptIdx"
+    const commentKey = `${app.lesson.id}__${sectionId}__${promptIdx}`;
+    div.appendChild(buildCommentSection(commentKey));
   });
 
-  if (block.imagePair) {
-    div.appendChild(buildImagePair(block.imagePair));
-  }
-
+  if (block.imagePair) div.appendChild(buildImagePair(block.imagePair));
   if (block.conclusion) {
     const concl = document.createElement("div");
     concl.className = "question__conclusion";
     concl.innerHTML = formatInline(block.conclusion);
     div.appendChild(concl);
   }
-
   return div;
 }
 
@@ -461,78 +749,69 @@ function renderConcept(block) {
   const div = document.createElement("div");
   div.className = "block callout concept";
   let html = "";
-  if (block.title) html += `<div class="concept__title">💡 ${escapeHtml(block.title)}</div>`;
-  if (block.body) html += `<div class="concept__body">${formatInline(block.body)}</div>`;
+  if (block.title)   html += `<div class="concept__title">💡 ${escapeHtml(block.title)}</div>`;
+  if (block.body)    html += `<div class="concept__body">${formatInline(block.body)}</div>`;
   if (block.bullets) {
     html += `<ul class="concept__bullets">`;
     block.bullets.forEach(b => { html += `<li>${formatInline(b)}</li>`; });
     html += `</ul>`;
   }
   div.innerHTML = html;
-
   if (block.image) {
     const img = buildImage(block.image);
     img.style.marginTop = "1rem";
     div.appendChild(img);
   }
-
   return div;
 }
 
 function renderFigureConcept(block) {
-  const div = document.createElement("div");
+  const div  = document.createElement("div");
   div.className = "block figure-row";
-
   const left = document.createElement("div");
   left.className = "figure-row__image-wrap";
   left.appendChild(buildImage(block.figure.image, block.figure.caption));
   if (block.figure.caption) {
     const cap = document.createElement("div");
-    cap.className = "figure-row__caption";
+    cap.className   = "figure-row__caption";
     cap.textContent = block.figure.caption;
     left.appendChild(cap);
   }
-
   const right = document.createElement("div");
-  right.className = "callout concept";
+  right.className    = "callout concept";
   right.style.margin = "0";
-  right.innerHTML = `
+  right.innerHTML    = `
     <div class="concept__title">💡 ${escapeHtml(block.concept.title)}</div>
     <div class="concept__body">${formatInline(block.concept.body)}</div>
   `;
-
   div.appendChild(left);
   div.appendChild(right);
   return div;
 }
 
 function renderFigureQuote(block) {
-  const div = document.createElement("div");
+  const div  = document.createElement("div");
   div.className = "block figure-row";
-
   const left = document.createElement("div");
   left.className = "figure-row__image-wrap";
   left.appendChild(buildImage(block.figure.image, block.figure.caption));
   if (block.figure.caption) {
     const cap = document.createElement("div");
-    cap.className = "figure-row__caption";
+    cap.className   = "figure-row__caption";
     cap.textContent = block.figure.caption;
     left.appendChild(cap);
   }
-
   const right = document.createElement("div");
   const q = document.createElement("div");
   q.className = "figure-row__quote";
   q.innerHTML = formatInline(block.quote);
   right.appendChild(q);
-
   if (block.note) {
     const n = document.createElement("div");
     n.className = "figure-row__note";
     n.innerHTML = formatInline(block.note);
     right.appendChild(n);
   }
-
   div.appendChild(left);
   div.appendChild(right);
   return div;
@@ -541,20 +820,16 @@ function renderFigureQuote(block) {
 function renderExpandable(block) {
   const div = document.createElement("div");
   div.className = "block expandable";
-
   const btn = document.createElement("button");
-  btn.className = "expandable__summary";
+  btn.className   = "expandable__summary";
   btn.textContent = block.summary;
-
   const content = document.createElement("div");
   content.className = "expandable__content";
   block.children.forEach(child => {
     const el = renderBlock(child);
     if (el) content.appendChild(el);
   });
-
   btn.addEventListener("click", () => div.classList.toggle("is-open"));
-
   div.appendChild(btn);
   div.appendChild(content);
   return div;
@@ -573,105 +848,255 @@ function renderSummary(block) {
 function extractYouTubeId(url) {
   try {
     const u = new URL(url);
-    // https://www.youtube.com/watch?v=ID
     if (u.searchParams.has("v")) return u.searchParams.get("v");
-    // https://youtu.be/ID
     if (u.hostname === "youtu.be") return u.pathname.slice(1);
-    // https://www.youtube.com/embed/ID
-    const embedMatch = u.pathname.match(/^\/embed\/([^/?]+)/);
-    if (embedMatch) return embedMatch[1];
-  } catch (_) { }
+    const m = u.pathname.match(/^\/embed\/([^/?]+)/);
+    if (m) return m[1];
+  } catch (_) {}
   return null;
 }
 
 function renderMedia(block) {
   const div = document.createElement("div");
   div.className = "block media";
-
   if (block.kind === "image") {
     div.classList.add("media--image");
-    const img = buildImage(block.src, block.caption || "");
-    div.appendChild(img);
+    div.appendChild(buildImage(block.src, block.caption || ""));
     if (block.caption) {
       const cap = document.createElement("div");
-      cap.className = "media__caption";
+      cap.className   = "media__caption";
       cap.textContent = block.caption;
       div.appendChild(cap);
     }
-
   } else if (block.kind === "video-link") {
     div.classList.add("media--video-link");
     const videoId = extractYouTubeId(block.url);
-    const thumbSrc = videoId
-      ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
-      : "";
-
-    const link = document.createElement("a");
-    link.href = block.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
+    const link    = document.createElement("a");
+    link.href     = block.url; link.target = "_blank"; link.rel = "noopener noreferrer";
     link.className = "media__thumb-link";
     link.setAttribute("aria-label", block.caption || "영상 보기");
-
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "media__thumb-wrap";
-
-    if (thumbSrc) {
+    if (videoId) {
       const img = document.createElement("img");
-      img.src = thumbSrc;
-      img.alt = block.caption || "YouTube 썸네일";
-      img.loading = "lazy";
-      img.onerror = () => {
-        const ph = document.createElement("div");
-        ph.className = "image-placeholder";
-        ph.textContent = "썸네일을 불러올 수 없습니다";
-        img.replaceWith(ph);
-      };
+      img.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      img.alt = block.caption || "YouTube 썸네일"; img.loading = "lazy";
+      img.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = "썸네일 없음"; img.replaceWith(ph); };
       thumbWrap.appendChild(img);
-    } else {
-      const ph = document.createElement("div");
-      ph.className = "image-placeholder";
-      ph.textContent = "알 수 없는 URL 형식";
-      thumbWrap.appendChild(ph);
     }
-
-    const playIcon = document.createElement("div");
-    playIcon.className = "media__play-icon";
-    playIcon.setAttribute("aria-hidden", "true");
-    playIcon.textContent = "▶";
-    thumbWrap.appendChild(playIcon);
-
-    link.appendChild(thumbWrap);
-    div.appendChild(link);
-
+    const play = document.createElement("div");
+    play.className = "media__play-icon"; play.setAttribute("aria-hidden","true"); play.textContent = "▶";
+    thumbWrap.appendChild(play); link.appendChild(thumbWrap); div.appendChild(link);
     if (block.caption) {
       const cap = document.createElement("div");
-      cap.className = "media__caption";
-      cap.textContent = block.caption;
-      div.appendChild(cap);
+      cap.className = "media__caption"; cap.textContent = block.caption; div.appendChild(cap);
     }
   }
-
   return div;
 }
 
-function renderDivider(block) {
+function renderDivider() {
   const hr = document.createElement("hr");
   hr.className = "block divider";
   return hr;
 }
 
+/* ====================================================================
+   댓글 시스템
+   ==================================================================== */
+function buildCommentSection(key) {
+  const wrap   = document.createElement("div");
+  wrap.className = "comment-section";
 
-/* ---------- 헬퍼 ---------- */
+  const toggle = document.createElement("button");
+  toggle.className   = "comment-toggle";
+  toggle.textContent = "💬 학생 답변 보기/남기기";
+  toggle.type        = "button";
+
+  const body = document.createElement("div");
+  body.className = "comment-body";
+
+  const list = document.createElement("div");
+  list.className   = "comment-list";
+  list.dataset.key = key;
+
+  body.appendChild(list);
+  body.appendChild(buildCommentForm(key, list));
+
+  toggle.addEventListener("click", () => {
+    const isOpen = body.classList.toggle("is-open");
+    toggle.classList.toggle("is-open", isOpen);
+    if (isOpen && !body.dataset.loaded) {
+      body.dataset.loaded = "1";
+      subscribeComments(key, list);
+    }
+  });
+
+  wrap.appendChild(toggle);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function subscribeComments(key, list) {
+  list.innerHTML = `<div class="comment-loading">불러오는 중…</div>`;
+
+  // 경로: comments / 수업코드 / 댓글key
+  const dbRef    = ref(db, `comments/${toFbKey(app.sessionCode)}/${toFbKey(key)}`);
+  let firstBatch = true;
+  let count      = 0;
+
+  const unsubAdded = onChildAdded(dbRef, snap => {
+    if (firstBatch) { list.innerHTML = ""; firstBatch = false; }
+    appendCommentItem(list, { id: snap.key, ...snap.val() });
+    count++;
+  });
+
+  const emptyTimer = setTimeout(() => {
+    if (count === 0) {
+      list.innerHTML = `<div class="comment-empty">아직 답변이 없습니다. 첫 번째로 작성해보세요!</div>`;
+      firstBatch = false;
+    }
+  }, 600);
+
+  const unsubRemoved = onChildRemoved(dbRef, snap => {
+    const item = list.querySelector(`.comment-item[data-id="${CSS.escape(snap.key)}"]`);
+    if (item) item.remove();
+    if (!list.querySelector(".comment-item")) {
+      list.innerHTML = `<div class="comment-empty">아직 답변이 없습니다. 첫 번째로 작성해보세요!</div>`;
+    }
+  });
+
+  activeUnsubscribers.push(() => {
+    clearTimeout(emptyTimer);
+    unsubAdded();
+    unsubRemoved();
+  });
+}
+
+function appendCommentItem(list, comment) {
+  if (list.querySelector(`.comment-item[data-id="${CSS.escape(comment.id)}"]`)) return;
+  list.querySelector(".comment-empty")?.remove();
+
+  const item = document.createElement("div");
+  item.className  = "comment-item";
+  item.dataset.id = comment.id;
+
+  const time = comment.createdAt
+    ? new Date(comment.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  item.innerHTML = `
+    <div class="comment-item__header">
+      <span class="comment-item__name">${escapeHtml(comment.name)}</span>
+      <span class="comment-item__time">${time}</span>
+    </div>
+    <div class="comment-item__text">${escapeHtml(comment.text)}</div>
+  `;
+
+  if (app.isTeacher) {
+    const del = document.createElement("button");
+    del.className   = "comment-item__delete";
+    del.type        = "button";
+    del.textContent = "✕";
+    del.title       = "삭제";
+    del.addEventListener("click", () => {
+      if (confirm("이 답변을 삭제할까요?")) {
+        remove(ref(db, `comments/${toFbKey(app.sessionCode)}/${toFbKey(comment.key || list.dataset.key)}/${comment.id}`));
+      }
+    });
+    item.appendChild(del);
+  }
+
+  list.appendChild(item);
+  item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function buildCommentForm(key, list) {
+  const form = document.createElement("div");
+  form.className = "comment-form";
+
+  const nameInput = document.createElement("input");
+  nameInput.type        = "text";
+  nameInput.placeholder = "이름";
+  nameInput.className   = "comment-form__name";
+  nameInput.maxLength   = 30;
+  const saved = localStorage.getItem("comment-name") || "";
+  if (saved) nameInput.value = saved;
+  nameInput.addEventListener("input", () => localStorage.setItem("comment-name", nameInput.value));
+
+  const textarea = document.createElement("textarea");
+  textarea.placeholder = "이 질문에 대한 내 생각을 적어보세요…";
+  textarea.className   = "comment-form__text";
+  textarea.rows        = 3;
+  textarea.maxLength   = 500;
+
+  const footer  = document.createElement("div");
+  footer.className = "comment-form__footer";
+
+  const counter = document.createElement("span");
+  counter.className   = "comment-form__counter";
+  counter.textContent = "0 / 500";
+  textarea.addEventListener("input", () => { counter.textContent = `${textarea.value.length} / 500`; });
+
+  const submit = document.createElement("button");
+  submit.type        = "button";
+  submit.className   = "comment-form__submit";
+  submit.textContent = "답변 제출";
+
+  submit.addEventListener("click", async () => {
+    const name = nameInput.value.trim();
+    const text = textarea.value.trim();
+    if (!name) { nameInput.focus(); showFormError(form, "이름을 입력해주세요."); return; }
+    if (!text) { textarea.focus();  showFormError(form, "답변 내용을 입력해주세요."); return; }
+
+    submit.disabled    = true;
+    submit.textContent = "전송 중…";
+
+    try {
+      await push(ref(db, `comments/${toFbKey(app.sessionCode)}/${toFbKey(key)}`), {
+        key, name, text, createdAt: new Date().toISOString(),
+      });
+      textarea.value      = "";
+      counter.textContent = "0 / 500";
+      submit.textContent  = "✓ 제출됨";
+      setTimeout(() => { submit.textContent = "답변 제출"; }, 2000);
+    } catch (err) {
+      console.error(err);
+      showFormError(form, "저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  footer.appendChild(counter);
+  footer.appendChild(submit);
+  form.appendChild(nameInput);
+  form.appendChild(textarea);
+  form.appendChild(footer);
+  return form;
+}
+
+function showFormError(form, msg) {
+  let el = form.querySelector(".comment-form__error");
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "comment-form__error";
+    form.insertBefore(el, form.querySelector(".comment-form__footer"));
+  }
+  el.textContent = msg;
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* ====================================================================
+   헬퍼
+   ==================================================================== */
 function buildAnswer(answer, label = "답 보기") {
   const wrap = document.createElement("div");
   wrap.className = "answer";
-
   const btn = document.createElement("button");
-  btn.className = "answer__toggle";
+  btn.className   = "answer__toggle";
   btn.textContent = label;
   btn.addEventListener("click", () => wrap.classList.toggle("is-open"));
-
   const content = document.createElement("div");
   content.className = "answer__content";
   if (answer.bullets) {
@@ -682,7 +1107,6 @@ function buildAnswer(answer, label = "답 보기") {
   } else if (answer.text) {
     content.innerHTML = `<p>${formatInline(answer.text)}</p>`;
   }
-
   wrap.appendChild(btn);
   wrap.appendChild(content);
   return wrap;
@@ -696,70 +1120,24 @@ function buildImagePair(paths) {
 }
 
 function buildImage(key, alt = "") {
-  // 1. assets 맵에서 별명이 있는지 확인
   let resolved = key;
-  if (app.lesson.assets && app.lesson.assets[key]) {
-    resolved = app.lesson.assets[key];
-  }
+  if (app.lesson.assets?.[key]) resolved = app.lesson.assets[key];
+  if (typeof resolved === "string" && resolved.startsWith("text:")) return buildTextCutout(resolved.slice(5), alt);
 
-  // 2. "text:" 프리픽스면 신문기사 톤의 텍스트 컷아웃으로 렌더링
-  //    (스프레드시트 D열에 이미지 URL 대신 "text:본문..."을 적으면 이미지 자리에 텍스트가 들어감)
-  if (typeof resolved === "string" && resolved.startsWith("text:")) {
-    return buildTextCutout(resolved.slice(5), alt);
-  }
-
-  // 3. YouTube URL이면 썸네일 + 클릭 링크로 렌더링
   const videoId = extractYouTubeId(resolved);
   if (videoId) {
-    const wrap = document.createElement("div");
-    wrap.className = "media__thumb-wrap";
-
-    const link = document.createElement("a");
-    link.href = resolved;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.className = "media__thumb-link";
-    link.setAttribute("aria-label", alt || "YouTube 영상 보기");
-
-    const thumb = document.createElement("img");
-    thumb.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-    thumb.alt = alt || "YouTube 썸네일";
-    thumb.loading = "lazy";
-    thumb.onerror = () => {
-      const ph = document.createElement("div");
-      ph.className = "image-placeholder";
-      ph.textContent = "썸네일을 불러올 수 없습니다";
-      thumb.replaceWith(ph);
-    };
-
-    const playIcon = document.createElement("div");
-    playIcon.className = "media__play-icon";
-    playIcon.setAttribute("aria-hidden", "true");
-    playIcon.textContent = "▶";
-
-    link.appendChild(thumb);
-    link.appendChild(playIcon);
-    wrap.appendChild(link);
-    return wrap;
+    const wrap = document.createElement("div"); wrap.className = "media__thumb-wrap";
+    const link = document.createElement("a"); link.href = resolved; link.target = "_blank"; link.rel = "noopener noreferrer"; link.className = "media__thumb-link"; link.setAttribute("aria-label", alt || "YouTube 영상 보기");
+    const thumb = document.createElement("img"); thumb.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`; thumb.alt = alt || "YouTube 썸네일"; thumb.loading = "lazy";
+    thumb.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = "썸네일 없음"; thumb.replaceWith(ph); };
+    const play = document.createElement("div"); play.className = "media__play-icon"; play.setAttribute("aria-hidden","true"); play.textContent = "▶";
+    link.appendChild(thumb); link.appendChild(play); wrap.appendChild(link); return wrap;
   }
 
-  // 3. 일반 이미지: 로컬 또는 외부 URL
-  const src = /^https?:\/\//.test(resolved)
-    ? resolved
-    : app.lesson.imageBase + resolved;
-
+  const src = /^https?:\/\//.test(resolved) ? resolved : app.lesson.imageBase + resolved;
   const img = document.createElement("img");
-  img.src = src;
-  img.alt = alt;
-  img.loading = "lazy";
-
-  img.onerror = () => {
-    const ph = document.createElement("div");
-    ph.className = "image-placeholder";
-    ph.textContent = `이미지: ${key}`;
-    img.replaceWith(ph);
-  };
-
+  img.src = src; img.alt = alt; img.loading = "lazy";
+  img.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = `이미지: ${key}`; img.replaceWith(ph); };
   return img;
 }
 
@@ -771,104 +1149,50 @@ function formatInline(text) {
   return s;
 }
 
-/**
- * 이미지 자리에 들어가는 "신문기사 컷아웃".
- * 스프레드시트 D열에 "text:본문..." 으로 적어두면 buildImage가 이 함수로 위임.
- * 본문 내 **볼드**·줄바꿈 지원 (formatInline과 동일).
- *
- * 첫 줄에 ## 이 붙어있으면 헤드라인으로, --- 다음 줄은 출처/캡션으로 분리 렌더.
- *   예) "text:## 재산 분할 다시 판단할 듯\n최 회장이 노 관장에게...\n---\n서울고등법원 가사2부"
- */
 function buildTextCutout(body, alt = "") {
-  const wrap = document.createElement("div");
-  wrap.className = "text-cutout";
-
-  // --- 로 본문/출처 분리
+  const wrap = document.createElement("div"); wrap.className = "text-cutout";
   const [mainPart, sourcePart] = body.split(/\n---\n/);
-
-  const lines = mainPart.split("\n");
-  let headline = null;
-  let rest = lines;
-  if (lines[0] && lines[0].startsWith("## ")) {
-    headline = lines[0].slice(3).trim();
-    rest = lines.slice(1);
-    // 헤드라인 다음 빈 줄 제거 (있다면)
-    while (rest.length && rest[0].trim() === "") rest.shift();
-  }
-
-  if (headline) {
-    const h = document.createElement("div");
-    h.className = "text-cutout__headline";
-    h.innerHTML = formatInline(headline);
-    wrap.appendChild(h);
-  }
-
-  const bodyEl = document.createElement("div");
-  bodyEl.className = "text-cutout__body";
-  bodyEl.innerHTML = formatInline(rest.join("\n"));
-  wrap.appendChild(bodyEl);
-
-  if (sourcePart && sourcePart.trim()) {
-    const src = document.createElement("div");
-    src.className = "text-cutout__source";
-    src.innerHTML = formatInline(sourcePart.trim());
-    wrap.appendChild(src);
-  }
-
+  const lines = mainPart.split("\n"); let headline = null, rest = lines;
+  if (lines[0]?.startsWith("## ")) { headline = lines[0].slice(3).trim(); rest = lines.slice(1); while (rest.length && !rest[0].trim()) rest.shift(); }
+  if (headline) { const h = document.createElement("div"); h.className = "text-cutout__headline"; h.innerHTML = formatInline(headline); wrap.appendChild(h); }
+  const bodyEl = document.createElement("div"); bodyEl.className = "text-cutout__body"; bodyEl.innerHTML = formatInline(rest.join("\n")); wrap.appendChild(bodyEl);
+  if (sourcePart?.trim()) { const src = document.createElement("div"); src.className = "text-cutout__source"; src.innerHTML = formatInline(sourcePart.trim()); wrap.appendChild(src); }
   return wrap;
 }
 
 function escapeHtml(s) {
   if (s == null) return "";
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
-/* ---------- 하단 네비 ---------- */
+/* ====================================================================
+   하단 네비 / 키보드
+   ==================================================================== */
 function renderNavFooter() {
   const prev = document.getElementById("nav-prev");
   const next = document.getElementById("nav-next");
   const prog = document.getElementById("nav-progress");
   if (!prev) return;
-
   const total = app.lesson.sections.length;
-  prev.disabled = app.currentIdx === 0;
-  next.disabled = app.currentIdx >= total - 1;
+  prev.disabled    = app.currentIdx === 0;
+  next.disabled    = app.currentIdx >= total - 1;
   prog.textContent = `${app.currentIdx + 1} / ${total}`;
-
   prev.onclick = () => goTo(app.currentIdx - 1);
   next.onclick = () => goTo(app.currentIdx + 1);
 }
 
-/* ---------- 키보드 ---------- */
 function bindKeyboard() {
   document.addEventListener("keydown", e => {
     if (e.target.matches("input, textarea")) return;
-
-    // 포커스 오버레이가 열려 있으면: ESC만 받고 나머지 단축키는 차단
-    const overlayOpen = !!document.getElementById("focus-overlay");
-    if (overlayOpen) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closeFocusOverlay();
-      }
+    if (document.getElementById("focus-overlay")) {
+      if (e.key === "Escape") { e.preventDefault(); closeFocusOverlay(); }
       return;
     }
-
-    if (e.key === "ArrowRight" || e.key === "PageDown") {
-      e.preventDefault();
-      goTo(app.currentIdx + 1);
-    } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
-      e.preventDefault();
-      goTo(app.currentIdx - 1);
-    } else if (e.key === " " || e.key === "Enter") {
+    if      (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); goTo(app.currentIdx + 1); }
+    else if (e.key === "ArrowLeft"  || e.key === "PageUp")   { e.preventDefault(); goTo(app.currentIdx - 1); }
+    else if (e.key === " " || e.key === "Enter") {
       if (e.target.tagName === "BUTTON") return;
-      e.preventDefault();
-      toggleFirstVisibleAnswer();
+      e.preventDefault(); toggleFirstVisibleAnswer();
     }
   });
 }
@@ -877,13 +1201,12 @@ function toggleFirstVisibleAnswer() {
   const answers = document.querySelectorAll(".answer");
   for (const a of answers) {
     const rect = a.getBoundingClientRect();
-    if (rect.top >= 0 && rect.top < window.innerHeight * 0.7) {
-      a.classList.toggle("is-open");
-      return;
-    }
+    if (rect.top >= 0 && rect.top < window.innerHeight * 0.7) { a.classList.toggle("is-open"); return; }
   }
-  if (answers.length > 0) answers[0].classList.toggle("is-open");
+  if (answers.length) answers[0].classList.toggle("is-open");
 }
 
-/* ---------- 시작 ---------- */
+/* ====================================================================
+   시작
+   ==================================================================== */
 init();

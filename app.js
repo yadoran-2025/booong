@@ -600,7 +600,10 @@ function renderSection(sec) {
       if (block.type !== "divider") attachFocusAffordance(el);
       main.appendChild(el);
     }
-    if (sec.blocks[idx + 1]) main.appendChild(renderDivider());
+    // 다음 블록이 있고, 현재 블록이 heading이 아닐 때만 구분선 추가
+    if (sec.blocks[idx + 1] && block.type !== "heading") {
+      main.appendChild(renderDivider());
+    }
   });
 }
 
@@ -677,6 +680,7 @@ function renderBlock(block, blockIdx) {
     "figure-concept": renderFigureConcept,
     "figure-quote": renderFigureQuote,
     "image-row": renderImageRow,
+    "quiz-accordion": renderQuizAccordion,
     expandable: renderExpandable,
     summary: renderSummary,
     media: renderMedia,
@@ -863,6 +867,57 @@ function renderFigureQuote(block) {
   div.appendChild(left);
   div.appendChild(right);
   return div;
+}
+
+function parseExamTitle(filename) {
+  // 예: 250611[사문] -> 2025학년도 6월 11번 [사문]
+  const regex = /^(\d{2})(\d{2})(\d{2})\[(.*)\]$/;
+  const match = filename.match(regex);
+  if (!match) return filename; // 형식에 맞지 않으면 원본 반환
+
+  const [_, yy, mm, nn, subject] = match;
+  const year = `20${yy}학년도`;
+  const month = `${parseInt(mm, 10)}월`;
+  const num = `${parseInt(nn, 10)}번`;
+  return `${year} ${month} ${num} [${subject}]`;
+}
+
+function renderQuizAccordion(block) {
+  const container = document.createElement("div");
+  container.className = "block quiz-accordion";
+
+  block.items.forEach(item => {
+    const itemEl = document.createElement("div");
+    itemEl.className = "quiz-accordion__item";
+
+    const summary = document.createElement("button");
+    summary.className = "quiz-accordion__summary";
+    summary.innerHTML = `<span class="quiz-accordion__title">${parseExamTitle(item.image)}</span>`;
+    
+    const content = document.createElement("div");
+    content.className = "quiz-accordion__content";
+    
+    // 문제 이미지
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "quiz-accordion__image-wrap";
+    imgWrap.appendChild(buildImage(item.image));
+    content.appendChild(imgWrap);
+
+    // 정답 (있는 경우에만)
+    if (item.answer) {
+      content.appendChild(buildAnswer(item.answer, "정답 및 해설 보기"));
+    }
+
+    summary.addEventListener("click", () => {
+      itemEl.classList.toggle("is-open");
+    });
+
+    itemEl.appendChild(summary);
+    itemEl.appendChild(content);
+    container.appendChild(itemEl);
+  });
+
+  return container;
 }
 
 function renderExpandable(block) {

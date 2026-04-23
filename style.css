@@ -809,6 +809,87 @@ button {
   display: block;
 }
 
+/* ---------- 기출문제 아코디언 ---------- */
+.quiz-accordion {
+  margin: 1rem 0 2rem;
+}
+
+.quiz-accordion__item {
+  border: 1px solid var(--case-border);
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.quiz-accordion__item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.quiz-accordion__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.quiz-accordion__summary:hover {
+  background: rgba(46, 125, 79, 0.05);
+}
+
+.quiz-accordion__title {
+  font-family: var(--font-sans);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--brand-ink);
+  line-height: 1.4;
+}
+
+.quiz-accordion__summary::after {
+  content: "▼";
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  margin-left: 1rem;
+}
+
+.quiz-accordion__item.is-open .quiz-accordion__summary::after {
+  transform: rotate(180deg);
+}
+
+.quiz-accordion__content {
+  display: none;
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px dashed var(--case-border);
+}
+
+.quiz-accordion__item.is-open .quiz-accordion__content {
+  display: block;
+}
+
+.quiz-accordion__image-wrap {
+  padding: 1.5rem 0;
+  display: flex;
+  justify-content: center;
+  background: #fdfdfd;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.quiz-accordion__image-wrap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
 /* ---------- 차시 요약 ---------- */
 .summary {
   background: var(--brand-soft);

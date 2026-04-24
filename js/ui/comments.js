@@ -1,5 +1,5 @@
 import { app, activeUnsubscribers } from "../state.js";
-import { db, ref, push, remove, onChildAdded, onChildRemoved } from "../firebase-config.js";
+import { db, ref, push, onChildAdded, onChildRemoved } from "../firebase-config.js";
 import { toFbKey, escapeHtml } from "../utils.js";
 
 /**
@@ -40,9 +40,8 @@ export function buildCommentSection(key, variant = "question") {
 function subscribeComments(key, list) {
   list.innerHTML = `<div class="comment-loading">불러오는 중…</div>`;
 
-  const fbSessionKey = toFbKey(app.sessionCode);
   const fbCommentKey = toFbKey(key);
-  const dbRef = ref(db, `comments/${fbSessionKey}/${fbCommentKey}`);
+  const dbRef = ref(db, `comments/${toFbKey(app.lesson.id)}/${fbCommentKey}`);
   let initialized = false;
 
   const unsubAdded = onChildAdded(dbRef, snap => {
@@ -92,20 +91,6 @@ function appendCommentItem(list, comment) {
     <div class="comment-item__text">${escapeHtml(comment.text)}</div>
   `;
 
-  if (app.isTeacher) {
-    const del = document.createElement("button");
-    del.className = "comment-item__delete";
-    del.type = "button";
-    del.textContent = "✕";
-    del.title = "삭제";
-    del.addEventListener("click", () => {
-      if (confirm("이 답변을 삭제할까요?")) {
-        remove(ref(db, `comments/${toFbKey(app.sessionCode)}/${comment.fbKey || toFbKey(list.dataset.key)}/${comment.id}`));
-      }
-    });
-    item.appendChild(del);
-  }
-
   list.appendChild(item);
   item.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
@@ -152,7 +137,7 @@ function buildCommentForm(key, list) {
     submit.textContent = "전송 중…";
 
     try {
-      await push(ref(db, `comments/${toFbKey(app.sessionCode)}/${toFbKey(key)}`), {
+      await push(ref(db, `comments/${toFbKey(app.lesson.id)}/${toFbKey(key)}`), {
         key, name, text, createdAt: new Date().toISOString(),
       });
       textarea.value = "";

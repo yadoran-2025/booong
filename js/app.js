@@ -1,28 +1,23 @@
-import { app, clearListeners, DEFAULT_LESSON } from "./state.js";
+import { app, clearListeners } from "./state.js";
 import { loadExternalAssets } from "./api.js";
 import { showDashboard } from "./ui/dashboard.js";
-import { showStudentGate, showTeacherGate } from "./ui/gate.js";
 import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
-import { showQRPanel, closeImageLightbox, closeFocusOverlay } from "./ui/components.js";
+import { closeImageLightbox, closeFocusOverlay } from "./ui/components.js";
 import { renderBlock, renderDivider } from "./ui/blocks.js";
 import { escapeHtml } from "./utils.js";
 
 /* ====================================================================
-   진입점 — 수업 코드 게이팅
+   진입점
    ==================================================================== */
 async function init() {
   const params = new URLSearchParams(location.search);
   const lessonId = params.get("lesson");
-  app.isTeacher = params.get("teacher") === "1";
-  const codeInUrl = params.get("code") || "";
 
-  // 레슨 파라미터가 없으면 대시보드 표시
   if (!lessonId) {
     await showDashboard();
     return;
   }
 
-  // 레슨 데이터 로드
   try {
     const res = await fetch(`lessons/${lessonId}.json?_=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`${res.status}`);
@@ -38,48 +33,19 @@ async function init() {
     return;
   }
 
-  // QR로 코드가 URL에 있으면 바로 입장
-  if (codeInUrl) {
-    enterSession(codeInUrl.trim());
-    return;
-  }
-
-  // 교사 모드: 세션 관리 화면
-  if (app.isTeacher) {
-    showTeacherGate(enterSession);
-    return;
-  }
-
-  // 학생 모드: 코드 입력 화면
-  showStudentGate(enterSession);
+  startLesson();
 }
 
 /* ====================================================================
-   수업 입장 및 섹션 이동
+   수업 시작 및 섹션 이동
    ==================================================================== */
-function enterSession(code) {
-  app.sessionCode = code;
-  localStorage.setItem("session-code", code);
-
+function startLesson() {
   document.body.innerHTML = "";
   document.body.style.cssText = "";
 
   buildAppShell();
   renderSidebar(goTo);
   renderNavFooter(goTo);
-
-  if (app.isTeacher) {
-    showQRPanel(code);
-    const badge = document.createElement("div");
-    badge.className = "teacher-badge";
-    badge.textContent = `👩‍🏫 교사 모드 · ${code}`;
-    document.body.appendChild(badge);
-  } else {
-    const badge = document.createElement("div");
-    badge.className = "student-badge";
-    badge.textContent = `📚 ${code}`;
-    document.body.appendChild(badge);
-  }
 
   const hash = location.hash.replace("#", "");
   const idx = app.lesson.sections.findIndex(s => s.id === hash);

@@ -53,10 +53,29 @@
 }
 
 .dashboard__subtitle {
-  font-size: 1.25rem;
-  color: #666;
+  font-family: 'Gowun Batang', serif;
+  font-size: 1.5rem;
+  color: #555;
   font-weight: 400;
+  font-style: italic;
+  position: relative;
+  display: inline-block;
+  padding: 0 1rem;
 }
+
+.dashboard__subtitle::before,
+.dashboard__subtitle::after {
+  content: '"';
+  font-family: serif;
+  font-size: 2rem;
+  color: var(--accent);
+  opacity: 0.4;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.dashboard__subtitle::before { margin-right: 0.5rem; }
+.dashboard__subtitle::after { margin-left: 0.5rem; }
 
 /* 섹션 레이아웃 */
 .dashboard__section {

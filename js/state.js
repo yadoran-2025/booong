@@ -6,8 +6,6 @@ export const DEFAULT_LESSON = "rat-disc-1";
 export const app = {
   lesson: null,
   currentIdx: 0,
-  isTeacher: false,
-  sessionCode: null,
 };
 
 /**

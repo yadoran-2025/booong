@@ -15,6 +15,28 @@ body {
     padding: 44px 20px 24px;
 }
 
+/* ── 대시보드 이동 버튼 (공통) ── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  margin-bottom: 20px;
+  background: #fff;
+  border: 1.5px solid #dde1ea;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.back-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
 /* ── 헤더 ── */
 .sel-header { margin-bottom: 32px; }
 .sel-header__accent {

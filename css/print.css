@@ -71,6 +71,28 @@ body {
     color: #999;
 }
 
+/* 대시보드 이동 버튼 */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #fff;
+  border: 1.5px solid #dde1ea;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #555;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.back-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
 /* 인쇄 버튼 디자인 */
 .print-action-btn { display: flex; align-items: center; gap: 8px; padding: 12px 24px; background-color: #2563eb; color: white; font-size: 15px; font-weight: 600; font-family: inherit; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s ease; }
 .print-action-btn:hover { background-color: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4); }

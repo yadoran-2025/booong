@@ -21,6 +21,28 @@
   overflow-y: auto;
 }
 
+.sidebar__back {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 1.75rem;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.sidebar__back:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
 .sidebar__group {
   font-size: 0.7rem;
   font-weight: 700;

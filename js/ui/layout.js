@@ -11,6 +11,7 @@ export function buildAppShell() {
   const aside = document.createElement("aside");
   aside.className = "sidebar";
   aside.innerHTML = `
+    <a class="sidebar__back" href="index.html">← 대시보드</a>
     <div class="sidebar__group" id="sidebar-group"></div>
     <h1 class="sidebar__title" id="sidebar-title"></h1>
     <div class="sidebar__subtitle" id="sidebar-subtitle"></div>

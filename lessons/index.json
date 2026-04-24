@@ -37,9 +37,9 @@
       "id": "print-mode",
       "type": "print",
       "tag": "도구",
-      "title": "인쇄용 페이지 생성",
-      "desc": "원하는 시험문제의 코드를 입력하면, A4 크기에 맞게 자동으로 배치하여 출력합니다.",
-      "link": "print.html"
+      "title": "문제 선택 후 인쇄",
+      "desc": "목록에서 원하는 문제를 골라 A4 인쇄물을 바로 만들 수 있습니다.",
+      "link": "select.html"
     }
   ]
 }

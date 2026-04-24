@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const lessonId = urlParams.get('lesson') || 'print-list';
     const rootContainer = document.getElementById('print-root');
 
     rootContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#666;">불러오는 중...</div>';
@@ -8,13 +7,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQYkmQF4OJAcQN2FXGrmjYZP1Kr4geSX3t3O2ArB0_ntOqbvfgRzuoRwKSG--c3czenNUzyBVpW_f1R/pub?output=csv';
 
     try {
-        const [lessonRes, sheetRes] = await Promise.all([
-            fetch('lessons/' + lessonId + '.json').then(r => r.json()),
-            fetch(sheetUrl).then(r => r.text())
-        ]);
+        // ?keys= 가 있으면 직접 키 목록 사용, 없으면 lesson JSON 로드
+        const keysParam = urlParams.get('keys');
+        let lessonData, keys;
+        const sheetPromise = fetch(sheetUrl).then(r => r.text());
 
-        const sheetMap = parseSheetCSV(sheetRes);
-        const keys = lessonRes.imageKeys || extractKeysFromSections(lessonRes);
+        if (keysParam) {
+            keys = keysParam.split(',').map(k => k.trim()).filter(Boolean);
+            lessonData = { header: urlParams.get('header') || '선택 문제 모음' };
+        } else {
+            const lessonId = urlParams.get('lesson') || 'print-list';
+            lessonData = await fetch('lessons/' + lessonId + '.json').then(r => r.json());
+            keys = lessonData.imageKeys || extractKeysFromSections(lessonData);
+        }
+
+        const sheetMap = parseSheetCSV(await sheetPromise);
 
         const imagesToPrint = keys.map(function(key) {
             const cleanKey = String(key).trim();
@@ -27,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        await packImagesPerfectly(imagesToPrint, rootContainer, lessonRes);
+        await packImagesPerfectly(imagesToPrint, rootContainer, lessonData);
 
     } catch (error) {
         rootContainer.innerHTML = '<div style="padding:20px; color:red;">에러: ' + error.message + '</div>';

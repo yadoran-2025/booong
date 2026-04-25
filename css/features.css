@@ -3,20 +3,117 @@
    - 블록 확대(Focus), 게이트 화면, QR 패널, 댓글 시스템, 라이트박스
    ==================================================================== */
 
-/* ---------- 블록 포커스 기능 ---------- */
-/* 
-   - .block--focusable: 포커스 가능한 블록. 우상단에 📺 버튼 표시.
-   - .focus-overlay: 풀스크린 반투명 배경.
-   - .focus-overlay__stage: 중앙 확대 스테이지. 복제된 블록이 들어감.
-   - .block--focused: 복제본 블록. 원본보다 키워드가 크고 여유있게.
-*/
+/* ---------- 블록 전체화면 기능 ---------- */
 
-/* 포커스 가능한 블록: 📺 버튼의 absolute 기준점 */
+.block-fullscreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 1100;
+  overflow-y: auto;
+  opacity: 0;
+  transition: opacity 0.18s ease-out;
+}
+
+.block-fullscreen.is-open {
+  opacity: 1;
+}
+
+/* 블록이 scale()로 확대되는 무대 영역 */
+.block-fullscreen__stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.block-fullscreen__close {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 1101;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  box-shadow: var(--shadow-md);
+}
+
+.block-fullscreen__close:hover {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+
+/* 이전/다음 블록 화살표 버튼 */
+.block-fullscreen__nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3rem;
+  height: 7rem;
+  padding: 0;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  font-size: 2.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 1101;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.block-fullscreen__nav--prev {
+  left: 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  border-left: none;
+}
+
+.block-fullscreen__nav--next {
+  right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+  border-right: none;
+}
+
+.block-fullscreen__nav:not(:disabled):hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.block-fullscreen__nav:disabled {
+  opacity: 0.18;
+  cursor: not-allowed;
+}
+
+/* scale() 로 확대된 클론 — 원본 스타일 그대로 유지, transform만 JS에서 주입 */
+.block--fullscreen {
+  flex-shrink: 0;
+}
+
+/* ---------- 전체화면 버튼 (⛶) ---------- */
+
+/* 전체화면 버튼의 absolute 기준점 */
 .block--focusable {
   position: relative;
 }
 
-/* 📺 버튼 — 평소엔 투명, 블록 hover 시 페이드인 */
+/* ⛶ 버튼 — 평소엔 투명, 블록 hover 시 페이드인 */
 .focus-btn {
   position: absolute;
   top: 0.5rem;

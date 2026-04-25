@@ -2,7 +2,7 @@ import { app, clearListeners } from "./state.js";
 import { loadExternalAssets } from "./api.js";
 import { showDashboard } from "./ui/dashboard.js";
 import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
-import { closeImageLightbox, closeFocusOverlay } from "./ui/components.js";
+import { closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen } from "./ui/components.js";
 import { renderBlock, renderDivider } from "./ui/blocks.js";
 import { escapeHtml } from "./utils.js";
 
@@ -69,7 +69,9 @@ function startLesson() {
     goToIdx: goTo,
     toggleFirstVisibleAnswer,
     closeImageLightbox,
-    closeFocusOverlay
+    closeFocusOverlay,
+    closeBlockFullscreen,
+    navigateBlockFullscreen
   });
 
   window.addEventListener("hashchange", () => {

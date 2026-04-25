@@ -41,6 +41,7 @@ export async function showDashboard() {
     <div class="dashboard__logo">${logoHTML}</div>
     <h1 class="dashboard__title">${dashboard.title || "사회교육플랫폼 BOOONG"}</h1>
     <p class="dashboard__subtitle">${dashboard.subtitle || "스마트 수업 프리젠터"}</p>
+    ${dashboard.source ? `<p class="dashboard__source">— ${dashboard.source}</p>` : ""}
   `;
   inner.appendChild(header);
 

@@ -3,6 +3,8 @@ import { formatInline, escapeHtml, parseExamTitle, extractYouTubeId } from "../u
 import { attachFocusAffordance, openImageLightbox } from "./components.js";
 import { buildCommentSection } from "./comments.js";
 
+const FULLSCREEN_TYPES = new Set(['사례', '발문', '개념', '이미지곁글', '미디어', '기출문제', '접이식', '요약']);
+
 /**
  * 블록 디스패처: 타입에 맞는 렌더러 호출
  *
@@ -31,7 +33,9 @@ export function renderBlock(block, blockIdx) {
   };
   const fn = map[block.type];
   if (!fn) { console.warn("Unknown block type:", block.type); return null; }
-  return fn(block, blockIdx);
+  const el = fn(block, blockIdx);
+  if (el && FULLSCREEN_TYPES.has(block.type)) attachFocusAffordance(el);
+  return el;
 }
 
 /* ── 기본 텍스트 ── */

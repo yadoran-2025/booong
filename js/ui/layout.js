@@ -127,20 +127,27 @@ export function renderNavFooter(goToIdx) {
  * 키보드 단축키 바인딩
  */
 export function bindKeyboard(callbacks) {
-  const { goToIdx, toggleFirstVisibleAnswer, closeImageLightbox, closeFocusOverlay } = callbacks;
+  const { goToIdx, toggleFirstVisibleAnswer, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen } = callbacks;
 
   document.addEventListener("keydown", e => {
     if (e.target.matches("input, textarea")) return;
-    
+
     if (e.key === "Escape") {
       if (document.getElementById("image-lightbox")) {
-        e.preventDefault(); closeImageLightbox();
-        return;
+        e.preventDefault(); closeImageLightbox(); return;
+      }
+      if (document.getElementById("block-fullscreen")) {
+        e.preventDefault(); closeBlockFullscreen(); return;
       }
       if (document.getElementById("focus-overlay")) {
-        e.preventDefault(); closeFocusOverlay();
-        return;
+        e.preventDefault(); closeFocusOverlay(); return;
       }
+    }
+
+    if (document.getElementById("block-fullscreen")) {
+      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); navigateBlockFullscreen(1); }
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); navigateBlockFullscreen(-1); }
+      return;
     }
 
     if (document.getElementById("focus-overlay") || document.getElementById("image-lightbox")) return;

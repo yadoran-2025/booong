@@ -30,16 +30,23 @@
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  animation: motorcycleFloat 3.5s ease-in-out infinite;
+  animation: motorcycleRide 11s linear infinite alternate;
 }
 
 .dashboard__logo svg {
   display: block;
 }
 
-@keyframes motorcycleFloat {
-  0%, 100% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(-15px) rotate(5deg); }
+@keyframes motorcycleRide {
+  0%   { transform: translateX(22vw)   translateY(0px)  rotate(-3deg); }
+  12%  { transform: translateX(16vw)   translateY(-4px) rotate(-4deg); }
+  22%  { transform: translateX(11vw)   translateY(2px)  rotate(-2deg); }
+  35%  { transform: translateX(5.5vw)  translateY(-5px) rotate(-4deg); }
+  47%  { transform: translateX(0vw)    translateY(3px)  rotate(-2deg); }
+  58%  { transform: translateX(-5.5vw) translateY(-3px) rotate(-4deg); }
+  72%  { transform: translateX(-11vw)  translateY(4px)  rotate(-2deg); }
+  85%  { transform: translateX(-16vw)  translateY(-4px) rotate(-4deg); }
+  100% { transform: translateX(-22vw)  translateY(0px)  rotate(-3deg); }
 }
 
 .dashboard__title {
@@ -54,13 +61,16 @@
 
 .dashboard__subtitle {
   font-family: 'Gowun Batang', serif;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: #555;
   font-weight: 400;
   font-style: italic;
   position: relative;
-  display: inline-block;
-  padding: 0 1rem;
+  display: block;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  line-height: 1.6;
 }
 
 .dashboard__subtitle::before,
@@ -197,10 +207,158 @@
   background: rgba(0, 0, 0, 0.02);
 }
 
+.dash-card--game {
+  background: rgba(255, 245, 230, 0.6);
+}
+
 /* 애니메이션 */
 @keyframes dashboardFadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 수업 그룹 카드 (호버 → 차시 슬라이드다운) ===== */
+
+.lesson-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 스택 그림자 — 멀티 차시일 때만 */
+.lesson-group__card-wrapper {
+  position: relative;
+}
+
+.lesson-group--multi .lesson-group__card-wrapper::before {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 10px;
+  right: 10px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  z-index: -1;
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.lesson-group--multi .lesson-group__card-wrapper::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 20px;
+  right: 20px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  border-radius: 20px;
+  z-index: -2;
+}
+
+/* 그룹 카드 본체 — hover는 wrapper가 아닌 .lesson-group 기준 */
+.lesson-group__card {
+  cursor: default;
+}
+
+.lesson-group__card:hover {
+  transform: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lesson-group__card:hover::after {
+  opacity: 0;
+}
+
+.lesson-group:hover .lesson-group__card {
+  transform: translateY(-4px);
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+  border-color: var(--accent-light);
+}
+
+.lesson-group:hover .lesson-group__card::after {
+  opacity: 1;
+}
+
+.lesson-group:hover .lesson-group--multi .lesson-group__card-wrapper::before {
+  transform: translateY(6px);
+}
+
+/* 화살표: 닫힘 ↓ → 열림 시 살짝 내려감 */
+.lesson-group__card .dash-card__arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.lesson-group:hover .lesson-group__card .dash-card__arrow {
+  transform: translateY(3px);
+}
+
+/* 차시 목록 슬라이드다운 */
+.lesson-group__subs {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+              opacity 0.25s ease;
+}
+
+.lesson-group:hover .lesson-group__subs {
+  max-height: 400px;
+  opacity: 1;
+  transition: max-height 0.45s cubic-bezier(0.23, 1, 0.32, 1),
+              opacity 0.3s ease 0.05s;
+}
+
+/* 개별 차시 링크 */
+.lesson-sub-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1.25rem;
+  margin-top: 0.5rem;
+  text-decoration: none;
+  color: var(--text);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.6);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  font-size: 0.9rem;
+}
+
+.lesson-sub-card:hover {
+  background: var(--accent-light);
+  border-color: rgba(var(--accent-rgb), 0.3);
+  transform: translateX(4px);
+}
+
+.lesson-sub-card__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  min-width: 3rem;
+}
+
+.lesson-sub-card__title {
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.lesson-sub-card__arrow {
+  color: var(--accent);
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.lesson-sub-card:hover .lesson-sub-card__arrow {
+  opacity: 1;
+  transform: translateX(3px);
 }
 
 @media (max-width: 600px) {

@@ -100,7 +100,7 @@ function renderSection(sec) {
     if (el) {
       main.appendChild(el);
     }
-    if (sec.blocks[idx + 1] && block.type !== "heading") {
+    if (sec.blocks[idx + 1] && block.type !== "소제목") {
       main.appendChild(renderDivider());
     }
   });

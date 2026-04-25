@@ -64,7 +64,7 @@ export function renderSidebar(goToIdx) {
     groupEl.style.display = "none";
   }
   titleEl.textContent = app.lesson.title;
-  subEl.textContent = app.lesson.subtitle || "";
+  subEl.innerHTML = app.lesson.subtitle || "";
 
   const container = document.getElementById("sidebar-sections");
   container.innerHTML = "";

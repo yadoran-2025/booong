@@ -5,29 +5,36 @@ import { buildCommentSection } from "./comments.js";
 
 /**
  * 블록 디스패처: 타입에 맞는 렌더러 호출
+ *
+ * 블록 타입 목록 (11종):
+ *   단락, 소제목, 구분선    — 기본 텍스트
+ *   사례, 발문, 개념        — 콜아웃
+ *   이미지곁글              — 이미지 + 텍스트 좌우 배치
+ *   미디어                  — 이미지·영상·텍스트박스
+ *   기출문제                — 수능 문제 아코디언
+ *   접이식                  — 접이식 블록
+ *   요약                    — 번호 목록 마무리
  */
 export function renderBlock(block, blockIdx) {
   const map = {
-    paragraph: renderParagraph,
-    heading: renderHeading,
-    case: renderCase,
-    question: renderQuestion,
-    concept: renderConcept,
-    "figure-concept": renderFigureConcept,
-    "figure-quote": renderFigureQuote,
-    "image-row": renderImageRow,
-    "quiz-accordion": renderQuizAccordion,
-    expandable: renderExpandable,
-    summary: renderSummary,
-    media: renderMedia,
-    divider: renderDivider,
+    단락:      renderParagraph,
+    소제목:    renderHeading,
+    구분선:    renderDivider,
+    사례:      renderCase,
+    발문:      renderQuestion,
+    개념:      renderConcept,
+    이미지곁글: renderFigure,
+    미디어:    renderMedia,
+    기출문제:  renderQuizAccordion,
+    접이식:    renderExpandable,
+    요약:      renderSummary,
   };
   const fn = map[block.type];
   if (!fn) { console.warn("Unknown block type:", block.type); return null; }
   return fn(block, blockIdx);
 }
 
-/* ── 개별 블록 렌더러 ── */
+/* ── 기본 텍스트 ── */
 
 function renderParagraph(block) {
   const p = document.createElement("p");
@@ -39,21 +46,17 @@ function renderParagraph(block) {
 function renderHeading(block) {
   const h = document.createElement("h2");
   h.className = "block section-sub-heading";
-  h.innerHTML = formatInline(block.text);
+  h.innerHTML = formatInline(block.text || "");
   return h;
 }
 
-function renderImageRow(block) {
-  const row = document.createElement("div");
-  row.className = "block image-row";
-  block.images.forEach(src => {
-    const wrap = document.createElement("div");
-    wrap.className = "image-row__item";
-    wrap.appendChild(buildImage(src));
-    row.appendChild(wrap);
-  });
-  return row;
+export function renderDivider() {
+  const hr = document.createElement("hr");
+  hr.className = "block divider";
+  return hr;
 }
+
+/* ── 콜아웃 ── */
 
 function renderCase(block, blockIdx) {
   const div = document.createElement("div");
@@ -69,12 +72,11 @@ function renderCase(block, blockIdx) {
 
   const lessonId = app.lesson.id || app.lesson.title || "lesson";
   const sectionId = app.lesson.sections[app.currentIdx]?.id || `sec${app.currentIdx}`;
-  const bIdx = (blockIdx !== undefined) ? blockIdx : 0;
+  const bIdx = blockIdx ?? 0;
   const commentKey = `${lessonId}__${sectionId}__b${bIdx}__p0`;
-
   const wrapper = document.createElement("div");
   wrapper.className = "case-with-comments";
-  div.classList.remove("block"); 
+  div.classList.remove("block");
   wrapper.appendChild(div);
   wrapper.appendChild(buildCommentSection(commentKey, "case"));
   return wrapper;
@@ -83,7 +85,7 @@ function renderCase(block, blockIdx) {
 function renderQuestion(block, blockIdx) {
   const lessonId = app.lesson.id || app.lesson.title || "lesson";
   const sectionId = app.lesson.sections[app.currentIdx]?.id || `sec${app.currentIdx}`;
-  const bIdx = (blockIdx !== undefined) ? blockIdx : 0;
+  const bIdx = blockIdx ?? 0;
 
   const div = document.createElement("div");
   div.className = "block callout question";
@@ -98,11 +100,17 @@ function renderQuestion(block, blockIdx) {
     if (pr.note) p.innerHTML += `<div class="question__note">${formatInline(pr.note)}</div>`;
     div.appendChild(p);
 
-    if (pr.answer) div.appendChild(buildAnswer({ text: pr.answer }, "답 보기"));
+    // answer는 항상 { text } 또는 { bullets } 객체
+    if (pr.answer) div.appendChild(buildAnswer(pr.answer, "답 보기"));
 
     if (block.comments) {
       const commentKey = `${lessonId}__${sectionId}__b${bIdx}__p${promptIdx}`;
-      commentSections.push({ key: commentKey, label: block.prompts.length > 1 ? `💬 Q${promptIdx + 1} 학생 답변 보기` : "💬 학생 답변 보기" });
+      commentSections.push({
+        key: commentKey,
+        label: block.prompts.length > 1
+          ? `💬 Q${promptIdx + 1} 학생 답변 보기`
+          : "💬 학생 답변 보기",
+      });
     }
   });
 
@@ -118,15 +126,13 @@ function renderQuestion(block, blockIdx) {
 
   const outer = document.createElement("div");
   outer.className = "question-with-comments";
-  div.classList.remove("block"); 
+  div.classList.remove("block");
   outer.appendChild(div);
-
   commentSections.forEach(({ key, label }) => {
     const cs = buildCommentSection(key, "question");
     cs.querySelector(".comment-section__toggle").textContent = label;
     outer.appendChild(cs);
   });
-
   return outer;
 }
 
@@ -135,7 +141,7 @@ function renderConcept(block) {
   div.className = "block callout concept";
   let html = "";
   if (block.title) html += `<div class="concept__title">💡 ${escapeHtml(block.title)}</div>`;
-  if (block.body) html += `<div class="concept__body">${formatInline(block.body)}</div>`;
+  if (block.body)  html += `<div class="concept__body">${formatInline(block.body)}</div>`;
   if (block.bullets) {
     html += `<ul class="concept__bullets">`;
     block.bullets.forEach(b => { html += `<li>${formatInline(b)}</li>`; });
@@ -150,91 +156,153 @@ function renderConcept(block) {
   return div;
 }
 
-function renderFigureConcept(block) {
+/* ── 레이아웃 ── */
+
+/**
+ * figure — 이미지(왼쪽) + 텍스트(오른쪽) 좌우 배치
+ *
+ * title 있음 → 오른쪽이 concept 박스 스타일  (구 figure-concept)
+ * title 없음 → 오른쪽이 인용문 스타일         (구 figure-quote)
+ *
+ * 필드: image, caption?, title?, body, note?
+ */
+function renderFigure(block) {
   const div = document.createElement("div");
   div.className = "block figure-row";
+
   const left = document.createElement("div");
   left.className = "figure-row__image-wrap";
-  left.appendChild(buildImage(block.figure.image, block.figure.caption));
-  if (block.figure.caption) {
+  left.appendChild(buildImage(block.image, block.caption));
+  if (block.caption) {
     const cap = document.createElement("div");
     cap.className = "figure-row__caption";
-    cap.textContent = block.figure.caption;
+    cap.textContent = block.caption;
     left.appendChild(cap);
   }
+
   const right = document.createElement("div");
-  right.className = "callout concept";
-  right.style.margin = "0";
-  right.innerHTML = `
-    <div class="concept__title">💡 ${escapeHtml(block.concept.title)}</div>
-    <div class="concept__body">${formatInline(block.concept.body)}</div>
-  `;
+  if (block.title) {
+    right.className = "callout concept";
+    right.style.margin = "0";
+    right.innerHTML = `
+      <div class="concept__title">💡 ${escapeHtml(block.title)}</div>
+      <div class="concept__body">${formatInline(block.body || "")}</div>
+    `;
+  } else {
+    const q = document.createElement("div");
+    q.className = "figure-row__quote";
+    q.innerHTML = formatInline(block.body || "");
+    right.appendChild(q);
+    if (block.note) {
+      const n = document.createElement("div");
+      n.className = "figure-row__note";
+      n.innerHTML = formatInline(block.note);
+      right.appendChild(n);
+    }
+  }
+
   div.appendChild(left);
   div.appendChild(right);
   return div;
 }
 
-function renderFigureQuote(block) {
+/* ── 미디어 ── */
+
+/**
+ * media — 이미지·영상·텍스트박스 통합 블록
+ *
+ * kind: "row"   — 이미지 여러 장 가로 나열 (구 image-row)
+ * kind: "image" — 캡션 있는 단독 이미지
+ * kind: "video" — 유튜브 썸네일 링크 (구 video-link)
+ * kind: "text"  — 신문기사 스타일 텍스트박스 (구 text: 접두사)
+ *                 추가 필드: headline?, body, source?
+ */
+function renderMedia(block) {
+  if (block.kind === "row") {
+    const div = document.createElement("div");
+    div.className = "block image-row";
+    block.images.forEach(src => {
+      const wrap = document.createElement("div");
+      wrap.className = "image-row__item";
+      wrap.appendChild(buildImage(src));
+      div.appendChild(wrap);
+    });
+    return div;
+  }
+
+  if (block.kind === "text") {
+    const tc = buildTextCutout(block);
+    tc.classList.add("block");
+    return tc;
+  }
+
   const div = document.createElement("div");
-  div.className = "block figure-row";
-  const left = document.createElement("div");
-  left.className = "figure-row__image-wrap";
-  left.appendChild(buildImage(block.figure.image, block.figure.caption));
-  if (block.figure.caption) {
-    const cap = document.createElement("div");
-    cap.className = "figure-row__caption";
-    cap.textContent = block.figure.caption;
-    left.appendChild(cap);
+  div.className = "block media";
+
+  if (block.kind === "image") {
+    div.classList.add("media--image");
+    div.appendChild(buildImage(block.src, block.caption || ""));
+    if (block.caption) {
+      const cap = document.createElement("div");
+      cap.className = "media__caption";
+      cap.textContent = block.caption;
+      div.appendChild(cap);
+    }
+  } else if (block.kind === "video") {
+    div.classList.add("media--video");
+    const videoId = extractYouTubeId(block.url);
+    const link = document.createElement("a");
+    link.href = block.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.className = "media__thumb-link";
+    link.setAttribute("aria-label", block.caption || "영상 보기");
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "media__thumb-wrap";
+    if (videoId) {
+      const img = document.createElement("img");
+      img.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+      img.alt = block.caption || "YouTube 썸네일"; img.loading = "lazy";
+      img.onerror = () => {
+        const ph = document.createElement("div");
+        ph.className = "image-placeholder"; ph.textContent = "썸네일 없음";
+        img.replaceWith(ph);
+      };
+      thumbWrap.appendChild(img);
+    }
+    const play = document.createElement("div");
+    play.className = "media__play-icon"; play.setAttribute("aria-hidden", "true"); play.textContent = "▶";
+    thumbWrap.appendChild(play); link.appendChild(thumbWrap); div.appendChild(link);
+    if (block.caption) {
+      const cap = document.createElement("div");
+      cap.className = "media__caption"; cap.textContent = block.caption; div.appendChild(cap);
+    }
   }
-  const right = document.createElement("div");
-  const q = document.createElement("div");
-  q.className = "figure-row__quote";
-  q.innerHTML = formatInline(block.quote);
-  right.appendChild(q);
-  if (block.note) {
-    const n = document.createElement("div");
-    n.className = "figure-row__note";
-    n.innerHTML = formatInline(block.note);
-    right.appendChild(n);
-  }
-  div.appendChild(left);
-  div.appendChild(right);
+
   return div;
 }
+
+/* ── 인터랙션 ── */
 
 function renderQuizAccordion(block) {
   const container = document.createElement("div");
   container.className = "block quiz-accordion";
-
   block.items.forEach(item => {
     const itemEl = document.createElement("div");
     itemEl.className = "quiz-accordion__item";
-
     const summary = document.createElement("button");
     summary.className = "quiz-accordion__summary";
     summary.innerHTML = `<span class="quiz-accordion__title">${parseExamTitle(item.image)}</span>`;
-    
     const content = document.createElement("div");
     content.className = "quiz-accordion__content";
-    
     const imgWrap = document.createElement("div");
     imgWrap.className = "quiz-accordion__image-wrap";
     imgWrap.appendChild(buildImage(item.image));
     content.appendChild(imgWrap);
-
-    if (item.answer) {
-      content.appendChild(buildAnswer(item.answer, "정답 및 해설 보기"));
-    }
-
-    summary.addEventListener("click", () => {
-      itemEl.classList.toggle("is-open");
-    });
-
+    if (item.answer) content.appendChild(buildAnswer(item.answer, "정답 및 해설 보기"));
+    summary.addEventListener("click", () => itemEl.classList.toggle("is-open"));
     itemEl.appendChild(summary);
     itemEl.appendChild(content);
     container.appendChild(itemEl);
   });
-
   return container;
 }
 
@@ -266,52 +334,7 @@ function renderSummary(block) {
   return div;
 }
 
-function renderMedia(block) {
-  const div = document.createElement("div");
-  div.className = "block media";
-  if (block.kind === "image") {
-    div.classList.add("media--image");
-    div.appendChild(buildImage(block.src, block.caption || ""));
-    if (block.caption) {
-      const cap = document.createElement("div");
-      cap.className = "media__caption";
-      cap.textContent = block.caption;
-      div.appendChild(cap);
-    }
-  } else if (block.kind === "video-link") {
-    div.classList.add("media--video-link");
-    const videoId = extractYouTubeId(block.url);
-    const link = document.createElement("a");
-    link.href = block.url; link.target = "_blank"; link.rel = "noopener noreferrer";
-    link.className = "media__thumb-link";
-    link.setAttribute("aria-label", block.caption || "영상 보기");
-    const thumbWrap = document.createElement("div");
-    thumbWrap.className = "media__thumb-wrap";
-    if (videoId) {
-      const img = document.createElement("img");
-      img.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-      img.alt = block.caption || "YouTube 썸네일"; img.loading = "lazy";
-      img.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = "썸네일 없음"; img.replaceWith(ph); };
-      thumbWrap.appendChild(img);
-    }
-    const play = document.createElement("div");
-    play.className = "media__play-icon"; play.setAttribute("aria-hidden", "true"); play.textContent = "▶";
-    thumbWrap.appendChild(play); link.appendChild(thumbWrap); div.appendChild(link);
-    if (block.caption) {
-      const cap = document.createElement("div");
-      cap.className = "media__caption"; cap.textContent = block.caption; div.appendChild(cap);
-    }
-  }
-  return div;
-}
-
-export function renderDivider() {
-  const hr = document.createElement("hr");
-  hr.className = "block divider";
-  return hr;
-}
-
-/* ── 블록 내부 헬퍼 ── */
+/* ── 내부 헬퍼 ── */
 
 function buildAnswer(answer, label = "답 보기") {
   const wrap = document.createElement("div");
@@ -322,13 +345,13 @@ function buildAnswer(answer, label = "답 보기") {
   btn.addEventListener("click", () => wrap.classList.toggle("is-open"));
   const content = document.createElement("div");
   content.className = "answer__content";
-  if (answer.bullets) {
+  if (Array.isArray(answer)) {
     let html = "<ul>";
-    answer.bullets.forEach(b => { html += `<li>${formatInline(b)}</li>`; });
+    answer.forEach(b => { html += `<li>${formatInline(b)}</li>`; });
     html += "</ul>";
     content.innerHTML = html;
-  } else if (answer.text) {
-    content.innerHTML = `<p>${formatInline(answer.text)}</p>`;
+  } else {
+    content.innerHTML = `<p>${formatInline(answer)}</p>`;
   }
   wrap.appendChild(btn);
   wrap.appendChild(content);
@@ -347,69 +370,60 @@ function buildImage(key, alt = "") {
   if (app.lesson.assets?.[key]) resolved = app.lesson.assets[key];
 
   if (typeof resolved === "string" && resolved.includes("drive.google.com")) {
-    const driveIdMatch = resolved.match(/\/d\/([^/]+)/) || resolved.match(/id=([^&]+)/);
-    if (driveIdMatch && driveIdMatch[1]) {
-      resolved = `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
-    }
+    const m = resolved.match(/\/d\/([^/]+)/) || resolved.match(/id=([^&]+)/);
+    if (m?.[1]) resolved = `https://lh3.googleusercontent.com/d/${m[1]}`;
   }
-
-  if (typeof resolved === "string" && resolved.startsWith("text:")) return buildTextCutout(resolved.slice(5), alt);
 
   const videoId = extractYouTubeId(resolved);
   if (videoId) {
     const wrap = document.createElement("div"); wrap.className = "media__thumb-wrap";
-    const link = document.createElement("a"); link.href = resolved; link.target = "_blank"; link.rel = "noopener noreferrer"; link.className = "media__thumb-link"; link.setAttribute("aria-label", alt || "YouTube 영상 보기");
-    const thumb = document.createElement("img"); thumb.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`; thumb.alt = alt || "YouTube 썸네일"; thumb.loading = "lazy";
-    thumb.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = "썸네일 없음"; thumb.replaceWith(ph); };
-    const play = document.createElement("div"); play.className = "media__play-icon"; play.setAttribute("aria-hidden", "true"); play.textContent = "▶";
-    link.appendChild(thumb); link.appendChild(play); wrap.appendChild(link); return wrap;
+    const link = document.createElement("a");
+    link.href = resolved; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.className = "media__thumb-link"; link.setAttribute("aria-label", alt || "YouTube 영상 보기");
+    const thumb = document.createElement("img");
+    thumb.src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    thumb.alt = alt || "YouTube 썸네일"; thumb.loading = "lazy";
+    thumb.onerror = () => {
+      const ph = document.createElement("div");
+      ph.className = "image-placeholder"; ph.textContent = "썸네일 없음";
+      thumb.replaceWith(ph);
+    };
+    const play = document.createElement("div");
+    play.className = "media__play-icon"; play.setAttribute("aria-hidden", "true"); play.textContent = "▶";
+    link.appendChild(thumb); link.appendChild(play); wrap.appendChild(link);
+    return wrap;
   }
 
   const src = /^https?:\/\//.test(resolved) ? resolved : app.lesson.imageBase + resolved;
   const img = document.createElement("img");
   img.src = src; img.alt = alt; img.loading = "lazy";
   img.addEventListener("click", () => openImageLightbox(src));
-  img.onerror = () => { const ph = document.createElement("div"); ph.className = "image-placeholder"; ph.textContent = `이미지: ${key}`; img.replaceWith(ph); };
+  img.onerror = () => {
+    const ph = document.createElement("div");
+    ph.className = "image-placeholder"; ph.textContent = `이미지: ${key}`;
+    img.replaceWith(ph);
+  };
   return img;
 }
 
-function buildTextCutout(body, alt = "") {
+function buildTextCutout(block) {
   const wrap = document.createElement("div");
   wrap.className = "text-cutout";
-  const cleanBody = body.trim().replace(/\r\n/g, "\n");
-  const parts = cleanBody.split(/\n---\n/);
-  const mainPart = parts[0].trim();
-  const sourcePart = parts[1] ? parts[1].trim() : null;
-  const lines = mainPart.split("\n");
-  let headline = null;
-  let restLines = [...lines];
-
-  if (lines[0] && /^##\s?/.test(lines[0])) {
-    headline = lines[0].replace(/^##\s?/, "").trim();
-    restLines = lines.slice(1);
-    while (restLines.length && !restLines[0].trim()) {
-      restLines.shift();
-    }
-  }
-
-  if (headline) {
+  if (block.headline) {
     const h = document.createElement("div");
     h.className = "text-cutout__headline";
-    h.innerHTML = formatInline(headline);
+    h.innerHTML = formatInline(block.headline);
     wrap.appendChild(h);
   }
-
   const bodyEl = document.createElement("div");
   bodyEl.className = "text-cutout__body";
-  bodyEl.innerHTML = formatInline(restLines.join("\n"));
+  bodyEl.innerHTML = formatInline(block.body || "");
   wrap.appendChild(bodyEl);
-
-  if (sourcePart) {
+  if (block.source) {
     const src = document.createElement("div");
     src.className = "text-cutout__source";
-    src.innerHTML = formatInline(sourcePart);
+    src.innerHTML = formatInline(block.source);
     wrap.appendChild(src);
   }
-
   return wrap;
 }

@@ -5,26 +5,23 @@
 .dashboard {
   min-height: 100vh;
   background: radial-gradient(circle at top right, #f0f7ff, #ffffff);
-  padding: 3rem 2rem;
+  padding: 2.25rem;
   font-family: var(--font-sans);
   color: var(--text);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   position: relative;
 }
 
 .dashboard__about-link {
   position: absolute;
-  top: 1.25rem;
-  right: 1.5rem;
+  top: 1rem;
+  right: 1.25rem;
   z-index: 2;
   border: 1px solid rgba(207, 214, 226, 0.9);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.8);
   color: var(--accent-deep);
-  padding: 0.42rem 0.78rem;
-  font-size: 0.72rem;
+  padding: 0.34rem 0.75rem;
+  font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-decoration: none;
@@ -40,22 +37,24 @@
 }
 
 .dashboard__inner {
-  max-width: 1000px;
-  width: 100%;
+  width: min(1100px, 100%);
+  margin: 0 auto;
 }
 
 .dashboard__header {
-  text-align: center;
-  margin-bottom: 3.75rem;
-  animation: dashboardFadeIn 0.8s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  margin: 0 0 1.75rem;
+  animation: dashboardFadeIn 0.55s ease-out;
 }
 
 .dashboard__logo {
-  font-size: 4rem;
-  margin-bottom: 1.15rem;
   display: inline-flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--brand);
   animation: motorcycleRide 18s ease-in-out infinite alternate;
 }
 
@@ -63,329 +62,509 @@
   display: block;
 }
 
-@keyframes motorcycleRide {
-  0%   { transform: translateX(8vw)   translateY(0px)  rotate(-2deg); }
-  28%  { transform: translateX(4vw)   translateY(-3px) rotate(-3deg); }
-  50%  { transform: translateX(0vw)   translateY(2px)  rotate(-1deg); }
-  72%  { transform: translateX(-4vw)  translateY(-2px) rotate(-3deg); }
-  100% { transform: translateX(-8vw)  translateY(0px)  rotate(-2deg); }
-}
-
 .dashboard__title {
-  font-family: 'Black Han Sans', sans-serif;
-  font-size: 3.65rem;
-  font-weight: 400; /* Black Han Sans는 단일 두께 */
-  letter-spacing: -0.02em;
-  margin-bottom: 1rem;
+  margin: 0;
   color: var(--brand-ink);
+  font-family: var(--font-display, "Black Han Sans", sans-serif);
+  font-size: clamp(1.7rem, 3vw, 1.9rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
   line-height: 1.1;
 }
 
 .dashboard__subtitle {
-  font-family: 'Gowun Batang', serif;
-  font-size: 1.28rem;
-  color: #555;
-  font-weight: 400;
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
   font-style: italic;
-  position: relative;
-  display: block;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .dashboard__subtitle::before,
 .dashboard__subtitle::after {
+  color: var(--accent);
   content: '"';
   font-family: serif;
-  font-size: 2rem;
-  color: var(--accent);
+  font-size: 1.15rem;
+  line-height: 1;
   opacity: 0.4;
   vertical-align: middle;
-  line-height: 1;
 }
 
-.dashboard__subtitle::before { margin-right: 0.5rem; }
-.dashboard__subtitle::after { margin-left: 0.5rem; }
+.dashboard__subtitle::before {
+  margin-right: 0.25rem;
+}
+
+.dashboard__subtitle::after {
+  margin-left: 0.25rem;
+}
 
 .dashboard__source {
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
+  margin: 0.25rem 0 0;
   color: var(--text-faint);
-  text-align: right;
-  max-width: 800px;
-  margin: 0.6rem auto 0;
-  padding: 0 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
 }
 
-/* 섹션 레이아웃 */
-.dashboard__section {
-  margin-bottom: 3.25rem;
-}
-
-.dashboard__section-title {
-  font-size: 1.38rem;
-  font-weight: 700;
-  margin-bottom: 1.15rem;
+.dashboard-notice {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.dashboard__section-title::before {
-  content: "";
-  display: block;
-  width: 4px;
-  height: 1.5rem;
-  background: var(--accent);
-  border-radius: 2px;
-}
-
-/* 그리드 시스템 */
-.dashboard__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
-}
-
-/* 카드 UI */
-.dash-card {
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(207, 214, 226, 0.75);
-  border-radius: 12px;
-  padding: 1.65rem;
-  text-decoration: none;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid rgba(46, 125, 79, 0.14);
+  border-radius: var(--radius);
+  background: var(--case-bg);
+  padding: 0.56rem 1rem;
   color: inherit;
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 3px 14px rgba(17, 20, 24, 0.04);
-  position: relative;
-  overflow: hidden;
 }
 
-.dash-card::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: var(--accent);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.dash-card:hover {
-  transform: translateY(-4px);
-  background: #ffffff;
-  box-shadow: 0 10px 24px rgba(17, 20, 24, 0.08);
-  border-color: rgba(var(--accent-rgb), 0.28);
-}
-
-.dash-card:hover::after {
-  opacity: 1;
-}
-
-.dash-card__tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent);
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dash-card__title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  line-height: 1.3;
-}
-
-.dash-card__desc {
-  font-size: 0.95rem;
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 1.5rem;
-  flex-grow: 1;
-}
-
-.dash-card__footer {
+.dashboard-notice__body {
   display: flex;
   align-items: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--accent);
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-notice__tag {
+  flex: 0 0 auto;
+  border: 1px solid rgba(46, 125, 79, 0.2);
+  border-radius: 4px;
+  background: rgba(46, 125, 79, 0.08);
+  color: var(--case-border);
+  padding: 0.12rem 0.44rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-notice__title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--case-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-notice__desc {
+  flex: 0 1 auto;
+  overflow: hidden;
+  color: var(--case-border);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-notice__dots {
+  display: inline-flex;
+  flex: 0 0 auto;
   gap: 0.25rem;
 }
 
-.dash-card__arrow {
-  transition: transform 0.3s;
+.dashboard-notice__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #a8d5b8;
+  padding: 0;
 }
 
-.dash-card:hover .dash-card__arrow {
-  transform: translateX(4px);
+.dashboard-notice__dot.is-active {
+  background: var(--case-border);
 }
 
-/* 도구 카드 (색상 변형) */
-.dash-card--tool {
-  background: rgba(var(--accent-rgb), 0.04);
+.dashboard__section {
+  margin-bottom: 1.75rem;
 }
 
-.dash-card--print {
-  background: rgba(0, 0, 0, 0.02);
+.dashboard__section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.dashboard__section-title::before {
+  display: block;
+  width: 4px;
+  height: 1rem;
+  border-radius: 2px;
+  background: var(--section-color, var(--accent));
+  content: "";
+}
+
+.dashboard-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.62rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft);
+  padding: 0.75rem;
+}
+
+.dashboard-tool {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.62rem 0.88rem;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+
+.dashboard-tool:hover {
+  border-color: rgba(90, 99, 114, 0.3);
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(17, 20, 24, 0.06);
+}
+
+.dashboard-tool__body {
+  display: grid;
+  min-width: 0;
+}
+
+.dashboard-tool__title,
+.dashboard-tool__desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-tool__title {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.dashboard-tool__desc {
+  margin-top: 0.12rem;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.dashboard-tool__arrow {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform 0.18s;
+}
+
+.dashboard-tool:hover .dashboard-tool__arrow {
+  transform: translateX(2px);
+}
+
+.dashboard-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.62rem;
+  width: 100%;
+  border-bottom: 1px solid transparent;
+  background: #fff;
+  padding: 0.68rem 1rem;
+  color: inherit;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dashboard-panel.is-open .dashboard-panel__toggle {
+  border-bottom-color: var(--border);
+  background: var(--bg-sidebar);
+}
+
+.dashboard-panel__school {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dashboard-panel__count {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.dashboard-panel__chevron {
+  display: inline-block;
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.dashboard-panel:not(.is-open) .dashboard-panel__chevron {
+  transform: rotate(-90deg);
+}
+
+.dashboard-subject-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--subject-count), minmax(0, 1fr));
+}
+
+.dashboard-subject {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--border);
+}
+
+.dashboard-subject:last-child {
+  border-right: 0;
+}
+
+.dashboard-subject-head {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+  background: #fafbfc;
+  padding: 0.5rem 0.75rem;
+}
+
+.dashboard-subject-head__dot {
+  flex: 0 0 auto;
+  width: 0.44rem;
+  height: 0.44rem;
+  border-radius: 50%;
+  background: var(--subject-color);
+}
+
+.dashboard-subject-head__label {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-subject-head__count {
+  margin-left: auto;
+  color: var(--border-strong);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.dashboard-subject-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 3.25rem;
+  flex: 1;
+  padding: 0.62rem;
+}
+
+.dashboard-subject-column.is-empty {
+  align-items: center;
+  justify-content: center;
+  background: #fafbfc;
+}
+
+.dashboard-empty {
+  color: var(--border);
+  font-size: 0.75rem;
+}
+
+.dash-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.44rem;
+  overflow: hidden;
+  border: 1px solid rgba(207, 214, 226, 0.75);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 0.94rem 1rem;
+  color: inherit;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.25s cubic-bezier(0.23, 1, 0.32, 1),
+              background 0.25s cubic-bezier(0.23, 1, 0.32, 1),
+              box-shadow 0.25s cubic-bezier(0.23, 1, 0.32, 1),
+              transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.dash-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  content: "";
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.dash-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.25);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(17, 20, 24, 0.08);
+  transform: translateY(-2px);
+}
+
+.dash-card:hover::before {
+  opacity: 1;
 }
 
 .dash-card--game {
   background: rgba(255, 247, 237, 0.72);
 }
 
-/* 애니메이션 */
-@keyframes dashboardFadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.dash-card--game::before {
+  background: #ff8c1b;
 }
 
-/* ===== 수업 그룹 카드 (호버 → 차시 슬라이드다운) ===== */
-
-.lesson-group {
+.dash-card__meta {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
 }
 
-/* 스택 그림자 — 멀티 차시일 때만 */
-.lesson-group__card-wrapper {
-  position: relative;
+.dash-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  padding: 0.12rem 0.44rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
 }
 
-.lesson-group--multi .lesson-group__card-wrapper::before {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 10px;
-  right: 10px;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  z-index: -1;
-  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+.dash-tag--soft {
+  border-color: rgba(var(--accent-rgb), 0.13);
+  background: var(--accent-light);
+  color: var(--brand-ink);
 }
 
-.lesson-group--multi .lesson-group__card-wrapper::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 20px;
-  right: 20px;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
-  z-index: -2;
+.dash-tag--game {
+  border-color: rgba(255, 140, 27, 0.18);
+  background: #fff3e6;
+  color: #7a3a0a;
 }
 
-/* 그룹 카드 본체 — hover는 wrapper가 아닌 .lesson-group 기준 */
-.lesson-group__card {
-  cursor: default;
+.dash-card__title {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.35;
 }
 
-.lesson-group__card:hover {
-  transform: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(255, 255, 255, 0.5);
+.dash-card__desc {
+  flex: 1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.5;
 }
 
-.lesson-group__card:hover::after {
-  opacity: 0;
-}
-
-.lesson-group:hover .lesson-group__card {
-  transform: translateY(-4px);
-  background: #ffffff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
-  border-color: var(--accent-light);
-}
-
-.lesson-group:hover .lesson-group__card::after {
-  opacity: 1;
-}
-
-.lesson-group--multi:hover .lesson-group__card-wrapper::before {
-  transform: translateY(6px);
-}
-
-/* 화살표: 닫힘 ↓ → 열림 시 살짝 내려감 */
-.lesson-group__card .dash-card__arrow {
-  display: inline-block;
-  transition: transform 0.3s ease;
-}
-
-.lesson-group:hover .lesson-group__card .dash-card__arrow {
-  transform: translateY(3px);
-}
-
-/* 차시 목록 슬라이드다운 */
-.lesson-group__subs {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.4s cubic-bezier(0.23, 1, 0.32, 1),
-              opacity 0.25s ease;
-}
-
-.lesson-group:hover .lesson-group__subs,
-.lesson-group:focus-within .lesson-group__subs {
-  max-height: 400px;
-  opacity: 1;
-  transition: max-height 0.45s cubic-bezier(0.23, 1, 0.32, 1),
-              opacity 0.3s ease 0.05s;
-}
-
-/* 개별 차시 링크 */
-.lesson-sub-card {
+.dash-card__footer {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 1.25rem;
-  margin-top: 0.5rem;
-  text-decoration: none;
-  color: var(--text);
-  border-radius: 10px;
+  gap: 0.2rem;
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.dash-card__arrow {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.dash-card:hover .dash-card__arrow {
+  transform: translateX(3px);
+}
+
+.dash-card__links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  margin-top: 0.12rem;
+}
+
+.lesson-sub-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.6);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.68);
+  padding: 0.42rem 0.55rem;
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
 }
 
 .lesson-sub-card:hover {
-  background: var(--accent-light);
   border-color: rgba(var(--accent-rgb), 0.3);
+  background: var(--accent-light);
   transform: translateX(4px);
 }
 
 .lesson-sub-card__label {
-  font-size: 0.75rem;
-  font-weight: 700;
+  min-width: 2.5rem;
   color: var(--accent);
+  font-size: 0.64rem;
+  font-weight: 800;
   white-space: nowrap;
-  min-width: 3rem;
 }
 
 .lesson-sub-card__title {
-  flex: 1;
-  font-weight: 500;
-  line-height: 1.4;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lesson-sub-card__arrow {
   color: var(--accent);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
 }
@@ -395,42 +574,101 @@
   transform: translateX(3px);
 }
 
+@keyframes dashboardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motorcycleRide {
+  0% {
+    transform: translateX(1.4rem) translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(0) translateY(2px) rotate(-1deg);
+  }
+  100% {
+    transform: translateX(-1.4rem) translateY(0) rotate(-2deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard__logo,
   .dashboard__header,
   .dash-card,
-  .lesson-group__subs,
   .lesson-sub-card {
     animation: none;
     transition: none;
   }
 }
 
+@media (max-width: 900px) {
+  .dashboard {
+    padding: 2rem 1rem;
+  }
+
+  .dashboard-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-subject-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-subject {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dashboard-subject:last-child {
+    border-bottom: 0;
+  }
+}
+
 @media (max-width: 700px) {
-  .dashboard { padding: 2.5rem 1rem; }
-  .dashboard__header { margin-bottom: 2.75rem; }
-  .dashboard__logo { margin-bottom: 0.9rem; }
-  .dashboard__title { font-size: 2.25rem; }
-  .dashboard__subtitle {
-    font-size: 1.05rem;
-    padding: 0 0.35rem;
+  .dashboard {
+    padding: 4rem 1rem 2rem;
   }
-  .dashboard__source {
-    padding: 0;
-    text-align: center;
-  }
-  .dashboard__grid { grid-template-columns: 1fr; }
-  .dashboard__section { margin-bottom: 2.5rem; }
+
   .dashboard__about-link {
     top: 0.85rem;
     right: 0.85rem;
   }
-  .dash-card { padding: 1.35rem; }
-  .lesson-group__subs {
-    max-height: none;
-    opacity: 1;
+
+  .dashboard__header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.6rem;
   }
-  .lesson-group__card .dash-card__arrow {
-    transform: none;
+
+  .dashboard__title {
+    font-size: 1.55rem;
+  }
+
+  .dashboard-notice {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-notice__title,
+  .dashboard-notice__desc {
+    white-space: normal;
+  }
+
+  .dashboard-panel__toggle {
+    padding: 0.72rem 0.85rem;
+  }
+
+  .dashboard-subject-column {
+    padding: 0.75rem;
+  }
+
+  .lesson-sub-card__title {
+    white-space: normal;
   }
 }

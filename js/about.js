@@ -68,7 +68,8 @@ function renderAbout() {
               <span>타자로서</span> 돕는 사람들
             </h1>
             <p class="about__intro">
-              BOOONG은 사회를 이해하는 언어를 함께 만들고, 각자의 자리에서 질문을 이어가는 사회교육 공동체입니다.
+              교실에 앉아 사회변혁을 꿈꾸다.<br>
+              그런 허황된 꿈을 꾸어 온 교사모임입니다.
             </p>
           </div>
           <div class="about__scene" aria-label="공적 질문이 모이는 밤의 장면">

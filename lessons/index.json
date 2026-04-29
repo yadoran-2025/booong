@@ -98,6 +98,14 @@
   ],
   "tools": [
     {
+      "id": "asset-search",
+      "type": "tool",
+      "tag": "도구",
+      "title": "수업자료 서치",
+      "desc": "자료 DB와 기출문제 DB에서 JSON KEY와 원본 링크를 찾고, 새 자료를 등록합니다.",
+      "link": "asset-search.html"
+    },
+    {
       "id": "block-guide",
       "type": "guide",
       "tag": "문법",
@@ -118,7 +126,7 @@
       "type": "tool",
       "tag": "도구",
       "title": "BNG LANG 에디터",
-      "desc": "BNG LANG(붕랭) 문법으로 섹션·블록을 구성하면 발표용 JSON이 자동 생성됩니다. 외부자료 키 검색, 실시간 미리보기 포함.",
+      "desc": "BNG LANG(붕랭) 문법으로 섹션·블록을 구성하면 발표용 JSON이 자동 생성됩니다.",
       "link": "author.html"
     }
   ]

@@ -72,7 +72,7 @@ function parseCsvLine(line) {
 
 /* ── 키 메타 파싱 ── */
 function parseKeyMeta(key) {
-    const tagMatch    = key.match(/\[(.+?)\]/);
+    const tagMatch    = key.match(/[\[(（]\s*([^\]\)）]+?)\s*[\])）]/);
     const prefixMatch = key.match(/^(\d{4})/); // 앞 4자리 = YYMM
     return {
         tag:    tagMatch    ? tagMatch[1]    : '기타',
@@ -125,7 +125,7 @@ function renderList(keys) {
         head.className = 'sel-group__head';
         head.innerHTML =
             '<span class="sel-group__label">' +
-                '[' + groupName + ']' +
+                '(' + groupName + ')' +
                 '<span class="sel-group__count" id="' + gcId + '">' + countText(allGroupKeys) + '</span>' +
             '</span>' +
             '<span class="sel-group__chevron">▼</span>';

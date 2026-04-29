@@ -327,6 +327,9 @@ function bindRootEvents() {
     } else if (action === "insert-markup-asset") {
       state.assetTarget = "__markup__";
       openAssetSearch("multi", "media");
+    } else if (action === "insert-markup-upload") {
+      state.assetTarget = "__markup__";
+      openAssetSearch("single", "upload");
     } else if (action === "insert-markup-guide") {
       insertMarkupText(MARKUP_GUIDE_TEXT);
       toast("문법 설명을 넣었습니다.");
@@ -602,6 +605,7 @@ function renderMarkupEditor(sectionIdx) {
             </span>
           </span>
           <button class="btn btn--sm" type="button" data-action="insert-markup-asset">자료 키 넣기</button>
+          <button class="btn btn--sm" type="button" data-action="insert-markup-upload">새 자료 추가</button>
         </div>
       </div>
       <label class="field field--full">
@@ -1610,7 +1614,7 @@ function countSelectedAssets(items) {
 }
 
 function parseExamKeyMeta(key) {
-  const tag = key.match(/\[(.+?)\]/)?.[1] || "기타";
+  const tag = key.match(/[\[(（]\s*([^\]\)）]+?)\s*[\])）]/)?.[1] || "기타";
   const prefix = key.match(/^(\d{4})/)?.[1] || "기타";
   return { tag, prefix };
 }

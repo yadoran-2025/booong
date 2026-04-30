@@ -8,6 +8,85 @@ body {
     padding-bottom: 90px;
 }
 
+.sel-sidebar {
+    max-width: 780px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+}
+
+.sel-sidebar__inner {
+    border: 1.5px solid #e8ecf2;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    padding: 14px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.sel-sidebar__title {
+    margin-bottom: 10px;
+    color: #111;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.sel-toc {
+    display: grid;
+    gap: 8px;
+}
+
+.sel-toc__empty {
+    color: #9ca3af;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sel-toc__group {
+    display: grid;
+    gap: 3px;
+}
+
+.sel-toc__item,
+.sel-toc__subitem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sel-toc__item {
+    padding: 7px 8px;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.sel-toc__subitem {
+    padding: 5px 8px 5px 18px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.sel-toc__item:hover,
+.sel-toc__subitem:hover {
+    background: #eff6ff;
+}
+
+.sel-toc em {
+    flex: 0 0 auto;
+    color: #9ca3af;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 800;
+}
+
 /* ── 페이지 랩 ── */
 .sel-wrap {
     max-width: 780px;
@@ -102,6 +181,7 @@ body {
     border-radius: 12px;
     margin-bottom: 14px;
     overflow: hidden;
+    scroll-margin-top: 18px;
 }
 
 .sel-group__head {
@@ -129,7 +209,7 @@ body {
 .sel-group.collapsed .sel-group__body { display: none; }
 
 /* ── 서브그룹 ── */
-.sel-subgroup { }
+.sel-subgroup { scroll-margin-top: 18px; }
 
 .sel-subgroup__head {
     display: flex; align-items: center; justify-content: space-between;
@@ -210,4 +290,32 @@ body {
 }
 .sel-bar__btn:disabled {
     background: #94a3b8; box-shadow: none; cursor: default;
+}
+
+@media (min-width: 1200px) {
+    .sel-sidebar {
+        position: fixed;
+        top: 50%;
+        left: max(20px, calc(50vw - 620px));
+        z-index: 10;
+        width: 210px;
+        margin: 0;
+        padding: 0;
+        transform: translateY(-50%);
+    }
+
+    .sel-sidebar__inner {
+        max-height: min(620px, calc(100vh - 180px));
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 700px) {
+    .sel-sidebar {
+        margin-top: 12px;
+    }
+
+    .sel-sidebar__inner {
+        padding: 12px;
+    }
 }

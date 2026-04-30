@@ -15,11 +15,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         allKeys = parseSheetKeys(csvText);
         if (allKeys.length === 0) {
             listEl.innerHTML = '<div class="sel-no-results">시트에 표시할 문제가 없습니다.</div>';
+            renderToc({});
             return;
         }
         renderList(allKeys);
     } catch (e) {
         listEl.innerHTML = '<div class="sel-no-results">불러오기 실패: ' + e.message + '</div>';
+        renderToc({});
         return;
     }
 
@@ -106,6 +108,7 @@ function groupKeys(keys) {
 function renderList(keys) {
     const container = document.getElementById('key-list');
     const groups = groupKeys(keys);
+    renderToc(groups);
 
     if (Object.keys(groups).length === 0) {
         container.innerHTML = '<div class="sel-no-results">검색 결과가 없습니다.</div>';
@@ -118,6 +121,7 @@ function renderList(keys) {
         const allGroupKeys = Object.values(subGroups).flat();
         const groupEl = document.createElement('div');
         groupEl.className = 'sel-group';
+        groupEl.id = 'sel-group-' + encodeId(groupName);
 
         // 메인 그룹 헤드
         const gcId = 'gc-' + encodeId(groupName);
@@ -138,6 +142,7 @@ function renderList(keys) {
         for (const [prefix, subKeys] of Object.entries(subGroups)) {
             const subEl = document.createElement('div');
             subEl.className = 'sel-subgroup';
+            subEl.id = groupEl.id + '-' + encodeId(prefix);
 
             const sgcId = gcId + '-' + encodeId(prefix);
             const subHead = document.createElement('div');
@@ -196,6 +201,47 @@ function renderList(keys) {
         groupEl.appendChild(body);
         container.appendChild(groupEl);
     }
+}
+
+function renderToc(groups) {
+    const toc = document.getElementById('sel-toc');
+    if (!toc) return;
+
+    const entries = Object.entries(groups);
+    if (!entries.length) {
+        toc.innerHTML = '<span class="sel-toc__empty">표시할 목차 없음</span>';
+        return;
+    }
+
+    toc.innerHTML = entries.map(([groupName, subGroups]) => {
+        const groupId = 'sel-group-' + encodeId(groupName);
+        const groupCount = Object.values(subGroups).flat().length;
+        const subItems = Object.entries(subGroups).map(([prefix, subKeys]) => {
+            const subId = groupId + '-' + encodeId(prefix);
+            return '' +
+                '<button class="sel-toc__subitem" type="button" data-scroll-target="' + escHtml(subId) + '">' +
+                    '<span>' + escHtml(formatPrefix(prefix)) + '</span>' +
+                    '<em>' + subKeys.length + '</em>' +
+                '</button>';
+        }).join('');
+
+        return '' +
+            '<div class="sel-toc__group">' +
+                '<button class="sel-toc__item" type="button" data-scroll-target="' + escHtml(groupId) + '">' +
+                    '<span>' + escHtml(groupName) + '</span>' +
+                    '<em>' + groupCount + '</em>' +
+                '</button>' +
+                subItems +
+            '</div>';
+    }).join('');
+
+    toc.querySelectorAll('[data-scroll-target]').forEach(button => {
+        button.addEventListener('click', () => {
+            const target = document.getElementById(button.dataset.scrollTarget);
+            if (!target) return;
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 }
 
 /* ── 카운트 ── */

@@ -75,8 +75,20 @@ function bindEvents() {
       copyText(`${state.upload.lastKey}\t${state.upload.lastUrl}`, "업로드한 키+링크를 복사했습니다.");
     } else if (action === "open-preview") {
       state.preview = {
+        type: "image",
         src: button.dataset.src || "",
         title: button.dataset.title || "자료 미리보기",
+      };
+      renderPreviewOverlay();
+    } else if (action === "open-text-preview") {
+      const row = getRow(key);
+      if (!row) return renderStatus("미리 볼 텍스트를 찾지 못했습니다.");
+      state.preview = {
+        type: "text",
+        title: row.headline || row.title || row.key || "텍스트 자료",
+        body: row.body || row.reason || "",
+        source: row.source || "",
+        key: row.key || "",
       };
       renderPreviewOverlay();
     } else if (action === "close-preview") {
@@ -279,18 +291,24 @@ function renderRow(row) {
             <input type="checkbox" data-row-check value="${escapeAttr(row.key)}" ${selected ? "checked" : ""}>
           </label>
         </div>
-        <p class="asset-card__purpose">
-          <span>활용</span>
-          ${escapeHtml(purpose)}
-        </p>
+        <p class="asset-card__purpose"><span>활용</span>${escapeHtml(purpose)}</p>
         <div class="asset-card__actions">
           <button class="asset-btn" type="button" data-action="copy-key" data-key="${escapeAttr(row.key)}">키 복사</button>
           <button class="asset-btn" type="button" data-action="copy-link" data-key="${escapeAttr(row.key)}" ${row.rawLink ? "" : "disabled"}>링크 복사</button>
-          ${row.rawLink ? `<a class="asset-btn asset-btn--link" href="${escapeAttr(row.rawLink)}" target="_blank" rel="noopener">링크 바로가기</a>` : ""}
+          ${renderOpenAction(row)}
         </div>
       </div>
     </article>
   `;
+}
+
+function renderOpenAction(row) {
+  if (row.kind === "text") {
+    return `<button class="asset-btn asset-btn--link" type="button" data-action="open-text-preview" data-key="${escapeAttr(row.key)}">기사 미리보기</button>`;
+  }
+  return row.rawLink
+    ? `<a class="asset-btn asset-btn--link" href="${escapeAttr(row.rawLink)}" target="_blank" rel="noopener">링크 바로가기</a>`
+    : "";
 }
 
 function getPurposeText(row) {
@@ -320,7 +338,23 @@ function renderPreviewOverlay() {
   const mount = document.getElementById("asset-preview-root");
   if (!mount) return;
   const preview = state.preview;
-  mount.innerHTML = preview?.src ? `
+  if (!preview) {
+    mount.innerHTML = "";
+    return;
+  }
+  mount.innerHTML = preview.type === "text" ? `
+    <div class="asset-preview" role="dialog" aria-modal="true" aria-label="${escapeAttr(preview.title)}">
+      <button class="asset-preview__backdrop" type="button" data-action="close-preview" aria-label="미리보기 닫기"></button>
+      <article class="asset-preview__frame asset-preview__frame--text">
+        <button class="asset-preview__close" type="button" data-action="close-preview">닫기</button>
+        <span class="asset-preview__eyebrow">텍스트 자료</span>
+        <h2>${escapeHtml(preview.title)}</h2>
+        <div class="asset-preview__text-body">${escapeHtml(preview.body || "본문이 없습니다.")}</div>
+        ${preview.source ? `<p class="asset-preview__source">${escapeHtml(preview.source)}</p>` : ""}
+        ${preview.key ? `<code class="asset-preview__key">${escapeHtml(preview.key)}</code>` : ""}
+      </article>
+    </div>
+  ` : preview.src ? `
     <div class="asset-preview" role="dialog" aria-modal="true" aria-label="${escapeAttr(preview.title)}">
       <button class="asset-preview__backdrop" type="button" data-action="close-preview" aria-label="미리보기 닫기"></button>
       <figure class="asset-preview__frame">

@@ -397,14 +397,46 @@
   opacity: 1;
 }
 
-/* 블록이 scale()로 확대되는 무대 영역 */
+/* 블록 전체화면 무대 영역 */
 .block-fullscreen__stage {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  padding: 4rem 4.5rem;
+  scrollbar-gutter: stable;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.16s ease-out, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.block-fullscreen__stage.is-scrollable {
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.block-fullscreen__stage.is-section-leaving-next {
+  opacity: 0;
+  transform: translateX(-2.4rem);
+}
+
+.block-fullscreen__stage.is-section-leaving-prev {
+  opacity: 0;
+  transform: translateX(2.4rem);
+}
+
+.block-fullscreen__stage.is-section-entering-next {
+  opacity: 0;
+  transform: translateX(2.4rem);
+}
+
+.block-fullscreen__stage.is-section-entering-prev {
+  opacity: 0;
+  transform: translateX(-2.4rem);
 }
 
 .block-fullscreen__close {
@@ -479,9 +511,16 @@
   cursor: not-allowed;
 }
 
-/* scale() 로 확대된 클론 — 원본 스타일 그대로 유지, transform만 JS에서 주입 */
+/* 원본 가로폭은 유지하고, 너무 넓을 때만 JS에서 축소 */
 .block--fullscreen {
   flex-shrink: 0;
+  margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block-fullscreen__stage {
+    transition: none;
+  }
 }
 
 /* ---------- 전체화면 버튼 (⛶) ---------- */
@@ -674,6 +713,7 @@ body.is-focus-locked {
 
 /* 모바일/좁은 화면 대응 */
 @media (max-width: 900px) {
+  .block-fullscreen__stage,
   .focus-overlay__stage {
     padding: 2rem 1.5rem;
   }

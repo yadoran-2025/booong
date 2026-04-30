@@ -113,7 +113,11 @@ function splitKeywords(value) {
 }
 
 function normalizeSheetText(value) {
-  return String(value || "").replace(/\\n/g, "\n").trim();
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .trim();
 }
 
 function pruneEmpty(value) {

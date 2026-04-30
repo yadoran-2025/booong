@@ -117,7 +117,7 @@
       "id": "print-mode",
       "type": "print",
       "tag": "도구",
-      "title": "문제 선택 후 인쇄",
+      "title": "기출문제 디스펜서",
       "desc": "목록에서 원하는 문제들을 골라, 학습지를 바로 만들 수 있습니다.",
       "link": "select.html"
     },

@@ -144,23 +144,64 @@ function renderNoticeBanner(notices, state) {
 }
 
 function renderTools(tools) {
+  const bngTools = tools.filter(tool => ["block-guide", "lesson-author"].includes(tool.id));
+  const visibleTools = tools.filter(tool => !["block-guide", "lesson-author"].includes(tool.id));
+  const toolCards = [
+    ...visibleTools.slice(0, 1).map(renderToolCard),
+    bngTools.length ? renderToolGroup(bngTools) : "",
+    ...visibleTools.slice(1).map(renderToolCard),
+  ].filter(Boolean);
+
   const section = document.createElement("section");
   section.className = "dashboard__section dashboard__section--tools";
   section.innerHTML = `
     ${renderSectionTitle("도구", TYPE_COLORS.tool.color)}
     <div class="dashboard-tools">
-      ${tools.map(tool => `
-        <a class="dashboard-tool" href="${escapeAttr(tool.link || "#")}">
-          <span class="dashboard-tool__body">
-            <span class="dashboard-tool__title">${escapeHtml(tool.title || "도구")}</span>
-            <span class="dashboard-tool__desc">${escapeHtml(tool.desc || "")}</span>
-          </span>
-          <span class="dashboard-tool__arrow" aria-hidden="true">→</span>
-        </a>
-      `).join("")}
+      ${toolCards.join("")}
     </div>
   `;
   return section;
+}
+
+function renderToolCard(tool) {
+  return `
+    <a class="dashboard-tool" href="${escapeAttr(tool.link || "#")}">
+      <span class="dashboard-tool__body">
+        <span class="dashboard-tool__title">${escapeHtml(tool.title || "도구")}</span>
+        <span class="dashboard-tool__desc">${escapeHtml(tool.desc || "")}</span>
+      </span>
+      <span class="dashboard-tool__arrow" aria-hidden="true">→</span>
+    </a>
+  `;
+}
+
+function renderToolGroup(tools) {
+  return `
+    <article class="dashboard-tool dashboard-tool--group">
+      <div class="dashboard-tool__summary">
+        <span class="dashboard-tool__body">
+          <span class="dashboard-tool__title">BNG LANG</span>
+          <span class="dashboard-tool__desc">설명서와 슬라이드 에디터를 한 곳에서 엽니다.</span>
+        </span>
+        <span class="dashboard-tool__arrow dashboard-tool__arrow--dropdown" aria-hidden="true">⌄</span>
+      </div>
+      <div class="dash-card__links dashboard-tool__links">
+        ${tools.map(tool => `
+          <a class="lesson-sub-card dashboard-tool-sub-card" href="${escapeAttr(tool.link || "#")}">
+            <span class="lesson-sub-card__label">${escapeHtml(tool.tag || "도구")}</span>
+            <span class="lesson-sub-card__title">${escapeHtml(getToolGroupTitle(tool))}</span>
+            <span class="lesson-sub-card__arrow" aria-hidden="true">→</span>
+          </a>
+        `).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function getToolGroupTitle(tool) {
+  if (tool.id === "block-guide") return "붕랭 설명서";
+  if (tool.id === "lesson-author") return "슬라이드 에디터";
+  return tool.title || "BNG LANG";
 }
 
 function renderPanelSection({ title, type, accent, items, subjects, schools, state }) {

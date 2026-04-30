@@ -10,7 +10,7 @@ import {
 } from "../utils.js";
 import { attachFocusAffordance, openImageLightbox } from "./components.js";
 
-const FULLSCREEN_TYPES  = new Set(['사례', '발문', '개념', '이미지곁글', '미디어', '기출문제']);
+const FULLSCREEN_TYPES  = new Set(['단락', '소제목', '절', '인용', '텍스트박스', '사례', '발문', '개념', '이미지곁글', '미디어', '기출문제']);
 const IMG_SELF_HANDLED  = new Set(['이미지곁글', '미디어']); // 자체적으로 이미지를 처리하는 블록
 const linkPreviewCache = new Map();
 

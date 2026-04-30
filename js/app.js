@@ -3,7 +3,7 @@ import { loadExternalAssets } from "./api.js";
 import { showDashboard } from "./ui/dashboard.js";
 import { renderGuideGallery } from "./ui/guide-gallery.js";
 import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
-import { closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen } from "./ui/components.js";
+import { attachFocusAffordance, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen, setBlockFullscreenSectionNavigator, expandNextFullscreenToggle, scrollBlockFullscreen } from "./ui/components.js";
 import { renderBlock, renderBlockSeparator } from "./ui/blocks.js";
 import { escapeHtml } from "./utils.js";
 
@@ -66,6 +66,7 @@ function startLesson() {
   buildAppShell();
   renderSidebar(goTo);
   renderNavFooter(goTo);
+  setBlockFullscreenSectionNavigator(navigateFullscreenSection);
 
   const hash = location.hash.replace("#", "");
   const idx = app.lesson.sections.findIndex(s => s.id === hash);
@@ -77,7 +78,9 @@ function startLesson() {
     closeImageLightbox,
     closeFocusOverlay,
     closeBlockFullscreen,
-    navigateBlockFullscreen
+    navigateBlockFullscreen,
+    expandNextFullscreenToggle,
+    scrollBlockFullscreen
   });
 
   window.addEventListener("hashchange", () => {
@@ -115,6 +118,7 @@ function renderSection(sec) {
     <div class="section-header__id">${escapeHtml(sec.id)} · ${escapeHtml(app.lesson.title)}</div>
     <h1 class="section-header__title">${escapeHtml(sec.title)}</h1>
   `;
+  attachFocusAffordance(header);
   main.appendChild(header);
 
   let previousBlockType = null;
@@ -128,6 +132,13 @@ function renderSection(sec) {
       previousBlockType = block.type;
     }
   });
+}
+
+function navigateFullscreenSection(direction, options = {}) {
+  const nextIdx = app.currentIdx + direction;
+  if (nextIdx < 0 || nextIdx >= app.lesson.sections.length) return false;
+  if (!options.dryRun) goTo(nextIdx);
+  return true;
 }
 
 // 시작

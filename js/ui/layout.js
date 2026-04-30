@@ -121,7 +121,16 @@ export function renderNavFooter(goToIdx) {
  * 키보드 단축키 바인딩
  */
 export function bindKeyboard(callbacks) {
-  const { goToIdx, toggleFirstVisibleAnswer, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen } = callbacks;
+  const {
+    goToIdx,
+    toggleFirstVisibleAnswer,
+    closeImageLightbox,
+    closeFocusOverlay,
+    closeBlockFullscreen,
+    navigateBlockFullscreen,
+    expandNextFullscreenToggle,
+    scrollBlockFullscreen,
+  } = callbacks;
 
   document.addEventListener("keydown", e => {
     if (e.target.matches("input, textarea")) return;
@@ -139,8 +148,11 @@ export function bindKeyboard(callbacks) {
     }
 
     if (document.getElementById("block-fullscreen")) {
-      if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); navigateBlockFullscreen(1); }
+      if (e.key === "Enter") { e.preventDefault(); expandNextFullscreenToggle?.(); }
+      else if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); navigateBlockFullscreen(1); }
       else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); navigateBlockFullscreen(-1); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); scrollBlockFullscreen?.(1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); scrollBlockFullscreen?.(-1); }
       return;
     }
 

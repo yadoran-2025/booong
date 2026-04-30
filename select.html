@@ -8,9 +8,18 @@
     <title>문제 선택 | BOOONG</title>
     <link rel="stylesheet" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-    <link rel="stylesheet" href="css/select.css">
+    <link rel="stylesheet" href="css/select.css?v=toc-sidebar-1">
 </head>
 <body>
+    <aside class="sel-sidebar" aria-label="문제 목차">
+        <div class="sel-sidebar__inner">
+            <div class="sel-sidebar__title">목차</div>
+            <nav class="sel-toc" id="sel-toc">
+                <span class="sel-toc__empty">목록을 불러오는 중</span>
+            </nav>
+        </div>
+    </aside>
+
     <div class="sel-wrap">
         <header class="sel-header">
             <a class="back-btn" href="index.html">← 대시보드</a>
@@ -51,6 +60,6 @@
         </button>
     </div>
 
-    <script src="js/select.js"></script>
+    <script src="js/select.js?v=toc-sidebar-1"></script>
 </body>
 </html>

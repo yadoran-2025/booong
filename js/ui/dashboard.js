@@ -1,13 +1,21 @@
+import { parseCSV } from "../api.js";
 import { escapeHtml } from "../utils.js";
 
-const SUBJECT_COLORS = {
-  "법": "#1B6BFF",
-  "경제": "#FF8C1B",
-  "정치": "#2E7D4F",
-  "사회": "#8B5CF6",
-  "사회학": "#8B5CF6",
-  "기타": "#5A6372",
+const DASHBOARD_SHEET_URLS = {
+  groups: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=1091433397&single=true&output=csv",
+  lessons: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=0&single=true&output=csv",
 };
+
+const SUBJECT_COLOR_PALETTE = [
+  "#1B6BFF",
+  "#FF8C1B",
+  "#2E7D4F",
+  "#8B5CF6",
+  "#5A6372",
+  "#C2410C",
+  "#0F766E",
+  "#BE185D",
+];
 
 const TYPE_COLORS = {
   lesson: { label: "수업", color: "#1B6BFF", bg: "#E6EEFF", text: "#0A2E7A" },
@@ -16,6 +24,8 @@ const TYPE_COLORS = {
   notice: { label: "공지", color: "#2E7D4F", bg: "#EAF5EE", text: "#16402A" },
 };
 
+const SCHOOL_ORDER = ["초등학교", "중학교", "고등학교", "대학교", "기타"];
+
 /**
  * 대시보드 메인 화면 렌더링
  */
@@ -23,17 +33,16 @@ export async function showDashboard() {
   document.body.innerHTML = "";
   document.body.style.background = "";
 
-  let config = { dashboard: {}, subjects: [], groups: [], games: [], tools: [], notices: [] };
-  try {
-    const res = await fetch(`lessons/index.json?_=${Date.now()}`, { cache: "no-store" });
-    if (res.ok) config = await res.json();
-  } catch (err) {
-    console.error("대시보드 설정 로드 실패:", err);
-  }
+  const config = await loadDashboardConfig();
 
   const state = {
     noticeIndex: 0,
     openPanels: new Set(),
+      filters: {
+      kind: "",
+      school: "",
+      subject: "",
+    },
   };
 
   const container = document.createElement("div");
@@ -54,6 +63,167 @@ export async function showDashboard() {
   renderDashboard(inner, config, state);
 }
 
+export async function loadDashboardConfig() {
+  let config = { dashboard: {}, groups: [], games: [], tools: [], notices: [] };
+
+  try {
+    const res = await fetch(`lessons/index.json?_=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) config = await res.json();
+  } catch (err) {
+    console.error("대시보드 설정 로드 실패:", err);
+  }
+
+  try {
+    const sheetGroups = await loadSheetLessonGroups();
+    if (sheetGroups.length) {
+      config = {
+        ...config,
+        groups: sheetGroups,
+        games: [],
+      };
+    }
+  } catch (err) {
+    console.warn("구글 시트 수업 목록 로드 실패, lessons/index.json을 사용합니다:", err);
+  }
+
+  return config;
+}
+
+async function loadSheetLessonGroups() {
+  const [groupText, lessonText] = await Promise.all([
+    fetchSheetText(DASHBOARD_SHEET_URLS.groups),
+    fetchSheetText(DASHBOARD_SHEET_URLS.lessons),
+  ]);
+  const groupRows = csvToObjects(groupText);
+  const lessonRows = csvToObjects(lessonText);
+  return buildLessonGroups(groupRows, lessonRows);
+}
+
+async function fetchSheetText(url) {
+  const res = await fetch(`${url}&_=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.text();
+}
+
+function csvToObjects(text) {
+  const rows = parseCSV(text).filter(row => row.some(cell => String(cell || "").trim()));
+  const headers = (rows.shift() || []).map(normalizeHeader);
+  return rows.map(row => {
+    const out = {};
+    headers.forEach((header, index) => {
+      if (!header) return;
+      out[header] = normalizeSheetText(row[index] || "");
+    });
+    return out;
+  });
+}
+
+function buildLessonGroups(groupRows, lessonRows) {
+  const publishedLessons = lessonRows
+    .filter(row => row.lesson_id && row.group_id && isPublished(row.published))
+    .sort(compareByOrder)
+    .map(row => ({
+      id: row.lesson_id,
+      groupId: row.group_id,
+      label: row.label || "차시",
+      title: row.lesson_title || "수업",
+      desc: row.desc || "",
+      jsonPath: row.json_path || "",
+      order: parseOrder(row.order),
+    }));
+
+  const lessonsByGroup = publishedLessons.reduce((acc, lesson) => {
+    if (!acc[lesson.groupId]) acc[lesson.groupId] = [];
+    return acc;
+  }, {});
+
+  publishedLessons.forEach(lesson => {
+    if (!lessonsByGroup[lesson.groupId]) lessonsByGroup[lesson.groupId] = [];
+    lessonsByGroup[lesson.groupId].push(pruneEmpty({
+      id: lesson.id,
+      label: lesson.label,
+      title: lesson.title,
+      desc: lesson.desc,
+      link: getLessonLink(lesson),
+      jsonPath: lesson.jsonPath,
+    }));
+  });
+
+  return groupRows
+    .filter(row => row.group_id && isPublished(row.published))
+    .sort(compareByOrder)
+    .map(row => {
+      const kind = normalizeKind(row.kind);
+      const lessons = lessonsByGroup[row.group_id] || [];
+      return pruneEmpty({
+        id: row.group_id,
+        kind,
+        discipline: row.discipline,
+        subject: row.subject,
+        school: row.school,
+        title: row.group_title || (kind === "game" ? "게임" : "수업"),
+        desc: row.desc || "",
+        tag: kind === "game" ? "게임" : "",
+        link: row.game_link || row.main_link || "",
+        worksheet: row.worksheet_link || "",
+        zeroSession: kind === "lesson" ? {
+          label: "0차시",
+          title: "지도안 및 심화자료",
+          desc: "수업 지도안과 확장 읽기 자료",
+          link: row.teacher_link || "",
+        } : null,
+        lessons: kind === "lesson" ? lessons : [],
+      });
+    });
+}
+
+function getLessonLink(lesson) {
+  if (!lesson.jsonPath) return "";
+  const match = lesson.jsonPath.match(/(?:^|\/)([^/]+)\.json$/i);
+  return match ? `?lesson=${encodeURIComponent(match[1])}` : "";
+}
+
+function normalizeHeader(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+function normalizeSheetText(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .trim();
+}
+
+function isPublished(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return !["false", "0", "no", "n", "hidden", "draft", "비공개"].includes(normalized);
+}
+
+function compareByOrder(a, b) {
+  return parseOrder(a.order) - parseOrder(b.order);
+}
+
+function parseOrder(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+}
+
+function pruneEmpty(value) {
+  const out = {};
+  Object.entries(value).forEach(([key, child]) => {
+    if (child === "" || child == null) return;
+    if (Array.isArray(child) && !child.length) return;
+    if (child && typeof child === "object" && !Array.isArray(child)) {
+      const pruned = pruneEmpty(child);
+      if (Object.keys(pruned).length) out[key] = pruned;
+      return;
+    }
+    out[key] = child;
+  });
+  return out;
+}
+
 function initializeOpenPanels(config, state) {
   getSchools(config.groups || [], false).forEach(school => state.openPanels.add(`lesson:${school}`));
   getSchools(config.games || [], true).forEach(school => state.openPanels.add(`game:${school}`));
@@ -69,33 +239,60 @@ function renderDashboard(root, config, state) {
   const tools = Array.isArray(config.tools) ? config.tools : [];
   if (tools.length) root.appendChild(renderTools(tools));
 
-  const groups = Array.isArray(config.groups) ? config.groups : [];
-  if (groups.length) {
+  const items = mergeDashboardItems(config.groups, config.games);
+  normalizeFilterState(items, state);
+  if (items.length) {
+    const filteredItems = getFilteredDashboardItems(items, state.filters);
     root.appendChild(renderPanelSection({
       title: "수업",
-      type: "lesson",
+      type: "content",
       accent: TYPE_COLORS.lesson.color,
-      items: groups,
-      subjects: getSubjectOrder(config.subjects, groups, false),
-      schools: getSchools(groups, false),
+      items: filteredItems,
+      disciplines: getDisciplineOrder(items, true),
+      schools: getSchools(filteredItems, true),
       state,
-    }));
-  }
-
-  const games = Array.isArray(config.games) ? config.games : [];
-  if (games.length) {
-    root.appendChild(renderPanelSection({
-      title: "게임",
-      type: "game",
-      accent: TYPE_COLORS.game.color,
-      items: games,
-      subjects: getSubjectOrder(config.subjects, games, true),
-      schools: getSchools(games, true),
-      state,
+      controls: renderContentFilterbar(items, filteredItems, state.filters),
+      empty: "조건에 맞는 항목이 없습니다.",
     }));
   }
 
   bindDashboardEvents(root, config, state);
+}
+
+function mergeDashboardItems(groups = [], games = []) {
+  const normalizedGroups = Array.isArray(groups) ? groups.map(item => ({
+    ...item,
+    kind: normalizeKind(item.kind),
+  })) : [];
+  const groupIds = new Set(normalizedGroups.map(item => item.id).filter(Boolean));
+  const legacyGames = (Array.isArray(games) ? games : [])
+    .filter(game => game.id && !groupIds.has(game.id))
+    .map(game => pruneEmpty({
+      ...game,
+      kind: "game",
+      school: game.school || "기타",
+      subject: game.subject || "미분류",
+      discipline: game.discipline || game.subject || "미분류",
+    }));
+  return [...normalizedGroups, ...legacyGames];
+}
+
+function normalizeFilterState(items, state) {
+  const kinds = getKinds(items);
+  if (state.filters.kind && !kinds.includes(state.filters.kind)) state.filters.kind = "";
+
+  const kindScope = state.filters.kind
+    ? items.filter(item => normalizeKind(item.kind) === state.filters.kind)
+    : items;
+  const schools = getSchools(kindScope, true);
+  if (state.filters.school && !schools.includes(state.filters.school)) state.filters.school = "";
+
+  const subjectScope = kindScope.filter(item => {
+    if (state.filters.school && !getItemSchools(item, true).includes(state.filters.school)) return false;
+    return true;
+  });
+  const subjects = getSubjectOrder(subjectScope, true);
+  if (state.filters.subject && !subjects.includes(state.filters.subject)) state.filters.subject = "";
 }
 
 function renderHeader(dashboard) {
@@ -163,6 +360,96 @@ function renderTools(tools) {
   return section;
 }
 
+function renderContentFilterbar(items, filteredItems, filters) {
+  const kindScope = filters.kind
+    ? items.filter(item => normalizeKind(item.kind) === filters.kind)
+    : items;
+  const schools = getSchools(kindScope, true);
+  const subjectScope = kindScope.filter(item => {
+    if (filters.school && !getItemSchools(item, true).includes(filters.school)) return false;
+    return true;
+  });
+  const subjects = getSubjectOrder(subjectScope, true);
+
+  const kindButtons = renderFilterButtons({
+    values: getKinds(items),
+    selected: filters.kind,
+    filter: "kind",
+    allLabel: "전체",
+    labelForValue: getKindLabel,
+  });
+  const schoolButtons = renderFilterButtons({
+    values: schools,
+    selected: filters.school,
+    filter: "school",
+    allLabel: "전체",
+  });
+  const subjectButtons = renderFilterButtons({
+    values: subjects,
+    selected: filters.subject,
+    filter: "subject",
+    allLabel: "전체",
+  });
+  const countText = `${filteredItems.length}개`;
+
+  return `
+    <div class="dashboard-filterbar">
+      <div class="dashboard-filterbar__field">
+        <span class="dashboard-filterbar__label">유형</span>
+        <div class="dashboard-filterbar__buttons" role="group" aria-label="유형">
+          ${kindButtons}
+        </div>
+      </div>
+      <div class="dashboard-filterbar__field">
+        <span class="dashboard-filterbar__label">학교급</span>
+        <div class="dashboard-filterbar__buttons" role="group" aria-label="학교급">
+          ${schoolButtons}
+       </div>
+      </div>
+      <div class="dashboard-filterbar__field">
+        <span class="dashboard-filterbar__label">과목</span>
+        <div class="dashboard-filterbar__buttons" role="group" aria-label="과목">
+          ${subjectButtons}
+        </div>
+      </div>
+      <span class="dashboard-filterbar__count">${escapeHtml(countText)}</span>
+    </div>
+  `;
+}
+
+function renderFilterButtons({ values, selected, filter, allLabel, labelForValue = value => value }) {
+  return [
+    renderFilterButton({ label: allLabel, value: "", selected: !selected, filter }),
+    ...values.map(value => renderFilterButton({ label: labelForValue(value), value, selected: value === selected, filter })),
+  ].join("");
+}
+
+function renderFilterButton({ label, value, selected, filter }) {
+  return `
+    <button
+      class="dashboard-filterbar__button ${selected ? "is-active" : ""}"
+      type="button"
+      data-filter="${escapeAttr(filter)}"
+      data-filter-value="${escapeAttr(value)}"
+      aria-pressed="${selected ? "true" : "false"}"
+    >
+      ${escapeHtml(label)}
+    </button>
+  `;
+}
+
+function getFilteredDashboardItems(items, filters) {
+  return items.filter(item => {
+    const kind = normalizeKind(item.kind);
+    const schools = getItemSchools(item, true);
+    const subject = normalizeSubject(item.subject, true);
+    if (filters.kind && kind !== filters.kind) return false;
+    if (filters.school && !schools.includes(filters.school)) return false;
+    if (filters.subject && subject !== filters.subject) return false;
+    return true;
+  });
+}
+
 function renderToolCard(tool) {
   return `
     <a class="dashboard-tool" href="${escapeAttr(tool.link || "#")}">
@@ -204,24 +491,29 @@ function getToolGroupTitle(tool) {
   return tool.title || "BNG LANG";
 }
 
-function renderPanelSection({ title, type, accent, items, subjects, schools, state }) {
+function renderPanelSection({ title, type, accent, items, disciplines, schools, state, controls = "", empty = "" }) {
   const section = document.createElement("section");
   section.className = `dashboard__section dashboard__section--${type}`;
   section.innerHTML = `
-    ${renderSectionTitle(title, accent)}
-    <div class="dashboard-panels">
-      ${schools.map(school => renderSchoolPanel({ type, school, subjects, items, state })).join("")}
+    <div class="dashboard-section-head">
+      ${renderSectionTitle(title, accent)}
+      ${controls}
     </div>
+    ${items.length ? `
+      <div class="dashboard-panels">
+        ${schools.map(school => renderSchoolPanel({ type, school, disciplines, items, state })).join("")}
+      </div>
+    ` : `<div class="dashboard-empty-results">${escapeHtml(empty || "표시할 항목이 없습니다.")}</div>`}
   `;
   return section;
 }
 
-function renderSchoolPanel({ type, school, subjects, items, state }) {
+function renderSchoolPanel({ type, school, disciplines, items, state }) {
   const panelKey = `${type}:${school}`;
   const isOpen = state.openPanels.has(panelKey);
-  const schoolItems = items.filter(item => normalizeSchool(item.school, type === "game") === school);
-  const subjectMap = subjects.reduce((acc, subject) => {
-    acc[subject] = schoolItems.filter(item => normalizeSubject(item.subject, type === "game") === subject);
+  const schoolItems = items.filter(item => getItemSchools(item, true).includes(school));
+  const disciplineMap = disciplines.reduce((acc, discipline) => {
+    acc[discipline] = schoolItems.filter(item => normalizeDiscipline(item.discipline, true) === discipline);
     return acc;
   }, {});
 
@@ -233,40 +525,44 @@ function renderSchoolPanel({ type, school, subjects, items, state }) {
         <span class="dashboard-panel__chevron" aria-hidden="true">▾</span>
       </button>
       <div class="dashboard-panel__body" ${isOpen ? "" : "hidden"}>
-        <div class="dashboard-subject-grid" style="--subject-count: ${subjects.length};">
-          ${subjects.map(subject => renderSubjectBlock(subject, subjectMap[subject] || [], type)).join("")}
+        <div class="dashboard-discipline-grid" style="--discipline-count: ${disciplines.length};">
+          ${disciplines.map((discipline, index) => renderDisciplineBlock(discipline, disciplineMap[discipline] || [], type, index)).join("")}
         </div>
       </div>
     </article>
   `;
 }
 
-function renderSubjectBlock(subject, items, type) {
+function renderDisciplineBlock(discipline, items, type, index) {
   return `
-    <div class="dashboard-subject">
-      ${renderSubjectHeader(subject, items.length)}
-      ${renderSubjectColumn(subject, items, type)}
+    <div class="dashboard-discipline">
+      ${renderDisciplineHeader(discipline, items.length, index)}
+      ${renderDisciplineColumn(discipline, items, type)}
     </div>
   `;
 }
 
-function renderSubjectHeader(subject, count) {
-  const color = SUBJECT_COLORS[subject] || SUBJECT_COLORS["기타"];
+function renderDisciplineHeader(discipline, count, index) {
+  const color = getDisciplineColor(index);
   return `
-    <div class="dashboard-subject-head">
-      <span class="dashboard-subject-head__dot" style="--subject-color: ${escapeAttr(color)};"></span>
-      <span class="dashboard-subject-head__label">${escapeHtml(subject)}</span>
-      <span class="dashboard-subject-head__count">${count}</span>
+    <div class="dashboard-discipline-head">
+      <span class="dashboard-discipline-head__dot" style="--discipline-color: ${escapeAttr(color)};"></span>
+      <span class="dashboard-discipline-head__label">${escapeHtml(discipline)}</span>
+      <span class="dashboard-discipline-head__count">${count}</span>
     </div>
   `;
 }
 
-function renderSubjectColumn(subject, items, type) {
+function renderDisciplineColumn(discipline, items, type) {
   return `
-    <div class="dashboard-subject-column ${items.length ? "" : "is-empty"}" aria-label="${escapeAttr(subject)} ${type === "game" ? "게임" : "수업"}">
-      ${items.length ? items.map(item => type === "game" ? renderGameCard(item) : renderLessonGroup(item)).join("") : `<span class="dashboard-empty">—</span>`}
+    <div class="dashboard-discipline-column ${items.length ? "" : "is-empty"}" aria-label="${escapeAttr(discipline)} 항목">
+      ${items.length ? items.map(renderDashboardItemCard).join("") : `<span class="dashboard-empty">—</span>`}
     </div>
   `;
+}
+
+function renderDashboardItemCard(item) {
+  return normalizeKind(item.kind) === "game" ? renderGameCard(item) : renderLessonGroup(item);
 }
 
 function renderLessonGroup(group) {
@@ -277,10 +573,11 @@ function renderLessonGroup(group) {
     <article class="dash-card dash-card--lesson">
       <div class="dash-card__meta">
         <span class="dash-tag">${escapeHtml(group.school || "학교급")}</span>
+        ${group.subject ? `<span class="dash-tag dash-tag--soft">${escapeHtml(group.subject)}</span>` : ""}
         <span class="dash-tag dash-tag--soft">${lessons.length}차시</span>
       </div>
       <h3 class="dash-card__title">${formatDashboardText(group.title || "수업")}</h3>
-      <p class="dash-card__desc">${escapeHtml(group.desc || "")}</p>
+      <p class="dash-card__desc">${formatDashboardText(group.desc || "")}</p>
       <div class="dash-card__links">
         ${lessonLinks.map(renderLessonSubCard).join("")}
       </div>
@@ -308,7 +605,7 @@ function renderLessonSubCard(lesson) {
     isDisabled ? "is-disabled" : "",
   ].filter(Boolean).join(" ");
   const label = escapeHtml(lesson.label || "차시");
-  const title = escapeHtml(lesson.title || "수업 열기");
+  const title = formatDashboardText(lesson.title || "수업 열기");
   const status = isDisabled ? `<span class="lesson-sub-card__status">준비 중</span>` : `<span class="lesson-sub-card__arrow" aria-hidden="true">→</span>`;
   const attrs = [
     `class="${classes}"`,
@@ -326,20 +623,62 @@ function renderLessonSubCard(lesson) {
 }
 
 function renderGameCard(game) {
-  const href = game.link || "#";
+  const href = game.link || "";
+  const worksheetHref = getGameWorksheetHref(game);
+  const hasWorksheet = Boolean(game.worksheet || game.worksheetLink);
+  const gameLinkAttrs = href
+    ? `href="${escapeAttr(href)}" target="_blank" rel="noopener"`
+    : `aria-disabled="true"`;
   return `
-    <a class="dash-card dash-card--game" href="${escapeAttr(href)}" target="_blank" rel="noopener">
+    <article class="dash-card dash-card--game">
       <div class="dash-card__meta">
         <span class="dash-tag dash-tag--game">${escapeHtml(game.tag || "게임")}</span>
+        ${game.school ? `<span class="dash-tag">${escapeHtml(game.school)}</span>` : ""}
+        ${game.subject ? `<span class="dash-tag dash-tag--soft">${escapeHtml(game.subject)}</span>` : ""}
+        ${hasWorksheet ? `<span class="dash-tag dash-tag--soft">학습지</span>` : ""}
       </div>
-      <h3 class="dash-card__title">${escapeHtml(game.title || "게임")}</h3>
-      <p class="dash-card__desc">${escapeHtml(game.desc || "")}</p>
-      <span class="dash-card__footer">게임 열기 <span class="dash-card__arrow" aria-hidden="true">→</span></span>
-    </a>
+      <h3 class="dash-card__title">${formatDashboardText(game.title || "게임")}</h3>
+      <p class="dash-card__desc">${formatDashboardText(game.desc || "")}</p>
+      <span class="dash-card__footer">게임 도구 <span class="dash-card__arrow" aria-hidden="true">→</span></span>
+      <div class="dash-card__links dash-card__links--game">
+        <a class="lesson-sub-card dashboard-game-sub-card ${href ? "" : "is-disabled"}" ${gameLinkAttrs}>
+          <span class="lesson-sub-card__label">게임</span>
+          <span class="lesson-sub-card__title">게임 열기</span>
+          ${href ? `<span class="lesson-sub-card__arrow" aria-hidden="true">→</span>` : `<span class="lesson-sub-card__status">준비 중</span>`}
+        </a>
+        ${hasWorksheet ? `<a class="lesson-sub-card dashboard-game-sub-card lesson-sub-card--zero" href="${escapeAttr(worksheetHref)}">
+          <span class="lesson-sub-card__label">학습지</span>
+          <span class="lesson-sub-card__title">학습지 열기</span>
+          <span class="lesson-sub-card__arrow" aria-hidden="true">→</span>
+        </a>` : ""}
+      </div>
+    </article>
   `;
 }
 
+function getDisciplineColor(index) {
+  return SUBJECT_COLOR_PALETTE[index % SUBJECT_COLOR_PALETTE.length];
+}
+
+function getGameWorksheetHref(game) {
+  if (game.worksheetLink) return game.worksheetLink;
+  if (game.worksheet && /^https?:\/\//i.test(game.worksheet)) return game.worksheet;
+  const params = new URLSearchParams();
+  params.set("game", game.id || "");
+  if (game.worksheet) params.set("worksheet", game.worksheet);
+  return `worksheet-maker.html?${params.toString()}`;
+}
+
 function bindDashboardEvents(root, config, state) {
+  root.querySelectorAll("[data-filter]").forEach(control => {
+    control.addEventListener("click", () => {
+      const key = control.dataset.filter;
+      if (!key) return;
+      state.filters[key] = control.dataset.filterValue || "";
+      renderDashboard(root, config, state);
+    });
+  });
+
   root.querySelectorAll("[data-panel-toggle]").forEach(button => {
     button.addEventListener("click", () => {
       const key = button.dataset.panelToggle;
@@ -380,15 +719,51 @@ function getLogoHTML(logo) {
   `;
 }
 
-function getSubjectOrder(configSubjects = [], items = [], useFallback) {
-  const configured = Array.isArray(configSubjects) ? configSubjects.filter(Boolean) : [];
+function getSubjectOrder(items = [], useFallback) {
   const discovered = items.map(item => normalizeSubject(item.subject, useFallback));
-  const subjects = unique(configured.length ? [...configured, ...discovered] : discovered);
-  return subjects.filter(Boolean);
+  return unique(discovered).filter(Boolean);
+}
+
+function getDisciplineOrder(items = [], useFallback) {
+  const discovered = items.map(item => normalizeDiscipline(item.discipline, useFallback));
+  return unique(discovered).filter(Boolean);
+}
+
+function getKinds(items = []) {
+  return unique(items.map(item => normalizeKind(item.kind))).filter(Boolean);
+}
+
+function normalizeKind(kind) {
+  const value = String(kind || "").trim().toLowerCase();
+  return value === "game" ? "game" : "lesson";
+}
+
+function getKindLabel(kind) {
+  return normalizeKind(kind) === "game" ? "게임" : "수업";
 }
 
 function getSchools(items = [], useFallback) {
-  return unique(items.map(item => normalizeSchool(item.school, useFallback))).filter(Boolean);
+  return sortSchools(unique(items.flatMap(item => getItemSchools(item, useFallback))).filter(Boolean));
+}
+
+function sortSchools(schools) {
+  return [...schools].sort((a, b) => {
+    const aIndex = SCHOOL_ORDER.indexOf(a);
+    const bIndex = SCHOOL_ORDER.indexOf(b);
+    const aKnown = aIndex >= 0;
+    const bKnown = bIndex >= 0;
+    if (aKnown && bKnown) return aIndex - bIndex;
+    if (aKnown) return -1;
+    if (bKnown) return 1;
+    return a.localeCompare(b, "ko");
+  });
+}
+
+function getItemSchools(item, useFallback) {
+  const schools = splitList(item?.school).map(value => normalizeSchool(value, false)).filter(Boolean);
+  if (schools.length) return schools;
+  const fallback = normalizeSchool("", useFallback);
+  return fallback ? [fallback] : [];
 }
 
 function normalizeSchool(school, useFallback) {
@@ -398,7 +773,16 @@ function normalizeSchool(school, useFallback) {
 
 function normalizeSubject(subject, useFallback) {
   const value = String(subject || "").trim();
-  return value || (useFallback ? "기타" : "");
+  return value || (useFallback ? "미분류" : "");
+}
+
+function normalizeDiscipline(discipline, useFallback) {
+  const value = String(discipline || "").trim();
+  return value || (useFallback ? "미분류" : "");
+}
+
+function splitList(value) {
+  return String(value || "").split(",").map(item => item.trim()).filter(Boolean);
 }
 
 function unique(values) {
@@ -406,7 +790,9 @@ function unique(values) {
 }
 
 function formatDashboardText(value) {
-  return escapeHtml(String(value ?? "")).replace(/&lt;br\s*\/?&gt;/gi, "<br>");
+  return escapeHtml(String(value ?? ""))
+    .replace(/&lt;br\s*\/?&gt;/gi, "<br>")
+    .replace(/\r?\n/g, "<br>");
 }
 
 function escapeAttr(value) {

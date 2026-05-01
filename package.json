@@ -1,0 +1,7 @@
+{
+  "name": "booong-dashboard",
+  "private": true,
+  "dependencies": {
+    "@yadoran-2025/booong-design-system": "^1.0.1"
+  }
+}

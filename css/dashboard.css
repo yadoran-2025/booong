@@ -1,4 +1,4 @@
-/* ====================================================================
+﻿/* ====================================================================
    수업용 프리젠터 - 대시보드 메인 스타일
    ==================================================================== */
 
@@ -241,11 +241,99 @@
   content: "";
 }
 
+.dashboard-section-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.dashboard-section-head .dashboard__section-title {
+  margin: 0;
+}
+
 .dashboard-tools {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   min-width: 0;
+}
+
+.dashboard-filterbar {
+  display: grid;
+  grid-template-columns: minmax(6rem, 0.55fr) minmax(7rem, 0.7fr) minmax(0, 1.75fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.dashboard-filterbar__field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.dashboard-filterbar__label {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.dashboard-filterbar__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.dashboard-filterbar__button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+.dashboard-filterbar__button:hover,
+.dashboard-filterbar__button:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.dashboard-filterbar__button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.dashboard-filterbar__button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--brand-ink);
+}
+
+.dashboard-filterbar__count {
+  align-self: start;
+  justify-self: end;
+  padding: var(--space-1) 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.dashboard-empty-results {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  padding: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: center;
 }
 
 .dashboard-tool {
@@ -429,23 +517,23 @@
   transform: rotate(-90deg);
 }
 
-.dashboard-subject-grid {
+.dashboard-discipline-grid {
   display: grid;
-  grid-template-columns: repeat(var(--subject-count), minmax(0, 1fr));
+  grid-template-columns: repeat(var(--discipline-count), minmax(0, 1fr));
 }
 
-.dashboard-subject {
+.dashboard-discipline {
   display: flex;
   flex-direction: column;
   min-width: 0;
   border-right: 1px solid var(--border);
 }
 
-.dashboard-subject:last-child {
+.dashboard-discipline:last-child {
   border-right: 0;
 }
 
-.dashboard-subject-head {
+.dashboard-discipline-head {
   display: flex;
   align-items: center;
   gap: 0.38rem;
@@ -455,15 +543,15 @@
   padding: 0.5rem 0.75rem;
 }
 
-.dashboard-subject-head__dot {
+.dashboard-discipline-head__dot {
   flex: 0 0 auto;
   width: 0.44rem;
   height: 0.44rem;
   border-radius: 50%;
-  background: var(--subject-color);
+  background: var(--discipline-color);
 }
 
-.dashboard-subject-head__label {
+.dashboard-discipline-head__label {
   overflow: hidden;
   color: var(--text-muted);
   font-size: 0.68rem;
@@ -472,14 +560,14 @@
   white-space: nowrap;
 }
 
-.dashboard-subject-head__count {
+.dashboard-discipline-head__count {
   margin-left: auto;
   color: var(--border-strong);
   font-size: 0.62rem;
   font-weight: 700;
 }
 
-.dashboard-subject-column {
+.dashboard-discipline-column {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -489,7 +577,7 @@
   padding: 0.62rem;
 }
 
-.dashboard-subject-column.is-empty {
+.dashboard-discipline-column.is-empty {
   align-items: center;
   justify-content: center;
   background: #fafbfc;
@@ -632,12 +720,27 @@
 }
 
 .dash-card--lesson:hover .dash-card__links,
-.dash-card--lesson:focus-within .dash-card__links {
+.dash-card--lesson:focus-within .dash-card__links,
+.dash-card--game:hover .dash-card__links,
+.dash-card--game:focus-within .dash-card__links {
   max-height: 16rem;
   margin-top: 0.12rem;
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+.dash-card__links--game {
+  margin-top: 0;
+}
+
+.dashboard-game-sub-card {
+  border-color: rgba(255, 140, 27, 0.18);
+}
+
+.dashboard-game-sub-card .lesson-sub-card__label,
+.dashboard-game-sub-card .lesson-sub-card__arrow {
+  color: #c25e05;
 }
 
 .lesson-sub-card {
@@ -755,7 +858,20 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-section-head {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard__section--tools .dashboard__section-title {
+    padding: 0;
+  }
+
+  .dashboard-filterbar {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-filterbar__count {
+    justify-self: start;
     padding: 0;
   }
 
@@ -763,16 +879,16 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-subject-grid {
+  .dashboard-discipline-grid {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-subject {
+  .dashboard-discipline {
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
 
-  .dashboard-subject:last-child {
+  .dashboard-discipline:last-child {
     border-bottom: 0;
   }
 }
@@ -811,11 +927,23 @@
     grid-template-columns: 1fr;
   }
 
+  .dashboard-filterbar {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-filterbar__count {
+    justify-self: stretch;
+  }
+
+  .dashboard-filterbar__count {
+    text-align: left;
+  }
+
   .dashboard-panel__toggle {
     padding: 0.72rem 0.85rem;
   }
 
-  .dashboard-subject-column {
+  .dashboard-discipline-column {
     padding: 0.75rem;
   }
 
@@ -823,3 +951,6 @@
     white-space: normal;
   }
 }
+
+
+

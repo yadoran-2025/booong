@@ -1,9 +1,5 @@
 {
-  "id": "rat-disc-1",
-  "title": "1차시: 차별금지가 적용되는 영역",
-  "subtitle": "편견, 차별의 정의, 공/사적 영역",
   "imageBase": "assets/images/rational-discrimination/",
-  "next": "rat-disc-2",
   "sections": [
     {
       "id": "1-1",

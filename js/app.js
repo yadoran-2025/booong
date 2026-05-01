@@ -1,6 +1,6 @@
 import { app, clearListeners } from "./state.js";
 import { loadExternalAssets } from "./api.js";
-import { showDashboard } from "./ui/dashboard.js";
+import { loadDashboardConfig, showDashboard } from "./ui/dashboard.js";
 import { renderGuideGallery } from "./ui/guide-gallery.js";
 import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
 import { attachFocusAffordance, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen, setBlockFullscreenSectionNavigator, expandNextFullscreenToggle, scrollBlockFullscreen } from "./ui/components.js";
@@ -20,22 +20,13 @@ async function init() {
   }
 
   try {
-    const [lessonRes, indexRes] = await Promise.all([
+    const [lessonRes, dashboardConfig] = await Promise.all([
       fetch(`lessons/${lessonId}.json?_=${Date.now()}`, { cache: "no-store" }),
-      fetch(`lessons/index.json`).catch(() => null)
+      loadDashboardConfig(),
     ]);
     if (!lessonRes.ok) throw new Error(`${lessonRes.status}`);
     app.lesson = await lessonRes.json();
-
-    try {
-      if (indexRes?.ok) {
-        const indexData = await indexRes.json();
-        const group = indexData.groups?.find(g => g.lessons.some(l => l.id === lessonId));
-        if (group) app.lesson.lessonGroup = group.title;
-      }
-    } catch (e) {
-      console.warn("그룹 제목을 연동하지 못했습니다.");
-    }
+    applyLessonMetadata(lessonId, dashboardConfig);
 
     await loadExternalAssets();
   } catch (err) {
@@ -54,6 +45,48 @@ async function init() {
   }
 
   startLesson();
+}
+
+function applyLessonMetadata(lessonId, config) {
+  const meta = findLessonMetadata(lessonId, config);
+  app.lesson = {
+    ...app.lesson,
+    id: lessonId,
+    title: meta?.lesson?.title || app.lesson.title || lessonId,
+    subtitle: app.lesson.subtitle || "",
+    lessonGroup: meta?.group?.title || app.lesson.lessonGroup || "",
+    prev: meta?.prev ? getLessonTargetId(meta.prev) : app.lesson.prev || "",
+    next: meta?.next ? getLessonTargetId(meta.next) : app.lesson.next || "",
+  };
+}
+
+function findLessonMetadata(lessonId, config) {
+  const groups = Array.isArray(config?.groups) ? config.groups : [];
+  for (const group of groups) {
+    const lessons = Array.isArray(group.lessons) ? group.lessons : [];
+    const index = lessons.findIndex(lesson => getLessonTargetId(lesson) === lessonId);
+    if (index >= 0) {
+      return {
+        group,
+        lesson: lessons[index],
+        prev: lessons[index - 1] || null,
+        next: lessons[index + 1] || null,
+      };
+    }
+  }
+  return null;
+}
+
+function getLessonTargetId(lesson) {
+  if (lesson.link) {
+    const match = String(lesson.link).match(/[?&]lesson=([^&#]+)/);
+    if (match) return decodeURIComponent(match[1]);
+  }
+  if (lesson.jsonPath) {
+    const match = String(lesson.jsonPath).match(/(?:^|\/)([^/]+)\.json$/i);
+    if (match) return match[1];
+  }
+  return lesson.id || "";
 }
 
 /* ====================================================================

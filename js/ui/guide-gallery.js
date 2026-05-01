@@ -1,5 +1,5 @@
 import { app } from "../state.js";
-import { renderBlock } from "./blocks.js";
+import { renderBlock } from "./blocks/index.js";
 import { escapeHtml } from "../utils.js";
 
 const LEVEL_LABELS = {

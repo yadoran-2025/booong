@@ -1,5 +1,6 @@
 import { app } from "./state.js";
 import { inferMaterialKind, stripTextMarker, parseTextCutoutContent } from "./utils.js";
+import { EXTERNAL_ASSETS_CACHE_KEY } from "./asset-config.js";
 
 export const ASSET_SHEET_URLS = {
   media: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8z4eMwA6UaQLgnZTtj7Xk7-EzBagOfK8YDGUvfogcIa1RV_3h07ggcI2nbN93JbFFdciC9A6uph_4/pub?output=csv",
@@ -8,7 +9,7 @@ export const ASSET_SHEET_URLS = {
 
 export const SHEET_URLS = [ASSET_SHEET_URLS.media, ASSET_SHEET_URLS.exam];
 
-const CACHE_KEY = "externalAssets_v2";
+const CACHE_KEY = EXTERNAL_ASSETS_CACHE_KEY;
 const CACHE_TTL = 60 * 60 * 1000; // 1시간
 
 function loadFromCache() {

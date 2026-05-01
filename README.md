@@ -1,142 +1,136 @@
-# 🛵 사회교육공동체 BOOONG
+# BOOONG Dashboard
 
-우리가 만든 사회수업을 모아둔 대시보드입니다. 
+사회교육공동체 BOOONG의 수업 자료를 모아 보고, 수업 화면을 실행하고, 자료 검색/저작/출력 흐름을 다루는 정적 대시보드입니다.
 
-## 주요 특징
-- **대시보드 메인**: 모든 수업 목록과 도구를 한눈에 관리하는 대시보드 제공.
-- **실시간 피드백**: Firebase를 연동하여 학생들의 답변을 실시간으로 수집 및 공유.
-- **모듈화된 디자인**: 스타일시트를 기능별로 분리하여 유지보수성 극대화.
-- **멀티 미디어 지원**: 이미지, 유튜브 영상, 신문 기사 스타일의 텍스트 박스(Text-cutout) 지원.
-- **인쇄 최적화**: 구글 스프레드시트 자료를 A4 레이아웃에 맞춰 자동 배치하여 출력.
+이 저장소는 BOOONG Design System을 외부 의존성으로 사용합니다. 공통 디자인 토큰과 컴포넌트 원형은 이 repo에 다시 들여오지 않고, 페이지별 레이아웃과 제품 고유 동작만 관리합니다.
 
----
-
-## 📂 프로젝트 구조
-
-```
-rat-discri/
-├── index.html          # 앱 메인 셸 및 대시보드
-├── print.html          # 인쇄용 전용 페이지
-├── css/                # 모듈화된 스타일시트
-│   ├── base.css        # 디자인 토큰 및 리셋
-│   ├── layout.css      # 메인 구조 및 사이드바
-│   ├── components.css  # 공통 UI 컴포넌트
-│   ├── features.css    # 특수 기능(포커스, 댓글 등)
-│   └── dashboard.css   # 대시보드 전용 스타일
-├── js/
-│   ├── app.js          # 메인 앱 로직 및 대시보드 제어
-│   └── print.js        # 인쇄 페이지 렌더링 로직
-├── lessons/
-│   ├── block-guide.json # 모든 블록 타입 가이드 (추천)
-│   ├── rat-disc-1.json  # 수업 데이터 예시
-│   └── ...
-└── assets/             # 이미지 및 미디어 에셋
-```
-
----
-
-## 🚀 시작하기
-
-### 로컬 실행
-```bash
-# 별도의 빌드 과정 없이 정적 서버로 바로 실행 가능합니다.
-python -m http.server 8000
-```
-브라우저에서 `http://localhost:8000` 접속 시 세련된 **대시보드**가 나타납니다.
-
-### URL 파라미터
-- **대시보드**: `index.html` (파라미터 없음)
-- **특정 수업 진입**: `?lesson=파일명` (예: `?lesson=rat-disc-1`)
-- **섹션 바로가기**: `?lesson=파일명#섹션ID` (예: `#1-2`)
-- **인쇄 페이지**: `print.html?lesson=파일명`
-
----
-
-## 🛠️ 블록 타입 및 기능
-
-상세한 문법 예시는 **[BNG LANG 설명서](?lesson=block-guide)**에서 직접 확인할 수 있습니다.
-
-### 주요 블록
-- `소제목`, `단락`: 기본 텍스트 구조
-- `사례`, `발문`, `개념`: 수업 활동 블록 (`materials` 첨부 가능)
-- `미디어`: 자료 DB의 이미지·영상·텍스트를 `items` 배열로 표시
-- `기출문제`: 문제 이미지와 해설 목록
-
-### 자료 DB 및 특수 입력 포맷
-이미지, 영상, 텍스트는 같은 자료 DB에서 관리할 수 있습니다. 권장 열 구조는 `key | kind | title | content/url | caption/source | keywords`입니다.
-- **텍스트 자료**: `kind`가 `text`이면 `content/url` 칸의 내용을 텍스트 컷아웃으로 렌더링합니다. `kind`가 없어도 URL이 아니거나 `"`로 시작하면 텍스트로 추론합니다.
-- **텍스트 컷아웃 문법**: 텍스트 첫 줄 `## 제목`, 단독 줄 `---` 이후 출처, `### 파란 강조문`, `**강조**`, 불릿 목록이 유지됩니다. `text:` 접두사는 구버전 호환용으로만 남아 있습니다.
-- **유튜브**: 유튜브 URL 입력 시 자동으로 썸네일 생성 및 재생 링크 연결.
-- **구글 드라이브**: 공유 링크 입력 시 자동으로 이미지 URL로 변환하여 로드.
-
----
-
-## ⌨️ 조작법
-- `←` `→` / `PageUp` `PageDown`: 섹션 이동
-- `Space` / `Enter`: 현재 화면의 첫 번째 답안 토글
-- `Esc`: 확대(Focus) 모드 또는 라이트박스 닫기
-- `📺 버튼 (Hover)`: 특정 블록만 화면에 꽉 차게 확대하여 집중
-
----
-
-## 📝 수업 자료 추가 가이드
-1. `lessons/` 폴더에 새로운 `.json` 파일을 생성합니다.
-2. `js/app.js`의 `showDashboard()` 함수 내 `lessons` 배열에 새 수업 정보를 추가하면 대시보드에 자동으로 노출됩니다.
-3. 구글 스프레드시트와 연동하여 에셋(이미지, 영상, 텍스트)을 관리하려면 `js/api.js`의 `ASSET_SHEET_URLS`를 수정하세요.
-
-JSON 최상위 필드 예시:
-
-```json
-{
-  "id": "파일명과 동일",
-  "lessonGroup": "상위 수업 그룹명 (선택)",
-  "title": "1차시: 제목",
-  "subtitle": "부제목",
-  "imageBase": "assets/images/폴더명/",
-  "prev": "이전_차시_id 또는 null",
-  "next": "다음_차시_id 또는 null",
-  "sections": [...]
-}
-```
-
-- `소제목` — 섹션 내부 소제목
-- `단락` — 일반 단락
-- `사례` — 초록 사례 박스 (답 토글 가능)
-- `발문` — 질문 박스 (여러 하위 질문, 질문별 자료)
-- `개념` — 개념 정의 (제목, 본문, 첨부 자료; 본문에서 `- ` 불릿 사용 가능)
-- `미디어` — 자료 DB의 이미지·영상·텍스트를 같은 목록으로 표시
-  ```json
-  {
-    "type": "미디어",
-    "layout": "stack",
-    "items": [
-      "constitution-11",
-      { "ref": "allport", "caption": "고든 올포트" },
-      { "kind": "text", "title": "직접 텍스트", "body": "본문 **강조**" }
-    ]
-  }
-  ```
-- `기출문제` — 기출문제 이미지와 해설 (`items[].image`는 문제 전용 구조로 유지)
-- `사례`, `발문`, `개념` 블록에는 `materials` 배열을 붙여 활동 내부에 자료를 첨부할 수 있습니다.
-  ```json
-  {
-    "type": "발문",
-    "prompts": [
-      {
-        "q": "이 조항이 금지하는 차별 기준은 무엇인가요?",
-        "materials": ["constitution-11"]
-      }
-    ],
-    "materialsLayout": "row",
-    "materials": ["intro-video"]
-  }
-  ```
-
-기존 수업 JSON을 새 구조로 변환하려면 먼저 dry-run으로 확인한 뒤 `--write`를 붙여 실행합니다.
+## 빠른 시작
 
 ```bash
-node scripts/migrate-lessons.mjs
-node scripts/migrate-lessons.mjs --write
+npm run serve
 ```
 
-본문에서 `**볼드**`는 강조로, 줄바꿈은 그대로 렌더됩니다.
+기본 주소는 `http://127.0.0.1:8765/`입니다. 다른 포트를 쓰려면 PowerShell에서 다음처럼 실행합니다.
+
+```powershell
+$env:PORT="8000"; npm run serve
+```
+
+## 유지보수 명령
+
+```bash
+npm test
+npm run check
+npm run smoke
+```
+
+- `npm test`: BNG LANG/lesson markup 파서 테스트를 실행합니다.
+- `npm run check`: 모든 JS 파일의 문법과 로컬 ESM named import/export를 검사합니다.
+- `npm run smoke`: 주요 HTML 페이지와 로컬 script/link 참조가 깨지지 않았는지 확인합니다.
+- `npm run serve`: 로컬 정적 서버를 실행합니다.
+
+## 주요 페이지
+
+- `index.html`: 대시보드와 수업 실행 진입점입니다.
+- `author.html`: BNG LANG 기반 수업 JSON 저작 도구입니다.
+- `asset-search.html`: 외부 자료 DB와 새 자료 등록 흐름을 다룹니다.
+- `worksheet-maker.html`: 수업 블록을 활동지 형태로 조합합니다.
+- `print.html`: 선택한 문제/자료를 출력용 페이지로 렌더링합니다.
+- `select.html`: 출력할 문제를 고르는 페이지입니다.
+- `about.html`, `connect.html`: 소개와 연결/편집 보조 페이지입니다.
+
+## 현재 구조
+
+```text
+.
+|-- *.html
+|-- assets/
+|-- css/
+|-- js/
+|   |-- author/
+|   |-- asset-search/
+|   |-- ui/
+|   |   `-- blocks/
+|   |-- worksheet-maker/
+|   |-- api.js
+|   |-- app.js
+|   |-- asset-config.js
+|   |-- lesson-markup.js
+|   `-- ...
+|-- lessons/
+|-- scripts/
+|   |-- serve.mjs
+|   |-- check-js.mjs
+|   |-- check-local-imports.mjs
+|   |-- smoke-pages.mjs
+|   `-- test-lesson-markup.mjs
+`-- members.json
+```
+
+## 수업 데이터와 BNG LANG
+
+수업 본문은 `lessons/*.json`에 둡니다. 대시보드 목록은 `lessons/index.json`에서 읽고, 각 수업은 `sections[].blocks[]` 구조로 렌더링됩니다.
+
+저작 도구는 BNG LANG 문법을 JSON 블록으로 변환합니다. 대표 문법은 다음과 같습니다.
+
+```text
+## 장 제목
+### 절 제목
+
+일반 문단
+
+[[asset-key]]
+[[asset-a]] ~ [[asset-b]]
+[[asset-key==캡션]]
+
+{{텍스트박스 본문}}
+
+[사례
+사례 본문
+[[case-img]]
+<답>
+정답 또는 해설
+</답>
+]
+
+[발문
+질문입니다.
+[[question-ref]]
+<답>
+답입니다.
+</답>
+]
+
+[개념
+개념 설명
+[[concept-image]]
+]
+
+[문제
+250611[경제]
+<답>
+해설입니다.
+</답>
+]
+```
+
+자료 키는 외부 Google Sheet CSV에서 읽어 오며, 관련 설정은 `js/api.js`와 `js/asset-config.js`에 모여 있습니다.
+
+## 디자인 시스템 원칙
+
+HTML 페이지는 버전 고정된 BOOONG Design System CSS를 사용합니다.
+
+```html
+<link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css">
+```
+
+이 repo의 CSS는 제품별 화면 구성, 수업 블록 배치, 저작 도구, 자료 검색, 활동지/출력 흐름만 담당합니다. 공통 토큰이나 디자인 시스템 소스 파일을 이 repo에 다시 추가하지 않습니다.
+
+UI 스타일을 바꾸기 전에는 design-system `AI_GUIDE.md`를 먼저 확인합니다.
+
+## 작업 기준
+
+- 기능 변경 전후에는 `npm test`, `npm run check`, `npm run smoke`를 실행합니다.
+- 페이지 진입점 script 경로는 facade 없이 실제 `index.js` 모듈을 직접 가리킵니다.
+- 큰 파일은 기능별 모듈로 나누되, lesson JSON schema와 기존 URL 파라미터 동작은 유지합니다.
+- 임시 로그와 생성 산출물은 커밋하지 않습니다.

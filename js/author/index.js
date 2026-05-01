@@ -1,0 +1,15 @@
+import { applySavedDraft } from "./state.js";
+import { loadLocalDraft, refreshOutputs } from "./output.js";
+import { renderShell } from "./shell.js";
+import { bindRootEvents } from "./events.js";
+import { renderEditor } from "./editor.js";
+import { loadAssetIndex } from "./assets.js";
+
+const savedDraft = loadLocalDraft();
+applySavedDraft(savedDraft);
+
+renderShell();
+bindRootEvents();
+renderEditor();
+refreshOutputs();
+loadAssetIndex();

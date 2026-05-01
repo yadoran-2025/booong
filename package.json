@@ -1,7 +1,14 @@
 {
   "name": "booong-dashboard",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node scripts/serve.mjs",
+    "test": "node scripts/test-lesson-markup.mjs",
+    "check": "node scripts/check-js.mjs && node scripts/check-local-imports.mjs",
+    "smoke": "node scripts/smoke-pages.mjs"
+  },
   "dependencies": {
-    "@yadoran-2025/booong-design-system": "^1.0.1"
+    "@yadoran-2025/booong-design-system": "^2.0.0"
   }
 }

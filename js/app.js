@@ -4,7 +4,7 @@ import { loadDashboardConfig, showDashboard } from "./ui/dashboard.js";
 import { renderGuideGallery } from "./ui/guide-gallery.js";
 import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
 import { attachFocusAffordance, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen, setBlockFullscreenSectionNavigator, expandNextFullscreenToggle, scrollBlockFullscreen } from "./ui/components.js";
-import { renderBlock, renderBlockSeparator } from "./ui/blocks.js";
+import { renderBlock, renderBlockSeparator } from "./ui/blocks/index.js";
 import { escapeHtml } from "./utils.js";
 
 /* ====================================================================

@@ -1,3 +1,4 @@
+import { createMakerWorkMap, createWorkMap, getMemberLookupKeys, loadCachedDashboardConfig, loadDashboardConfig } from "./dashboard-data.js";
 import { escapeHtml } from "./utils.js";
 
 const root = document.getElementById("about-root");
@@ -17,6 +18,7 @@ const TYPE_COLORS = {
 const state = {
   members: [],
   workMap: new Map(),
+  makerWorkMap: new Map(),
   selectedMemberId: "",
 };
 
@@ -26,23 +28,48 @@ async function init() {
   root.innerHTML = renderLoading();
 
   try {
-    const [indexRes, membersRes] = await Promise.all([
-      fetch(`lessons/index.json?_=${Date.now()}`, { cache: "no-store" }),
-      fetch(`members.json?_=${Date.now()}`, { cache: "no-store" }),
-    ]);
-    if (!indexRes.ok) throw new Error(`lessons/index.json ${indexRes.status}`);
+    const membersRes = await fetch(`members.json?_=${Date.now()}`, { cache: "no-store" });
     if (!membersRes.ok) throw new Error(`members.json ${membersRes.status}`);
 
-    const config = await indexRes.json();
     const memberData = await membersRes.json();
     state.members = Array.isArray(memberData.members) ? memberData.members : [];
-    state.workMap = createWorkMap(config.groups || [], config.games || []);
+    applyDashboardConfig(loadCachedDashboardConfig());
     state.selectedMemberId = getInitialSelectedMemberId(state.members);
 
     renderAbout();
+    refreshWorks();
   } catch (err) {
     root.innerHTML = renderError(err);
   }
+}
+
+async function refreshWorks() {
+  try {
+    applyDashboardConfig(await loadDashboardConfig());
+    renderMemberDetail();
+  } catch (err) {
+    console.warn("About works refresh failed:", err);
+  }
+}
+
+function applyDashboardConfig(config) {
+  if (!config) {
+    state.workMap = new Map();
+    state.makerWorkMap = new Map();
+    return;
+  }
+  state.workMap = createWorkMap(config.groups || [], config.games || []);
+  state.makerWorkMap = createMakerWorkMap(state.workMap, state.members);
+}
+
+function renderMemberDetail() {
+  const detail = root.querySelector(".member-detail");
+  if (!detail) return;
+  const selectedMember = getSelectedMember();
+  detail.innerHTML = selectedMember
+    ? renderMemberCard(selectedMember, resolveMemberWorks(selectedMember, state.makerWorkMap))
+    : renderHint();
+  bindMemberCardActions();
 }
 
 function renderAbout() {
@@ -111,7 +138,7 @@ function renderMemberExplorer() {
         ${state.members.map((member, index) => renderMemberCode(member, index)).join("")}
       </div>
       <div class="member-detail" role="tabpanel" aria-live="polite">
-        ${selectedMember ? renderMemberCard(selectedMember, resolveMemberWorks(selectedMember, state.workMap)) : renderHint()}
+        ${selectedMember ? renderMemberCard(selectedMember, resolveMemberWorks(selectedMember, state.makerWorkMap)) : renderHint()}
       </div>
     </section>
   `;
@@ -143,6 +170,10 @@ function bindMemberExplorer() {
     });
   });
 
+  bindMemberCardActions();
+}
+
+function bindMemberCardActions() {
   root.querySelector("[data-action='close-member']")?.addEventListener("click", () => {
     selectMember("");
   });
@@ -156,7 +187,7 @@ function selectMember(memberId) {
   const detail = root.querySelector(".member-detail");
   if (detail) {
     detail.innerHTML = nextMember
-      ? renderMemberCard(nextMember, resolveMemberWorks(nextMember, state.workMap))
+      ? renderMemberCard(nextMember, resolveMemberWorks(nextMember, state.makerWorkMap))
       : renderHint();
   }
 
@@ -166,9 +197,7 @@ function selectMember(memberId) {
     button.setAttribute("aria-selected", isActive ? "true" : "false");
   });
 
-  root.querySelector("[data-action='close-member']")?.addEventListener("click", () => {
-    selectMember("");
-  });
+  bindMemberCardActions();
 
   if (nextMember) {
     history.replaceState(null, "", `#${encodeURIComponent(nextMember.id)}`);
@@ -246,12 +275,11 @@ function renderWorkLinks(works) {
           <li>
             <a href="${escapeAttr(work.href)}" ${work.external ? `target="_blank" rel="noopener"` : ""}>
               <span class="member-lessons__meta">${escapeHtml(work.groupTitle)}</span>
-              <span class="member-lessons__name">${escapeHtml(work.label ? `${work.label}: ${work.title}` : work.title)}</span>
+              <span class="member-lessons__name">${escapeHtml(getWorkTitle(work))}</span>
               <span
                 class="member-lessons__type"
                 style="--work-bg: ${escapeAttr(typeStyle.bg)}; --work-color: ${escapeAttr(typeStyle.color)};"
               >${escapeHtml(typeStyle.label)}</span>
-              ${work.missing ? `<span class="member-lessons__missing">자료를 찾을 수 없음</span>` : ""}
             </a>
           </li>
         `;
@@ -260,49 +288,29 @@ function renderWorkLinks(works) {
   `;
 }
 
-function createWorkMap(groups, games) {
-  const map = new Map();
-  groups.forEach(group => {
-    (group.lessons || []).forEach(lesson => {
-      map.set(`lesson:${lesson.id}`, {
-        type: "lesson",
-        id: lesson.id,
-        label: lesson.label,
-        title: lesson.title,
-        groupTitle: stripHtml(group.title),
-        href: `index.html?lesson=${encodeURIComponent(lesson.id)}`,
-        external: false,
-      });
-    });
-  });
-  games.forEach(game => {
-    map.set(`game:${game.id}`, {
-      type: "game",
-      id: game.id,
-      label: game.tag || "게임",
-      title: game.title,
-      groupTitle: "게임",
-      href: game.link || "#",
-      external: true,
-    });
-  });
-  return map;
+function resolveMemberWorks(member, makerWorkMap) {
+  return sortMemberWorks(uniqueWorks(getMemberLookupKeys(member).flatMap(key => makerWorkMap.get(key) || [])));
 }
 
-function resolveMemberWorks(member, workMap) {
-  const works = Array.isArray(member.works) ? member.works : [];
-  return works.map(work => {
+function getWorkTitle(work) {
+  if (work.type === "game") return work.title || "";
+  return work.label ? `${work.label}: ${work.title}` : work.title;
+}
+
+function uniqueWorks(works) {
+  const seen = new Set();
+  return works.filter(work => {
     const key = `${work.type}:${work.id}`;
-    return workMap.get(key) || {
-      type: work.type,
-      id: work.id,
-      label: work.type === "game" ? "게임" : "자료",
-      title: work.id || "이름 없는 자료",
-      groupTitle: "미등록 자료",
-      href: "#",
-      external: false,
-      missing: true,
-    };
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function sortMemberWorks(works) {
+  return [...works].sort((a, b) => {
+    if (a.type !== b.type) return a.type === "game" ? 1 : -1;
+    return 0;
   });
 }
 
@@ -359,11 +367,6 @@ function parseCareerItem(item) {
 function isSameMember(a, b) {
   return String(a || "").toLowerCase() === String(b || "").toLowerCase();
 }
-
-function stripHtml(value) {
-  return String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
-
 function getInitials(name) {
   const compact = String(name || "").replace(/\s+/g, "");
   return compact.slice(0, 1) || "B";

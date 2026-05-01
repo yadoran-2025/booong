@@ -1,10 +1,5 @@
-import { parseCSV } from "../api.js";
+﻿import { loadDashboardConfig as loadSharedDashboardConfig } from "../dashboard-data.js";
 import { escapeHtml } from "../utils.js";
-
-const DASHBOARD_SHEET_URLS = {
-  groups: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=1091433397&single=true&output=csv",
-  lessons: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=0&single=true&output=csv",
-};
 
 const SUBJECT_COLOR_PALETTE = [
   "#1B6BFF",
@@ -64,149 +59,7 @@ export async function showDashboard() {
 }
 
 export async function loadDashboardConfig() {
-  let config = { dashboard: {}, groups: [], games: [], tools: [], notices: [] };
-
-  try {
-    const res = await fetch(`lessons/index.json?_=${Date.now()}`, { cache: "no-store" });
-    if (res.ok) config = await res.json();
-  } catch (err) {
-    console.error("대시보드 설정 로드 실패:", err);
-  }
-
-  try {
-    const sheetGroups = await loadSheetLessonGroups();
-    if (sheetGroups.length) {
-      config = {
-        ...config,
-        groups: sheetGroups,
-        games: [],
-      };
-    }
-  } catch (err) {
-    console.warn("구글 시트 수업 목록 로드 실패, lessons/index.json을 사용합니다:", err);
-  }
-
-  return config;
-}
-
-async function loadSheetLessonGroups() {
-  const [groupText, lessonText] = await Promise.all([
-    fetchSheetText(DASHBOARD_SHEET_URLS.groups),
-    fetchSheetText(DASHBOARD_SHEET_URLS.lessons),
-  ]);
-  const groupRows = csvToObjects(groupText);
-  const lessonRows = csvToObjects(lessonText);
-  return buildLessonGroups(groupRows, lessonRows);
-}
-
-async function fetchSheetText(url) {
-  const res = await fetch(`${url}&_=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.text();
-}
-
-function csvToObjects(text) {
-  const rows = parseCSV(text).filter(row => row.some(cell => String(cell || "").trim()));
-  const headers = (rows.shift() || []).map(normalizeHeader);
-  return rows.map(row => {
-    const out = {};
-    headers.forEach((header, index) => {
-      if (!header) return;
-      out[header] = normalizeSheetText(row[index] || "");
-    });
-    return out;
-  });
-}
-
-function buildLessonGroups(groupRows, lessonRows) {
-  const publishedLessons = lessonRows
-    .filter(row => row.lesson_id && row.group_id && isPublished(row.published))
-    .sort(compareByOrder)
-    .map(row => ({
-      id: row.lesson_id,
-      groupId: row.group_id,
-      label: row.label || "차시",
-      title: row.lesson_title || "수업",
-      desc: row.desc || "",
-      jsonPath: row.json_path || "",
-      order: parseOrder(row.order),
-    }));
-
-  const lessonsByGroup = publishedLessons.reduce((acc, lesson) => {
-    if (!acc[lesson.groupId]) acc[lesson.groupId] = [];
-    return acc;
-  }, {});
-
-  publishedLessons.forEach(lesson => {
-    if (!lessonsByGroup[lesson.groupId]) lessonsByGroup[lesson.groupId] = [];
-    lessonsByGroup[lesson.groupId].push(pruneEmpty({
-      id: lesson.id,
-      label: lesson.label,
-      title: lesson.title,
-      desc: lesson.desc,
-      link: getLessonLink(lesson),
-      jsonPath: lesson.jsonPath,
-    }));
-  });
-
-  return groupRows
-    .filter(row => row.group_id && isPublished(row.published))
-    .sort(compareByOrder)
-    .map(row => {
-      const kind = normalizeKind(row.kind);
-      const lessons = lessonsByGroup[row.group_id] || [];
-      return pruneEmpty({
-        id: row.group_id,
-        kind,
-        discipline: row.discipline,
-        subject: row.subject,
-        school: row.school,
-        title: row.group_title || (kind === "game" ? "게임" : "수업"),
-        desc: row.desc || "",
-        tag: kind === "game" ? "게임" : "",
-        link: row.game_link || row.main_link || "",
-        worksheet: row.worksheet_link || "",
-        zeroSession: kind === "lesson" ? {
-          label: "0차시",
-          title: "지도안 및 심화자료",
-          desc: "수업 지도안과 확장 읽기 자료",
-          link: row.teacher_link || "",
-        } : null,
-        lessons: kind === "lesson" ? lessons : [],
-      });
-    });
-}
-
-function getLessonLink(lesson) {
-  if (!lesson.jsonPath) return "";
-  const match = lesson.jsonPath.match(/(?:^|\/)([^/]+)\.json$/i);
-  return match ? `?lesson=${encodeURIComponent(match[1])}` : "";
-}
-
-function normalizeHeader(value) {
-  return String(value || "").trim().toLowerCase().replace(/\s+/g, "_");
-}
-
-function normalizeSheetText(value) {
-  return String(value || "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\\n/g, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .trim();
-}
-
-function isPublished(value) {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  return !["false", "0", "no", "n", "hidden", "draft", "비공개"].includes(normalized);
-}
-
-function compareByOrder(a, b) {
-  return parseOrder(a.order) - parseOrder(b.order);
-}
-
-function parseOrder(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+  return loadSharedDashboardConfig();
 }
 
 function pruneEmpty(value) {
@@ -798,3 +651,4 @@ function formatDashboardText(value) {
 function escapeAttr(value) {
   return escapeHtml(String(value ?? ""));
 }
+

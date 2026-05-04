@@ -92,7 +92,8 @@ function renderAbout() {
             <p class="about__eyebrow">About Us</p>
             <h1 class="about__slogan">
               타자를 돕고,<br>
-              <span>타자로서</span> 돕는 사람들
+              <span>타자로서</span> 돕는<br>
+              사람들
             </h1>
             <p class="about__intro">
               교실에 앉아 사회변혁을 꿈꾸다.<br>

@@ -141,6 +141,13 @@ body {
   background: var(--brand-deep);
 }
 
+.print-hint {
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .print-message {
   width: 210mm;
   margin: 24px auto;
@@ -244,6 +251,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 10px;
   min-width: 0;
 }
@@ -281,14 +289,17 @@ body {
 .caption-body {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   min-width: 0;
   padding: 6px 10px;
 }
 
 .caption-key {
   overflow: hidden;
+  max-width: 120px;
+  flex-shrink: 0;
   color: var(--text-faint);
   font-size: 9.5px;
   font-weight: 600;
@@ -301,6 +312,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+  min-width: 0;
 }
 
 .tag-badge {

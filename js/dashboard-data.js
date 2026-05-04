@@ -195,6 +195,7 @@ function buildLessonGroups(groupRows, lessonRows) {
         title: row.lesson_title || "수업",
         desc: row.desc || "",
         jsonPath: row.json_path || "",
+        link: getLessonRowLink(row),
         order: parseOrder(row.order),
         makers: lessonMakers.length ? lessonMakers : normalizeMakers(groupRow.maker),
       };
@@ -213,6 +214,7 @@ function buildLessonGroups(groupRows, lessonRows) {
       title: lesson.title,
       desc: lesson.desc,
       link: getLessonLink(lesson),
+      href: lesson.link,
       jsonPath: lesson.jsonPath,
       makers: lesson.makers,
     }));
@@ -243,6 +245,7 @@ function buildLessonGroups(groupRows, lessonRows) {
           link: row.teacher_link || "",
         } : null,
         lessons: kind === "lesson" ? lessons : [],
+        links: kind === "game" ? lessons : [],
       });
     });
 }
@@ -289,9 +292,14 @@ function resolveMemberId(maker, aliasMap) {
 }
 
 function getLessonLink(lesson) {
+  if (lesson.link) return lesson.link;
   if (!lesson.jsonPath) return "";
   const match = lesson.jsonPath.match(/(?:^|\/)([^/]+)\.json$/i);
   return match ? `?lesson=${encodeURIComponent(match[1])}` : "";
+}
+
+function getLessonRowLink(row) {
+  return row.link_url || row.link || row.href || row.url || row.game_link || row.main_link || "";
 }
 
 function normalizeHeader(value) {

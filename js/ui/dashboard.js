@@ -29,7 +29,7 @@ const MAX_RECENT_ITEMS = 12;
 
 const TOOL_LABELS = {
   "asset-search": "수업자료 검색",
-  "print-mode": "기출문제 테스트 생성",
+  "print-mode": "기출문제 디스펜서",
   "worksheet-maker": "학습지 메이커",
   "block-guide": "BNG LANG 설명서",
   "lesson-author": "BNG LANG 에디터",
@@ -191,14 +191,13 @@ function renderSidebar(config, items, state) {
         ${renderNavButton({ section: "recent", label: "최근 본 항목", count: recentCount || "", icon: "clock", state })}
       </nav>
 
+      ${SIDEBAR_TOOL_GROUPS.map(group => renderToolSection(group, toolsById)).join("")}
+      ${renderVisitStatsShell()}
+      ${renderSidebarFooterLink()}
       <a class="dashboard-sidebar__create" href="author.html">
         ${renderSidebarIcon("plus")}
         <span>새 수업 만들기</span>
       </a>
-
-      ${SIDEBAR_TOOL_GROUPS.map(group => renderToolSection(group, toolsById)).join("")}
-      ${renderVisitStatsShell()}
-      ${renderSidebarFooterLink()}
     </aside>
   `;
 }
@@ -363,42 +362,45 @@ function renderSearchAndFilters(items, filteredItems, state) {
   return `
     <section class="dashboard-controls" aria-label="라이브러리 필터">
       <div class="dashboard-search">
-        <label class="field dashboard-search__field">
-          <span class="field__label field__label--muted">검색</span>
+        <label class="dashboard-search__field">
+          <span class="dashboard-search__icon" aria-hidden="true">🔍</span>
           <input
-            class="field__input"
+            class="dashboard-search__input"
             type="search"
             value="${escapeAttr(state.query)}"
             placeholder="수업 제목, 단원, 키워드로 검색"
             data-query-input
           >
         </label>
-        <a class="btn btn--secondary btn--sm dashboard-new-link" href="author.html">+ 새 수업</a>
       </div>
 
-      <div class="dashboard-filterbar">
-        ${renderFilterGroup({
-          label: "과목",
-          key: "subject",
-          values: getSubjects(sectionItems, false),
-          selected: state.subject,
-          allLabel: "전체",
-        })}
+      <div class="dashboard-control-row">
+        <div class="dashboard-filterbar">
+          ${renderFilterGroup({
+            label: "과목",
+            key: "subject",
+            values: getSubjects(sectionItems, false),
+            selected: state.subject,
+            allLabel: "전체",
+          })}
+        </div>
+        <div class="dashboard-results-actions">
+          <label class="dashboard-sort-select" aria-label="정렬">
+            <select data-sort-select>
+              <option value="default" ${state.sortMode === "default" ? "selected" : ""}>기본순</option>
+              <option value="popular" ${state.sortMode === "popular" ? "selected" : ""}>인기순</option>
+              <option value="date" ${state.sortMode === "date" ? "selected" : ""}>날짜순</option>
+            </select>
+          </label>
+          <div class="dashboard-view-toggle" role="group" aria-label="보기 방식">
+            <button class="${state.viewMode === "list" ? "is-active" : ""}" type="button" data-view-mode="list" aria-label="리스트 보기">${renderSidebarIcon("list")}</button>
+            <button class="${state.viewMode === "card" ? "is-active" : ""}" type="button" data-view-mode="card" aria-label="카드 보기">${renderSidebarIcon("grid")}</button>
+          </div>
+        </div>
       </div>
 
       <div class="dashboard-results-head">
         <span>${escapeHtml(getResultLabel(state, filteredItems.length))}</span>
-        <div class="dashboard-results-actions">
-          <div class="dashboard-sort-toggle" role="group" aria-label="정렬">
-            ${renderSortButton({ mode: "default", label: "기본", state })}
-            ${renderSortButton({ mode: "popular", label: "인기순", state })}
-            ${renderSortButton({ mode: "date", label: "날짜순", state })}
-          </div>
-          <div class="dashboard-view-toggle" role="group" aria-label="보기 방식">
-            <button class="${state.viewMode === "list" ? "is-active" : ""}" type="button" data-view-mode="list">리스트</button>
-            <button class="${state.viewMode === "card" ? "is-active" : ""}" type="button" data-view-mode="card">카드</button>
-          </div>
-        </div>
       </div>
     </section>
   `;
@@ -495,7 +497,7 @@ function renderResultRow(item) {
         </span>
         <span class="dashboard-result-row__taxonomy">
           ${item.meta.length ? `<span class="dashboard-result-row__meta">${escapeHtml(item.meta.join(" · "))}</span>` : ""}
-          ${item.subject ? `<span class="chip">${escapeHtml(item.subject)}</span>` : ""}
+          ${renderSubjectChips(item)}
         </span>
         ${item.desc ? `<span class="dashboard-result-row__desc">${formatDashboardText(item.desc)}</span>` : ""}
       </span>
@@ -508,7 +510,7 @@ function renderResultCard(item) {
   return `
     <article class="dashboard-library-card" data-item-key="${escapeAttr(item.key)}">
       <span class="dashboard-library-card__thumb" style="--item-color: ${escapeAttr(item.color)};">
-        <span>${escapeHtml(item.discipline || item.subject || getKindLabel(item.kind))}</span>
+        <span>${escapeHtml(item.discipline || getPrimarySubject(item) || getKindLabel(item.kind))}</span>
         ${item.kind === "game" ? `<b>게임</b>` : ""}
       </span>
       <span class="dashboard-library-card__body">
@@ -518,7 +520,7 @@ function renderResultCard(item) {
         </span>
         ${item.meta.length ? `<span class="dashboard-library-card__meta">${escapeHtml(item.meta.join(" · "))}</span>` : ""}
         <span class="dashboard-library-card__tags">
-          ${item.subject ? `<span class="chip">${escapeHtml(item.subject)}</span>` : ""}
+          ${renderSubjectChips(item)}
         </span>
         ${item.desc ? `<span class="dashboard-library-card__desc">${formatDashboardText(item.desc)}</span>` : ""}
       </span>
@@ -528,13 +530,19 @@ function renderResultCard(item) {
 }
 
 function renderDisciplineBadge(item, className) {
-  const label = item.discipline || item.subject || "미분류";
+  const label = item.discipline || getPrimarySubject(item) || "미분류";
   return `
     <span
       class="${escapeAttr(className)}"
       style="--discipline-color: ${escapeAttr(item.color)};"
     >${escapeHtml(label)}</span>
   `;
+}
+
+function renderSubjectChips(item) {
+  return getItemSubjects(item, false)
+    .map(subject => `<span class="chip">${escapeHtml(subject)}</span>`)
+    .join("");
 }
 
 function renderLessonPanel(item) {
@@ -611,17 +619,34 @@ function bindDashboardEvents(root, config, state) {
     });
   });
 
+  const sortSelect = root.querySelector("[data-sort-select]");
+  if (sortSelect) {
+    sortSelect.addEventListener("change", event => {
+      state.sortMode = normalizeSortMode(event.target.value);
+      renderDashboard(root, config, state);
+    });
+  }
+
   const queryInput = root.querySelector("[data-query-input]");
   if (queryInput) {
-    queryInput.addEventListener("input", event => {
+    let isComposing = false;
+    queryInput.addEventListener("compositionstart", () => {
+      isComposing = true;
+    });
+    queryInput.addEventListener("compositionend", event => {
+      isComposing = false;
       state.query = event.target.value || "";
       renderDashboard(root, config, state);
-      const nextInput = root.querySelector("[data-query-input]");
-      if (nextInput) {
-        nextInput.focus();
-        const length = nextInput.value.length;
-        nextInput.setSelectionRange(length, length);
+      restoreQueryFocus(root);
+    });
+    queryInput.addEventListener("input", event => {
+      if (isComposing || event.isComposing) {
+        state.query = event.target.value || "";
+        return;
       }
+      state.query = event.target.value || "";
+      renderDashboard(root, config, state);
+      restoreQueryFocus(root);
     });
   }
 
@@ -631,6 +656,14 @@ function bindDashboardEvents(root, config, state) {
       trackDashboardActionClick(event, link);
     });
   });
+}
+
+function restoreQueryFocus(root) {
+  const nextInput = root.querySelector("[data-query-input]");
+  if (!nextInput) return;
+  nextInput.focus();
+  const length = nextInput.value.length;
+  nextInput.setSelectionRange(length, length);
 }
 
 function trackDashboardActionClick(event, link) {
@@ -675,8 +708,9 @@ function createGroupItem(group, index = 0) {
     ...lessons.map((lesson, lessonIndex) => createLessonAction(lesson, group, lessonIndex + 1, false)),
   ].filter(Boolean);
   const schools = getItemSchools(group, true);
-  const subject = normalizeSubject(group.subject, true);
-  const discipline = normalizeDiscipline(group.discipline || group.subject, true);
+  const subjects = normalizeSubjects(group.subject, true);
+  const subject = subjects[0] || "";
+  const discipline = normalizeDiscipline(group.discipline || subject, true);
 
   return {
     key: `group:${group.id || index}`,
@@ -687,6 +721,7 @@ function createGroupItem(group, index = 0) {
     href: actions.find(action => !action.disabled)?.href || "",
     schools,
     subject,
+    subjects,
     discipline,
     color: getSubjectColor(discipline, index),
     actions,
@@ -695,7 +730,7 @@ function createGroupItem(group, index = 0) {
     searchText: buildSearchText([
       group.title,
       group.desc,
-      subject,
+      subjects.join(" "),
       discipline,
       schools.join(" "),
       ...actions.flatMap(action => [action.title, action.label, action.desc]),
@@ -706,22 +741,10 @@ function createGroupItem(group, index = 0) {
 function createGameItem(game, index = 0) {
   const href = game.link || "";
   const schools = getItemSchools(game, true);
-  const subject = normalizeSubject(game.subject, true);
-  const discipline = normalizeDiscipline(game.discipline || game.subject, true);
-  const actions = [
-    {
-      key: `game:${game.id || index}:open`,
-      groupId: game.id || `game-${index}`,
-      groupTitle: game.title || "게임",
-      groupType: "game",
-      label: game.tag || "게임",
-      title: "게임 열기",
-      href,
-      external: /^https?:\/\//i.test(href),
-      variant: "game",
-      disabled: !href,
-    },
-  ];
+  const subjects = normalizeSubjects(game.subject, true);
+  const subject = subjects[0] || "";
+  const discipline = normalizeDiscipline(game.discipline || subject, true);
+  const actions = createGameActions(game, index, href);
   const worksheetHref = getGameWorksheetHref(game);
   if (worksheetHref) {
     actions.push({
@@ -746,12 +769,62 @@ function createGameItem(game, index = 0) {
     href,
     schools,
     subject,
+    subjects,
     discipline,
     color: getSubjectColor(discipline, index),
     actions,
     meta: [],
-    searchText: buildSearchText([game.title, game.desc, subject, discipline, schools.join(" "), "게임"]),
+    searchText: buildSearchText([
+      game.title,
+      game.desc,
+      subjects.join(" "),
+      discipline,
+      schools.join(" "),
+      "게임",
+      ...actions.flatMap(action => [action.title, action.label]),
+    ]),
   };
+}
+
+function createGameActions(game, index, fallbackHref) {
+  const groupId = game.id || `game-${index}`;
+  const groupTitle = game.title || "게임";
+  const links = Array.isArray(game.links) ? game.links : [];
+  const linkedActions = links
+    .map((link, linkIndex) => {
+      const href = link.link || link.href || "";
+      if (!href) return null;
+      return {
+        key: `game:${groupId}:link-${link.id || linkIndex}`,
+        groupId,
+        groupTitle,
+        groupType: "game",
+        label: link.label || game.tag || "게임",
+        title: link.title || "게임 열기",
+        href,
+        external: /^https?:\/\//i.test(href),
+        variant: "game",
+        disabled: false,
+      };
+    })
+    .filter(Boolean);
+
+  if (linkedActions.length) return linkedActions;
+
+  return [
+    {
+      key: `game:${groupId}:open`,
+      groupId,
+      groupTitle,
+      groupType: "game",
+      label: game.tag || "게임",
+      title: "게임 열기",
+      href: fallbackHref,
+      external: /^https?:\/\//i.test(fallbackHref),
+      variant: "game",
+      disabled: !fallbackHref,
+    },
+  ];
 }
 
 function createLessonAction(lesson, group, index, isZeroSession) {
@@ -784,7 +857,7 @@ function normalizeState(items, state) {
 function getFilteredItems(items, state) {
   const query = normalizeSearchQuery(state.query);
   const filtered = getSectionItems(items, state.section).filter(item => {
-    if (state.subject && item.subject !== state.subject) return false;
+    if (state.subject && !getItemSubjects(item, false).includes(state.subject)) return false;
     if (query && !item.searchText.includes(query)) return false;
     return true;
   });
@@ -807,12 +880,7 @@ function sortItems(items, state) {
   }
 
   if (mode === "date") {
-    const statsByGroupId = createClickStatsByGroupId(state.clickStats);
-    return [...items].sort((a, b) => {
-      const dateDiff = (Number(statsByGroupId.get(b.groupId)?.updatedAt) || 0) - (Number(statsByGroupId.get(a.groupId)?.updatedAt) || 0);
-      if (dateDiff) return dateDiff;
-      return a.sortIndex - b.sortIndex;
-    });
+    return [...items].sort((a, b) => b.sortIndex - a.sortIndex);
   }
 
   return [...items].sort((a, b) => a.sortIndex - b.sortIndex);
@@ -900,7 +968,7 @@ function sortSchools(schools) {
 }
 
 function getSubjects(items = [], useFallback) {
-  return sortSubjects(unique(items.map(item => normalizeSubject(item.subject, useFallback))).filter(Boolean));
+  return sortSubjects(unique(items.flatMap(item => getItemSubjects(item, useFallback))).filter(Boolean));
 }
 
 function sortSubjects(subjects) {
@@ -959,6 +1027,13 @@ function normalizeSubject(subject, useFallback) {
   return value || (useFallback ? "미분류" : "");
 }
 
+function normalizeSubjects(subject, useFallback) {
+  const subjects = splitList(subject).map(value => normalizeSubject(value, false)).filter(Boolean);
+  if (subjects.length) return unique(subjects);
+  const fallback = normalizeSubject("", useFallback);
+  return fallback ? [fallback] : [];
+}
+
 function normalizeDiscipline(discipline, useFallback) {
   const value = String(discipline || "").trim();
   if (value === "사회학") return "사회";
@@ -966,7 +1041,16 @@ function normalizeDiscipline(discipline, useFallback) {
 }
 
 function splitList(value) {
-  return String(value || "").split(",").map(item => item.trim()).filter(Boolean);
+  return String(value || "").split(/[,;/|]+/).map(item => item.trim()).filter(Boolean);
+}
+
+function getItemSubjects(item, useFallback) {
+  if (Array.isArray(item?.subjects)) return item.subjects;
+  return normalizeSubjects(item?.subject, useFallback);
+}
+
+function getPrimarySubject(item) {
+  return getItemSubjects(item, false)[0] || item.subject || "";
 }
 
 function getSubjectColor(value, index = 0) {

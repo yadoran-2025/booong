@@ -5,7 +5,7 @@ const DASHBOARD_SHEET_URLS = {
   lessons: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=0&single=true&output=csv",
 };
 
-const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v1";
+const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v2";
 const DASHBOARD_CONFIG_CACHE_TTL = 10 * 60 * 1000;
 
 export async function loadDashboardConfig(options = {}) {
@@ -251,6 +251,7 @@ function buildLessonGroups(groupRows, lessonRows) {
         tag: kind === "game" ? "게임" : "",
         link: row.game_link || row.main_link || "",
         worksheet: row.worksheet_link || "",
+        isNew: normalizeNewFlag(getNewFlagValue(row)),
         makers: normalizeMakers(row.maker),
         zeroSession: kind === "lesson" ? {
           label: "0차시",
@@ -273,6 +274,7 @@ function normalizeGroups(groups) {
       makers,
       majorUnit: normalizeUnitText(group.majorUnit || group["대단원"]),
       middleUnit: normalizeUnitText(group.middleUnit || group["중단원"]),
+      isNew: normalizeNewFlag(group.isNew ?? group.new),
       lessons: (group.lessons || []).map(lesson => {
         const lessonMakers = normalizeMakers(lesson.makers || lesson.maker);
         const rowLink = lesson.link || lesson.href || "";
@@ -296,6 +298,7 @@ function normalizeGames(games) {
     makers: normalizeMakers(game.makers || game.maker),
     majorUnit: normalizeUnitText(game.majorUnit || game["대단원"]),
     middleUnit: normalizeUnitText(game.middleUnit || game["중단원"]),
+    isNew: normalizeNewFlag(game.isNew ?? game.new),
   }));
 }
 
@@ -351,6 +354,16 @@ function normalizeSheetText(value) {
 
 function normalizeUnitText(value) {
   return String(value || "").trim();
+}
+
+function getNewFlagValue(row = {}) {
+  return row.new ?? row["new!"] ?? row.new_flag ?? row.is_new ?? "";
+}
+
+function normalizeNewFlag(value) {
+  if (typeof value === "boolean") return value;
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return ["true", "1", "yes", "y", "new", "checked", "check", "on", "o", "예", "네", "체크"].includes(normalized);
 }
 
 function isPublished(value) {

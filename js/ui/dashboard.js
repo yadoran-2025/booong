@@ -26,6 +26,8 @@ const SUBJECT_ORDER = ["사회1", "사회2", "통사1", "통사2", "정치", "�
 const SCHOOL_ORDER = ["초등학교", "중학교", "고등학교", "대학교", "기타"];
 const RECENT_STORAGE_KEY = "booong-dashboard-recent-v1";
 const MAX_RECENT_ITEMS = 12;
+const MOBILE_LESSON_PANEL_QUERY = "(max-width: 700px)";
+const NEW_ITEM_LIMIT = 3;
 
 const TOOL_LABELS = {
   "asset-search": "수업자료 검색",
@@ -65,7 +67,7 @@ export async function showDashboard() {
     subject: "",
     query: "",
     viewMode: "list",
-    sortMode: "default",
+    sortMode: "popular",
     clickStats: [],
   };
 
@@ -93,13 +95,13 @@ function renderDashboard(root, config, state) {
         ${renderMobileNav(config, items, state)}
         ${renderMainHeader(config)}
         ${renderSearchAndFilters(items, filteredItems, state)}
-        ${renderResults(filteredItems, state)}
+        ${renderResults(filteredItems, state, items)}
       </main>
     </div>
   `;
 
   bindDashboardEvents(root, config, state);
-  hydrateVisitStats(root, state);
+  hydrateVisitStats(root, config, state);
 }
 
 function refreshSearchResults(root, config, state) {
@@ -112,8 +114,9 @@ function refreshSearchResults(root, config, state) {
 
   const currentResults = root.querySelector("[data-dashboard-results]");
   if (currentResults) {
-    currentResults.outerHTML = renderResults(filteredItems, state);
+    currentResults.outerHTML = renderResults(filteredItems, state, items);
     bindDashboardActionEvents(root);
+    bindDashboardLessonToggleEvents(root);
   } else {
     renderDashboard(root, config, state);
   }
@@ -140,7 +143,7 @@ function renderVisitStatsShell() {
   `;
 }
 
-async function hydrateVisitStats(root, state) {
+async function hydrateVisitStats(root, config, state) {
   const target = root.querySelector("[data-visit-stats]");
   if (!target) return;
 
@@ -150,6 +153,7 @@ async function hydrateVisitStats(root, state) {
   ]);
   if (!root.contains(target)) return;
   state.clickStats = clickStats;
+  refreshSearchResults(root, config, state);
 
   const dashboardStats = pageStats.find(item => item.key === "dashboard");
   const dashboardVisitors = dashboardStats?.visitors || 0;
@@ -523,10 +527,38 @@ function renderFilterButton({ key, value, label, selected }) {
   `;
 }
 
-function renderResults(items, state) {
+function renderResults(items, state, allItems = items) {
+  const newItems = getNewItems(allItems, state);
+  return `
+    <div class="dashboard-results" data-dashboard-results>
+      ${renderNewSection(newItems, state)}
+      ${renderResultCollection(items, state)}
+    </div>
+  `;
+}
+
+function renderNewSection(items, state) {
+  if (!items.length) return "";
+  return `
+    <section class="dashboard-new-section" aria-label="새로 추가된 수업">
+      <div class="dashboard-new-section__head">
+        <h2 class="dashboard-new-section__title">
+          <span class="dashboard-new-badge">NEW</span>
+          <span>새로 추가됨</span>
+        </h2>
+        <span class="dashboard-new-section__meta">최근 등록 ${escapeHtml(String(items.length))}개</span>
+      </div>
+      <div class="dashboard-result-list dashboard-result-list--new">
+        ${items.map(item => renderResultRow(item, state, { isNew: true, idSuffix: "new" })).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderResultCollection(items, state) {
   if (!items.length) {
     return `
-      <div class="empty-state dashboard-empty-state" data-dashboard-results>
+      <div class="empty-state dashboard-empty-state">
         <div class="empty-state__icon empty-state__icon--search" aria-hidden="true">?</div>
         <div class="empty-state__title">조건에 맞는 항목이 없습니다.</div>
         <div class="empty-state__desc">검색어나 필터를 조금 넓혀 다시 찾아보세요.</div>
@@ -536,23 +568,29 @@ function renderResults(items, state) {
 
   if (state.viewMode === "card") {
     return `
-      <section class="dashboard-card-grid" aria-label="수업 카드" data-dashboard-results>
-        ${items.map(renderResultCard).join("")}
+      <section class="dashboard-card-grid" aria-label="수업 카드">
+        ${items.map(item => renderResultCard(item, state)).join("")}
       </section>
     `;
   }
 
   return `
-    <section class="dashboard-result-list" aria-label="수업 목록" data-dashboard-results>
-      ${items.map(renderResultRow).join("")}
+    <section class="dashboard-result-list" aria-label="수업 목록">
+      ${items.map(item => renderResultRow(item, state)).join("")}
     </section>
   `;
 }
 
-function renderResultRow(item) {
+function renderResultRow(item, state, options = {}) {
+  const panelId = getLessonPanelId(item, options.idSuffix);
+  const classes = [
+    "dashboard-result-row",
+    options.isNew ? "is-new" : "",
+  ].filter(Boolean).join(" ");
   return `
-    <article class="dashboard-result-row" data-item-key="${escapeAttr(item.key)}">
+    <article class="${classes}" data-item-key="${escapeAttr(item.key)}" data-lesson-toggle-item>
       ${renderDisciplineBadge(item, "dashboard-result-row__discipline")}
+      ${renderVisitPill(item, state)}
       <span class="dashboard-result-row__body">
         ${renderTaxonomyLine(item, "dashboard-result-row__kicker", "dashboard-result-row__unit")}
         <span class="dashboard-result-row__title-line">
@@ -560,18 +598,21 @@ function renderResultRow(item) {
             <span class="dashboard-result-row__title-text">${formatDashboardText(item.title)}</span>
             ${item.kind === "game" ? `<span class="dashboard-kind-badge dashboard-kind-badge--game">게임</span>` : ""}
             ${item.lessonCount ? `<span class="dashboard-result-row__lesson-count">${escapeHtml(`${item.lessonCount}차시`)}</span>` : ""}
+            ${options.isNew ? `<span class="dashboard-new-badge dashboard-new-badge--inline">NEW</span>` : ""}
           </span>
+          ${renderLessonToggleButton(item, panelId)}
         </span>
         ${item.desc ? `<span class="dashboard-result-row__desc">${formatDashboardText(item.desc)}</span>` : ""}
       </span>
-      ${renderLessonPanel(item)}
+      ${renderLessonPanel(item, panelId)}
     </article>
   `;
 }
 
-function renderResultCard(item) {
+function renderResultCard(item, state) {
+  const panelId = getLessonPanelId(item);
   return `
-    <article class="dashboard-library-card" data-item-key="${escapeAttr(item.key)}">
+    <article class="dashboard-library-card" data-item-key="${escapeAttr(item.key)}" data-lesson-toggle-item>
       <span class="dashboard-library-card__thumb" style="--item-color: ${escapeAttr(item.color)};">
         <span>${escapeHtml(item.discipline || getPrimarySubject(item) || getKindLabel(item.kind))}</span>
         ${item.kind === "game" ? `<b>게임</b>` : ""}
@@ -582,12 +623,19 @@ function renderResultCard(item) {
           <span>${formatDashboardText(item.title)}</span>
           ${item.kind === "game" ? `<span class="dashboard-kind-badge dashboard-kind-badge--game">게임</span>` : ""}
           ${item.lessonCount ? `<span class="dashboard-library-card__lesson-count">${escapeHtml(`${item.lessonCount}차시`)}</span>` : ""}
+          ${renderLessonToggleButton(item, panelId)}
         </span>
         ${item.desc ? `<span class="dashboard-library-card__desc">${formatDashboardText(item.desc)}</span>` : ""}
       </span>
-      ${renderLessonPanel(item)}
+      ${renderLessonPanel(item, panelId)}
     </article>
   `;
+}
+
+function renderVisitPill(item, state) {
+  const visitors = getItemVisitorCount(item, state);
+  if (!visitors) return "";
+  return `<span class="dashboard-result-row__visit-pill">${escapeHtml(`${formatNumber(visitors)}명`)}</span>`;
 }
 
 function renderDisciplineBadge(item, className) {
@@ -644,10 +692,10 @@ function renderTaxonomyMore(entries, unitClassName) {
   `;
 }
 
-function renderLessonPanel(item) {
+function renderLessonPanel(item, panelId) {
   const actions = item.actions || [];
   return `
-    <div class="dashboard-lesson-panel" aria-label="${escapeAttr(item.title)} 하위 항목">
+    <div class="dashboard-lesson-panel" id="${escapeAttr(panelId)}" aria-label="${escapeAttr(item.title)} 하위 항목">
       ${actions.length ? actions.map(action => renderLessonAction(action)).join("") : `
         <span class="dashboard-lesson-link is-disabled">
           <span class="dashboard-lesson-link__label">준비 중</span>
@@ -655,6 +703,24 @@ function renderLessonPanel(item) {
         </span>
       `}
     </div>
+  `;
+}
+
+function renderLessonToggleButton(item, panelId) {
+  const actionLabel = item.kind === "game" ? "연결 항목" : "차시";
+  return `
+    <button
+      class="dashboard-lesson-toggle"
+      type="button"
+      data-lesson-toggle-button
+      aria-expanded="false"
+      aria-controls="${escapeAttr(panelId)}"
+      aria-label="${escapeAttr(`${stripHtml(item.title)} ${actionLabel} 열기`)}"
+    >
+      <svg class="dashboard-lesson-toggle__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </button>
   `;
 }
 
@@ -748,6 +814,7 @@ function bindDashboardEvents(root, config, state) {
   }
 
   bindDashboardActionEvents(root);
+  bindDashboardLessonToggleEvents(root);
 }
 
 function bindDashboardActionEvents(root) {
@@ -760,6 +827,52 @@ function bindDashboardActionEvents(root) {
       trackDashboardActionClick(event, link);
     });
   });
+}
+
+function bindDashboardLessonToggleEvents(root) {
+  const media = window.matchMedia(MOBILE_LESSON_PANEL_QUERY);
+
+  root.querySelectorAll("[data-lesson-toggle-item]").forEach(item => {
+    if (item.dataset.dashboardLessonToggleBound === "true") return;
+    item.dataset.dashboardLessonToggleBound = "true";
+
+    item.addEventListener("click", event => {
+      if (!media.matches || shouldIgnoreLessonToggleEvent(event)) return;
+      toggleLessonPanel(root, item);
+    });
+  });
+
+  if (root.dataset.dashboardLessonToggleResizeBound === "true") return;
+  root.dataset.dashboardLessonToggleResizeBound = "true";
+  media.addEventListener?.("change", event => {
+    if (!event.matches) closeAllLessonPanels(root);
+  });
+}
+
+function shouldIgnoreLessonToggleEvent(event) {
+  const target = event.target;
+  if (!(target instanceof Element)) return true;
+  if (target.closest(".dashboard-lesson-panel")) return true;
+  if (target.closest("[data-lesson-toggle-button]")) return false;
+  return Boolean(target.closest("a, button, input, select, textarea, summary"));
+}
+
+function toggleLessonPanel(root, item) {
+  const nextOpen = !item.classList.contains("is-open");
+  closeAllLessonPanels(root);
+  setLessonPanelOpen(item, nextOpen);
+}
+
+function closeAllLessonPanels(root) {
+  root.querySelectorAll("[data-lesson-toggle-item].is-open").forEach(item => {
+    setLessonPanelOpen(item, false);
+  });
+}
+
+function setLessonPanelOpen(item, isOpen) {
+  item.classList.toggle("is-open", isOpen);
+  const button = item.querySelector("[data-lesson-toggle-button]");
+  if (button) button.setAttribute("aria-expanded", String(isOpen));
 }
 
 function trackDashboardActionClick(event, link) {
@@ -821,6 +934,7 @@ function createGroupItem(group, index = 0) {
     subjects,
     discipline,
     color: getSubjectColor(discipline, index),
+    isNew: Boolean(group.isNew),
     actions,
     lessonCount: lessons.length,
     majorUnits: splitList(group.majorUnit),
@@ -876,6 +990,7 @@ function createGameItem(game, index = 0) {
     subjects,
     discipline,
     color: getSubjectColor(discipline, index),
+    isNew: Boolean(game.isNew),
     actions,
     majorUnits: splitList(game.majorUnit),
     middleUnits: splitList(game.middleUnit),
@@ -962,6 +1077,20 @@ function normalizeState(items, state) {
   state.school = "";
   const subjects = getSubjects(sectionItems, false);
   if (state.subject && !subjects.includes(state.subject)) state.subject = "";
+}
+
+function getNewItems(items, state) {
+  if (state.section !== "all") return [];
+  return items
+    .filter(item => item.isNew)
+    .sort((a, b) => a.sortIndex - b.sortIndex)
+    .slice(0, NEW_ITEM_LIMIT)
+    .map(item => item);
+}
+
+function getItemVisitorCount(item, state) {
+  const stats = (state.clickStats || []).find(stat => stat.groupId === item.groupId);
+  return Number(stats?.visitorCount) || 0;
 }
 
 function getFilteredItems(items, state) {
@@ -1229,6 +1358,11 @@ function formatDashboardText(value) {
 
 function escapeAttr(value) {
   return escapeHtml(String(value ?? ""));
+}
+
+function getLessonPanelId(item, suffix = "") {
+  const base = `dashboard-lesson-panel-${String(item.key || item.title || "item").replace(/[^a-zA-Z0-9_-]+/g, "-")}`;
+  return suffix ? `${base}-${suffix}` : base;
 }
 
 function unique(values) {

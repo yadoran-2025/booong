@@ -27,7 +27,6 @@ const SCHOOL_ORDER = ["초등학교", "중학교", "고등학교", "대학교", 
 const RECENT_STORAGE_KEY = "booong-dashboard-recent-v1";
 const MAX_RECENT_ITEMS = 12;
 const MOBILE_LESSON_PANEL_QUERY = "(max-width: 700px)";
-const NEW_ITEM_LIMIT = 3;
 
 const TOOL_LABELS = {
   "asset-search": "수업자료 검색",
@@ -1084,7 +1083,6 @@ function getNewItems(items, state) {
   return items
     .filter(item => item.isNew)
     .sort((a, b) => a.sortIndex - b.sortIndex)
-    .slice(0, NEW_ITEM_LIMIT)
     .map(item => item);
 }
 

@@ -272,10 +272,11 @@ function renderWorkLinks(works) {
     <ul class="member-lessons__list">
       ${works.map(work => {
         const typeStyle = TYPE_COLORS[work.type] || { label: work.label || "자료", bg: "#F4F6FA", color: "#5A6372" };
+        const meta = getWorkMeta(work);
         return `
           <li>
             <a href="${escapeAttr(work.href)}" ${work.external ? `target="_blank" rel="noopener"` : ""}>
-              <span class="member-lessons__meta">${escapeHtml(work.groupTitle)}</span>
+              ${meta ? `<span class="member-lessons__meta">${escapeHtml(meta)}</span>` : ""}
               <span class="member-lessons__name">${escapeHtml(getWorkTitle(work))}</span>
               <span
                 class="member-lessons__type"
@@ -295,7 +296,12 @@ function resolveMemberWorks(member, makerWorkMap) {
 
 function getWorkTitle(work) {
   if (work.type === "game") return work.title || "";
-  return work.label ? `${work.label}: ${work.title}` : work.title;
+  return work.title || "";
+}
+
+function getWorkMeta(work) {
+  if (work.type === "lesson") return "";
+  return work.groupTitle || "";
 }
 
 function uniqueWorks(works) {

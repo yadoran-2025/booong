@@ -86,31 +86,30 @@ export function createWorkMap(groups = [], games = []) {
   const map = new Map();
   groups.forEach(group => {
     if (normalizeKind(group.kind) === "game") {
+      const href = getGameWorkHref(group);
       map.set(`game:${group.id}`, {
         type: "game",
         id: group.id,
         label: group.tag || "게임",
-        title: group.title,
+        title: stripHtml(group.title),
         groupTitle: stripHtml(group.discipline || group.subject || "게임"),
-        href: group.link || "#",
-        external: /^https?:\/\//i.test(group.link || ""),
-        makers: normalizeMakers(group.makers),
+        href: href || "#",
+        external: /^https?:\/\//i.test(href),
+        makers: getGroupMakers(group),
       });
       return;
     }
 
-    const groupTitle = stripHtml(group.title);
-    (group.lessons || []).forEach(lesson => {
-      map.set(`lesson:${lesson.id}`, {
-        type: "lesson",
-        id: lesson.id,
-        label: lesson.label,
-        title: lesson.title,
-        groupTitle,
-        href: `index.html?lesson=${encodeURIComponent(lesson.id)}`,
-        external: false,
-        makers: normalizeMakers(lesson.makers || group.makers),
-      });
+    const href = getGroupWorkHref(group);
+    map.set(`lesson:${group.id}`, {
+      type: "lesson",
+      id: group.id,
+      label: group.subject || group.discipline || "수업",
+      title: stripHtml(group.title) || "수업",
+      groupTitle: stripHtml(group.discipline || group.subject || "수업"),
+      href: href || "#",
+      external: /^https?:\/\//i.test(href),
+      makers: getGroupMakers(group),
     });
   });
   games.forEach(game => {
@@ -118,7 +117,7 @@ export function createWorkMap(groups = [], games = []) {
       type: "game",
       id: game.id,
       label: game.tag || "게임",
-      title: game.title,
+      title: stripHtml(game.title),
       groupTitle: "게임",
       href: game.link || "#",
       external: true,
@@ -126,6 +125,45 @@ export function createWorkMap(groups = [], games = []) {
     });
   });
   return map;
+}
+
+function getGroupMakers(group) {
+  const lessonMakers = (group.lessons || [])
+    .flatMap(lesson => normalizeMakers(lesson.makers || lesson.maker));
+  const linkMakers = (group.links || [])
+    .flatMap(link => normalizeMakers(link.makers || link.maker));
+  return unique([
+    ...normalizeMakers(group.makers || group.maker),
+    ...lessonMakers,
+    ...linkMakers,
+  ]);
+}
+
+function getGroupWorkHref(group) {
+  const zeroHref = normalizeInternalPageHref(group.zeroSession?.link || group.zeroSession?.href || "");
+  if (zeroHref) return zeroHref;
+
+  const firstLesson = (group.lessons || []).find(lesson => lesson.link || lesson.href || lesson.id);
+  if (!firstLesson) return "";
+
+  return normalizeInternalPageHref(
+    firstLesson.link || firstLesson.href || `?lesson=${encodeURIComponent(firstLesson.id)}`
+  );
+}
+
+function getGameWorkHref(group) {
+  const ownHref = group.link || group.href || "";
+  if (ownHref) return ownHref;
+
+  const firstLink = (group.links || []).find(link => link.link || link.href);
+  return firstLink ? firstLink.link || firstLink.href || "" : "";
+}
+
+function normalizeInternalPageHref(href) {
+  const value = String(href || "").trim();
+  if (!value) return "";
+  if (value.startsWith("?")) return `index.html${value}`;
+  return value;
 }
 
 export function createMakerWorkMap(workMap, members = []) {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildDashboardCatalog } from "../js/dashboard-data.js";
+import { buildDashboardCatalog, mergeDashboardCatalog, normalizeDashboardConfig } from "../js/dashboard-data.js";
 
 const unitRows = [
   { "단원_코드": "36", "과목": "사회1", "대단원": "XII. 세계화와 평화", "중단원": "2. 세계화의 양상" },
@@ -22,3 +22,19 @@ assert.equal(catalog.resources.some(({ title }) => title === "숨긴 자료"), f
 assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").subjects, ["사회1", "통합사회2"]);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").actions.length, 2);
 assert.deepEqual(catalog.diagnostics.unknownUnitCodes, [999]);
+
+const local = { groups: [{ id: "local-lesson", lessons: [{ id: "lesson-1" }] }], games: [{ id: "local-game" }] };
+const merged = mergeDashboardCatalog(local, catalog);
+assert.equal(merged.schemaVersion, 3);
+assert.equal(merged.catalog, catalog);
+assert.equal(merged.groups[0].lessons[0].id, "lesson-1");
+assert.equal(merged.games[0].id, "local-game");
+
+const legacy = normalizeDashboardConfig({
+  groups: [{ id: "legacy-lesson", subject: "사회1", title: "로컬 수업", lessons: [] }],
+  games: [{ id: "legacy-game", subject: "경제", title: "로컬 게임", link: "https://example.com/game" }],
+});
+assert.equal(legacy.schemaVersion, 3);
+assert.equal(legacy.catalog.resources.length, 2);
+assert.equal(legacy.catalog.resources.every(({ unitKeys }) => unitKeys.length === 1), true);
+assert.equal(legacy.catalog.units.every(({ title }) => title === "단원 미지정"), true);

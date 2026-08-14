@@ -2,10 +2,10 @@ import { parseCSV } from "./api.js";
 
 const DASHBOARD_SHEET_URLS = {
   groups: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=1091433397&single=true&output=csv",
-  lessons: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=0&single=true&output=csv",
+  units: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=1789849359&single=true&output=csv",
 };
 
-const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v2";
+const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v3";
 const DASHBOARD_CONFIG_CACHE_TTL = 10 * 60 * 1000;
 
 const SCHOOL_BY_SUBJECT = {
@@ -33,24 +33,16 @@ export async function loadDashboardConfig(options = {}) {
   const cached = useCache ? loadCachedDashboardConfig() : null;
   if (cached) return cached;
 
-  let config = await loadLocalDashboardConfig();
+  const local = await loadLocalDashboardConfig();
 
   try {
-    const sheetGroups = await loadSheetLessonGroups();
-    if (sheetGroups.length) {
-      config = {
-        ...config,
-        groups: sheetGroups,
-        games: [],
-      };
-    }
-  } catch (err) {
-    console.warn("Sheet lesson list load failed, using lessons/index.json:", err);
+    const merged = mergeDashboardCatalog(local, await loadSheetDashboardCatalog());
+    if (useCache) saveCachedDashboardConfig(merged);
+    return merged;
+  } catch (error) {
+    console.warn("Dashboard catalog load failed, using local lessons index:", error);
+    return local;
   }
-
-  const normalized = normalizeDashboardConfig(config);
-  if (useCache) saveCachedDashboardConfig(normalized);
-  return normalized;
 }
 
 export async function loadLocalDashboardConfig() {
@@ -85,10 +77,23 @@ function saveCachedDashboardConfig(config) {
 }
 
 export function normalizeDashboardConfig(config = {}) {
-  return {
+  const normalized = {
     ...config,
     groups: normalizeGroups(config.groups || []),
     games: normalizeGames(config.games || []),
+  };
+  return {
+    ...normalized,
+    schemaVersion: 3,
+    catalog: normalized.catalog || buildLegacyDashboardCatalog(normalized.groups, normalized.games),
+  };
+}
+
+export function mergeDashboardCatalog(localConfig, catalog) {
+  return {
+    ...localConfig,
+    schemaVersion: 3,
+    catalog,
   };
 }
 
@@ -305,6 +310,67 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
   return { subjects: [...subjectsByValue.values()].filter(subject => visibleSubjects.has(subject.value)), units: [...unitsByKey.values()], resources, diagnostics };
 }
 
+export function buildLegacyDashboardCatalog(groups = [], games = []) {
+  const unitsByKey = new Map();
+  const subjectsByValue = new Map();
+  const resourceIds = new Set();
+  const resources = [];
+
+  [...groups, ...games].forEach((item, order) => {
+    const title = String(item?.title || "").trim();
+    if (!title) return;
+    const subjects = splitSheetList(item.subject);
+    const schools = splitSheetList(item.school);
+    const majorUnits = splitSheetList(item.majorUnit || item["대단원"]);
+    const middleUnits = splitSheetList(item.middleUnit || item["중단원"]);
+    const unitSubjects = subjects.length ? subjects : [""];
+    const unitTitles = majorUnits.length ? majorUnits : ["단원 미지정"];
+    const unitKeys = unique(unitSubjects.flatMap(subject => unitTitles.map(title => `${subject}::${title}`)));
+
+    unitSubjects.filter(Boolean).forEach(subject => {
+      if (!subjectsByValue.has(subject)) {
+        subjectsByValue.set(subject, { school: SCHOOL_BY_SUBJECT[subject] || schools[0] || "기타", value: subject, label: SUBJECT_LABELS[subject] || subject, order: subjectsByValue.size });
+      }
+    });
+    unitKeys.forEach((key, index) => {
+      if (!unitsByKey.has(key)) {
+        const [subject, title] = key.split("::");
+        unitsByKey.set(key, { key, school: SCHOOL_BY_SUBJECT[subject] || schools[0] || "기타", subject, title, order: unitsByKey.size, codes: [], middleUnits: [] });
+      }
+      const middleUnit = middleUnits[index] || (middleUnits.length === 1 ? middleUnits[0] : "");
+      if (middleUnit && !unitsByKey.get(key).middleUnits.includes(middleUnit)) unitsByKey.get(key).middleUnits.push(middleUnit);
+    });
+
+    const id = createResourceId(title, [order]);
+    if (resourceIds.has(id)) return;
+    resourceIds.add(id);
+    const kind = normalizeKind(item.kind);
+    const actions = [
+      createResourceAction("teacher", kind === "game" ? "게임 열기" : "교사용 자료", kind === "game" ? item.link : item.zeroSession?.link),
+      createResourceAction("worksheet", "활동지", item.worksheet),
+    ].filter(Boolean);
+    const makers = normalizeMakers(item.makers || item.maker);
+    resources.push({
+      id,
+      title,
+      desc: String(item.desc || "").trim(),
+      sourceUnitName: "",
+      kind,
+      discipline: String(item.discipline || "").trim(),
+      makers,
+      isNew: normalizeNewFlag(item.isNew ?? item.new),
+      unitCodes: [],
+      unitKeys,
+      subjects,
+      schools,
+      actions,
+      searchText: [title, item.discipline, ...subjects, ...majorUnits, ...middleUnits, ...makers].filter(Boolean).join(" ").normalize("NFKC").toLowerCase(),
+    });
+  });
+
+  return { subjects: [...subjectsByValue.values()], units: [...unitsByKey.values()], resources, diagnostics: { unknownUnitCodes: [], duplicateUnitCodes: [], duplicateResourceIds: [] } };
+}
+
 function normalizeUnitCode(value) {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
@@ -331,14 +397,12 @@ function createResourceAction(key, label, value) {
   return href ? { key, label, href, external: /^https?:\/\//i.test(href) } : null;
 }
 
-async function loadSheetLessonGroups() {
-  const [groupText, lessonText] = await Promise.all([
+async function loadSheetDashboardCatalog() {
+  const [groupText, unitText] = await Promise.all([
     fetchSheetText(DASHBOARD_SHEET_URLS.groups),
-    fetchSheetText(DASHBOARD_SHEET_URLS.lessons),
+    fetchSheetText(DASHBOARD_SHEET_URLS.units),
   ]);
-  const groupRows = csvToObjects(groupText);
-  const lessonRows = csvToObjects(lessonText);
-  return buildLessonGroups(groupRows, lessonRows);
+  return buildDashboardCatalog(csvToObjects(groupText), csvToObjects(unitText));
 }
 
 async function fetchSheetText(url) {
@@ -358,81 +422,6 @@ function csvToObjects(text) {
     });
     return out;
   });
-}
-
-function buildLessonGroups(groupRows, lessonRows) {
-  const groupsById = new Map(groupRows.map(row => [row.group_id, row]));
-  const publishedLessons = lessonRows
-    .filter(row => row.lesson_id && row.group_id && isPublished(row.published))
-    .sort(compareByOrder)
-    .map(row => {
-      const groupRow = groupsById.get(row.group_id) || {};
-      const lessonMakers = normalizeMakers(row.maker);
-      return {
-        id: row.lesson_id,
-        groupId: row.group_id,
-        label: row.label || "차시",
-        title: row.lesson_title || "수업",
-        desc: row.desc || "",
-        jsonPath: row.json_path || "",
-        link: getExternalLessonRowLink(row),
-        sourceUrl: getLessonRowSourceUrl(row),
-        order: parseOrder(row.order),
-        makers: lessonMakers.length ? lessonMakers : normalizeMakers(groupRow.maker),
-      };
-    });
-
-  const lessonsByGroup = publishedLessons.reduce((acc, lesson) => {
-    if (!acc[lesson.groupId]) acc[lesson.groupId] = [];
-    return acc;
-  }, {});
-
-  publishedLessons.forEach(lesson => {
-    if (!lessonsByGroup[lesson.groupId]) lessonsByGroup[lesson.groupId] = [];
-    lessonsByGroup[lesson.groupId].push(pruneEmpty({
-      id: lesson.id,
-      label: lesson.label,
-      title: lesson.title,
-      desc: lesson.desc,
-      link: getLessonLink(lesson),
-      href: lesson.link,
-      jsonPath: lesson.jsonPath,
-      sourceUrl: lesson.sourceUrl,
-      makers: lesson.makers,
-    }));
-  });
-
-  return groupRows
-    .filter(row => row.group_id && isPublished(row.published))
-    .sort(compareByOrder)
-    .map(row => {
-      const kind = normalizeKind(row.kind);
-      const lessons = lessonsByGroup[row.group_id] || [];
-      return pruneEmpty({
-        id: row.group_id,
-        kind,
-        discipline: row.discipline,
-        subject: row.subject,
-        school: row.school,
-        majorUnit: row["대단원"],
-        middleUnit: row["중단원"],
-        title: row.group_title || (kind === "game" ? "게임" : "수업"),
-        desc: row.desc || "",
-        tag: kind === "game" ? "게임" : "",
-        link: row.game_link || row.main_link || "",
-        worksheet: row.worksheet_link || "",
-        isNew: normalizeNewFlag(getNewFlagValue(row)),
-        makers: normalizeMakers(row.maker),
-        zeroSession: kind === "lesson" ? {
-          label: "0차시",
-          title: "지도안 및 수업자료",
-          desc: "수업 지도안과 현장 읽기 자료",
-          link: row.teacher_link || "",
-        } : null,
-        lessons: kind === "lesson" ? lessons : [],
-        links: kind === "game" ? lessons : [],
-      });
-    });
 }
 
 function normalizeGroups(groups) {
@@ -487,29 +476,6 @@ function resolveMemberId(maker, aliasMap) {
   return aliasMap.get(key) || key;
 }
 
-function getLessonLink(lesson) {
-  if (lesson.link) return lesson.link;
-  if (lesson.id) return `?lesson=${encodeURIComponent(lesson.id)}`;
-  if (!lesson.jsonPath) return "";
-  const match = lesson.jsonPath.match(/(?:^|\/)([^/]+)\.json$/i);
-  return match ? `?lesson=${encodeURIComponent(match[1])}` : "";
-}
-
-function getLessonRowLink(row) {
-  return row.link_url || row.link || row.href || row.url || row.game_link || row.main_link || "";
-}
-
-function getExternalLessonRowLink(row) {
-  const link = getLessonRowLink(row);
-  return isJsonLessonUrl(link) ? "" : link;
-}
-
-function getLessonRowSourceUrl(row) {
-  const link = getLessonRowLink(row);
-  if (isJsonLessonUrl(link)) return link;
-  return isJsonLessonUrl(row.json_path) ? row.json_path : "";
-}
-
 function normalizeHeader(value) {
   return String(value || "").trim().toLowerCase().replace(/\s+/g, "_");
 }
@@ -541,15 +507,6 @@ function isPublished(value) {
   return ["true", "1", "yes", "y", "공개"].includes(normalized);
 }
 
-function compareByOrder(a, b) {
-  return parseOrder(a.order) - parseOrder(b.order);
-}
-
-function parseOrder(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
-}
-
 function normalizeKind(kind) {
   const value = String(kind || "").trim().toLowerCase();
   return value === "game" ? "game" : "lesson";
@@ -557,21 +514,6 @@ function normalizeKind(kind) {
 
 function normalizeMakerKey(value) {
   return String(value || "").trim().toLowerCase();
-}
-
-function pruneEmpty(value) {
-  const out = {};
-  Object.entries(value).forEach(([key, child]) => {
-    if (child === "" || child == null) return;
-    if (Array.isArray(child) && !child.length) return;
-    if (child && typeof child === "object" && !Array.isArray(child)) {
-      const pruned = pruneEmpty(child);
-      if (Object.keys(pruned).length) out[key] = pruned;
-      return;
-    }
-    out[key] = child;
-  });
-  return out;
 }
 
 function stripHtml(value) {

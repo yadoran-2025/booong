@@ -1,5 +1,5 @@
 import { loadDashboardConfig as loadSharedDashboardConfig } from "../dashboard-data.js";
-import { SCHOOL_OPTIONS, createSubjectOptions, getAdjacentTeacherProfile, loadTeacherProfile, normalizeTeacherProfile, saveTeacherProfile } from "../teacher-profile.js";
+import { SCHOOL_OPTIONS, createSubjectOptions, getAdjacentTeacherProfile, getSubjectLabel, loadTeacherProfile, normalizeTeacherProfile, saveTeacherProfile } from "../teacher-profile.js";
 import { escapeHtml } from "../utils.js";
 import { trackGroupClick } from "../visitor-analytics.js";
 
@@ -39,7 +39,7 @@ function startCurationHome(root, config, profile, subjectOptions) {
 
 async function refreshDashboardConfig(root, currentConfig, state) {
   try {
-    const nextConfig = await loadDashboardConfig({ cache: false });
+    const nextConfig = await loadDashboardConfig({ cache: false, fallbackConfig: currentConfig });
     if (!root.isConnected || JSON.stringify(nextConfig) === JSON.stringify(currentConfig)) return;
     const subjectOptions = createSubjectOptions(nextConfig.catalog);
     const profile = normalizeTeacherProfile(state.profile, subjectOptions);
@@ -47,16 +47,18 @@ async function refreshDashboardConfig(root, currentConfig, state) {
       renderTeacherOnboarding(root, nextProfile => startCurationHome(root, nextConfig, nextProfile, subjectOptions), {}, subjectOptions);
       return;
     }
+    const focusTarget = getCurationFocusTarget(root);
     state.subjectOptions = subjectOptions;
     state.profile = profile;
-    renderCurationHome(root, nextConfig, state);
+    renderCurationHome(root, nextConfig, state, focusTarget);
   } catch (error) {
     console.warn("Dashboard refresh failed:", error);
   }
 }
 
-function renderCurationHome(root, config, state) {
+function renderCurationHome(root, config, state, focusTarget = "") {
   const catalog = config.catalog;
+  const subjectLabel = getSubjectLabel(state.subjectOptions, state.profile.school, state.profile.subject);
   const subjectItems = catalog.resources.filter(resource =>
     resource.subjects.includes(state.profile.subject) && resource.schools.includes(state.profile.school)
   );
@@ -77,8 +79,8 @@ function renderCurationHome(root, config, state) {
     <div class="curation-shell">
       ${renderTopbar()}
       <main>
-        ${renderHero(state.profile, subjectItems.length)}
-        ${renderUnitNavigator(units, selectedUnit, state.profile, unitItems, catalog.resources, state)}
+        ${renderHero(state.profile, subjectItems.length, state.query, subjectLabel)}
+        ${renderUnitNavigator(units, selectedUnit, state.profile, unitItems, catalog.resources, state, subjectLabel)}
       </main>
       ${renderFooter()}
     </div>
@@ -86,8 +88,9 @@ function renderCurationHome(root, config, state) {
 
   bindCurationEvents(root, config, state);
   applyLibraryFilter(root, state);
-  const activeUnit = root.querySelector("[data-unit][aria-selected=\"true\"]");
+  const activeUnit = root.querySelector("[data-unit][aria-pressed=\"true\"]");
   if (activeUnit) activeUnit.parentElement.scrollLeft = activeUnit.offsetLeft - (activeUnit.parentElement.clientWidth - activeUnit.offsetWidth) / 2;
+  restoreCurationFocus(root, focusTarget);
 }
 
 function renderTopbar() {
@@ -102,24 +105,24 @@ function renderTopbar() {
   `;
 }
 
-function renderHero(profile, count) {
+function renderHero(profile, count, query, subjectLabel) {
   return `
     <section class="curation-hero" aria-labelledby="curation-hero-title">
       <div class="curation-hero__copy">
-        <span class="curation-kicker">${escapeHtml(profile.school)} · ${escapeHtml(profile.subject)} 수업 준비실</span>
+        <span class="curation-kicker">${escapeHtml(profile.school)} · ${escapeHtml(subjectLabel)} 수업 준비실</span>
         <h1 id="curation-hero-title">오늘 수업,<br><em>어디서 시작할까요?</em></h1>
         <p>${count
           ? `선생님의 과목에 맞는 수업 꾸러미 ${count}개를 먼저 꺼내두었습니다.`
           : "아직 꼭 맞는 꾸러미는 없지만, 바로 쓸 수 있는 제작 도구와 전체 자료를 열어두었습니다."}</p>
         <label class="curation-search">
           <span aria-hidden="true">⌕</span>
-          <input type="search" placeholder="주제, 단원, 수업 이름으로 찾기" data-library-search>
+          <input type="search" value="${escapeAttr(query)}" placeholder="주제, 단원, 수업 이름으로 찾기" data-library-search>
           <kbd>검색</kbd>
         </label>
       </div>
       <div class="curation-subject-slip" aria-hidden="true">
         <span>${profile.school === "중학교" ? "MIDDLE" : "HIGH"}</span>
-        <strong>${escapeHtml(profile.subject)}</strong>
+        <strong>${escapeHtml(subjectLabel)}</strong>
         <small>TEACHER'S EDITION</small>
         <i>BOOONG<br>CURATION</i>
       </div>
@@ -127,13 +130,13 @@ function renderHero(profile, count) {
   `;
 }
 
-function renderUnitNavigator(units, selectedUnit, profile, items, resources, state) {
+function renderUnitNavigator(units, selectedUnit, profile, items, resources, state, subjectLabel) {
   return `
     <section class="unit-axis" aria-labelledby="unit-axis-title">
       <header class="unit-axis__head">
         <div>
           <span>CURRICULUM MAP</span>
-          <h2 id="unit-axis-title">${escapeHtml(profile.subject)} 대단원</h2>
+          <h2 id="unit-axis-title">${escapeHtml(subjectLabel)} 대단원</h2>
         </div>
         ${renderSubjectRoller(profile, state.subjectOptions)}
         <p>현재 진도에 맞는 대단원을 고르면 그 아래 수업만 꺼내드립니다.</p>
@@ -142,11 +145,11 @@ function renderUnitNavigator(units, selectedUnit, profile, items, resources, sta
         <div class="unit-workspace">
           <aside class="unit-picker" aria-label="대단원 목록">
             <header><span>대단원 ${units.length}개</span></header>
-            <div class="unit-axis__track" role="tablist" aria-label="대단원 선택">
+            <div class="unit-axis__track" role="group" aria-label="대단원 선택">
               ${units.map((unit, index) => renderUnitTab(unit, index, selectedUnit, resources)).join("")}
             </div>
           </aside>
-          <div class="unit-detail" id="unit-detail" role="tabpanel" aria-live="polite">
+          <div class="unit-detail" id="unit-detail" aria-live="polite">
             ${renderResourcePanel(items, selectedUnit, state)}
           </div>
         </div>
@@ -161,20 +164,21 @@ function renderUnitNavigator(units, selectedUnit, profile, items, resources, sta
 }
 
 function renderSubjectRoller(profile, subjectOptions) {
+  const currentSubjectLabel = getSubjectLabel(subjectOptions, profile.school, profile.subject);
   return `
-    <div class="subject-roller" data-subject-roller tabindex="0" role="group" aria-label="과목 돌려서 변경">
+    <div class="subject-roller" data-subject-roller role="group" aria-label="과목 돌려서 변경">
       <div class="subject-roller__meta">
         <span>ALL SUBJECTS</span>
-        <strong>${escapeHtml(`${profile.school} · ${profile.subject}`)}</strong>
+        <strong>${escapeHtml(`${profile.school} · ${currentSubjectLabel}`)}</strong>
       </div>
-      <div class="subject-roller__groups" aria-live="polite">
+      <div class="subject-roller__groups" role="radiogroup" aria-label="과목 선택" aria-live="polite">
         ${SCHOOL_OPTIONS.map(({ value: school, label }) => `
           <div class="subject-roller__group">
             <span>${escapeHtml(label)}</span>
-            <div class="subject-roller__field" role="radiogroup" aria-label="${escapeAttr(label)} 과목">
-              ${(subjectOptions[school] || []).map(subject => {
+            <div class="subject-roller__field" role="group" aria-label="${escapeAttr(label)} 과목">
+              ${(subjectOptions[school] || []).map(({ value: subject, label: subjectLabel }) => {
                 const selected = school === profile.school && subject === profile.subject;
-                return `<button type="button" class="${selected ? "is-current" : ""}" data-subject-school="${escapeAttr(school)}" data-subject-value="${escapeAttr(subject)}" role="radio" aria-checked="${selected}">${escapeHtml(subject)}</button>`;
+                return `<button type="button" class="${selected ? "is-current" : ""}" data-subject-school="${escapeAttr(school)}" data-subject-value="${escapeAttr(subject)}" role="radio" aria-checked="${selected}" tabindex="${selected ? "0" : "-1"}">${escapeHtml(subjectLabel)}</button>`;
               }).join("")}
             </div>
           </div>
@@ -193,7 +197,7 @@ function renderUnitTab(unit, index, selectedUnit, resources) {
   const selected = selectedUnit?.key === unit.key;
   const resourceCount = resources.filter(resource => resource.unitKeys.includes(unit.key)).length;
   return `
-    <button class="unit-tab" type="button" role="tab" data-unit="${escapeAttr(unit.key)}" aria-selected="${selected}" aria-controls="unit-detail">
+    <button class="unit-tab" type="button" data-unit="${escapeAttr(unit.key)}" aria-pressed="${selected}">
       <span>${String(index + 1).padStart(2, "0")}</span>
       <strong>${escapeHtml(unit.title)}</strong>
       <small>${resourceCount}개 자료</small>
@@ -307,10 +311,10 @@ function renderFooter() {
 
 function bindCurationEvents(root, config, state) {
   root.querySelectorAll("[data-subject-step]").forEach(button => {
-    button.addEventListener("click", () => rollSubject(root, config, state, Number(button.dataset.subjectStep)));
+    button.addEventListener("click", () => rollSubject(root, config, state, Number(button.dataset.subjectStep), true));
   });
   root.querySelectorAll("[data-subject-value]").forEach(button => {
-    button.addEventListener("click", () => selectSubject(root, config, state, button.dataset.subjectSchool, button.dataset.subjectValue));
+    button.addEventListener("click", () => selectSubject(root, config, state, button.dataset.subjectSchool, button.dataset.subjectValue, 0, true));
   });
 
   const roller = root.querySelector("[data-subject-roller]");
@@ -322,7 +326,7 @@ function bindCurationEvents(root, config, state) {
   roller?.addEventListener("keydown", event => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    rollSubject(root, config, state, event.key === "ArrowRight" ? 1 : -1);
+    rollSubject(root, config, state, event.key === "ArrowRight" ? 1 : -1, true);
   });
 
   let dragStartX = null;
@@ -350,14 +354,15 @@ function bindCurationEvents(root, config, state) {
       state.unit = button.dataset.unit || "";
       state.kind = "all";
       state.query = "";
-      renderCurationHome(root, config, state);
+      renderCurationHome(root, config, state, "unit");
     });
   });
 
-  root.querySelectorAll("[data-kind]").forEach(button => {
+  const kindButtons = root.querySelectorAll(".curation-kind-filter [data-kind]");
+  kindButtons.forEach(button => {
     button.addEventListener("click", () => {
       state.kind = button.dataset.kind || "all";
-      root.querySelectorAll("[data-kind]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+      kindButtons.forEach(item => item.setAttribute("aria-pressed", String(item === button)));
       applyLibraryFilter(root, state);
     });
   });
@@ -375,12 +380,12 @@ function bindCurationEvents(root, config, state) {
   });
 }
 
-function rollSubject(root, config, state, direction) {
+function rollSubject(root, config, state, direction, restoreFocus = root.querySelector("[data-subject-roller]")?.contains(document.activeElement)) {
   const nextProfile = getAdjacentTeacherProfile(state.profile, state.subjectOptions, direction);
-  if (nextProfile) selectSubject(root, config, state, nextProfile.school, nextProfile.subject, direction);
+  if (nextProfile) selectSubject(root, config, state, nextProfile.school, nextProfile.subject, direction, restoreFocus);
 }
 
-function selectSubject(root, config, state, nextSchool, nextSubject, direction = 0) {
+function selectSubject(root, config, state, nextSchool, nextSubject, direction = 0, restoreFocus = false) {
   if (state.subjectRolling || !normalizeTeacherProfile({ school: nextSchool, subject: nextSubject }, state.subjectOptions)) return;
   if (nextSchool === state.profile.school && nextSubject === state.profile.subject) return;
 
@@ -393,7 +398,7 @@ function selectSubject(root, config, state, nextSchool, nextSubject, direction =
     state.query = "";
     state.subjectRolling = false;
     saveTeacherProfile(state.profile, state.subjectOptions);
-    renderCurationHome(root, config, state);
+    renderCurationHome(root, config, state, restoreFocus ? "subject" : "");
   }, 180);
 }
 
@@ -430,7 +435,7 @@ function renderTeacherOnboarding(root, onComplete, initialProfile = {}, subjectO
         title: "무엇을 가르치시나요?",
         desc: "선택한 과목의 수업 꾸러미를 첫 화면에 준비해둘게요.",
         value: draft.subject,
-        options: (subjectOptions[draft.school] || []).map(subject => ({ value: subject, label: subject })),
+        options: (subjectOptions[draft.school] || []).map(({ value, label }) => ({ value, label })),
       },
     ];
     const current = steps[step];
@@ -506,6 +511,25 @@ function renderScooterPictogram() {
 
 function normalizeSearch(value) {
   return String(value || "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function getCurationFocusTarget(root) {
+  const active = document.activeElement;
+  if (!active || !root.contains(active)) return "";
+  if (active.matches("[data-library-search]")) return "search";
+  if (active.matches("[data-unit]")) return "unit";
+  return active.closest("[data-subject-roller]") ? "subject" : "";
+}
+
+function restoreCurationFocus(root, target) {
+  const selector = {
+    search: "[data-library-search]",
+    subject: "[data-subject-value][aria-checked=\"true\"]",
+    unit: "[data-unit][aria-pressed=\"true\"]",
+  }[target];
+  const element = selector ? root.querySelector(selector) : null;
+  element?.focus({ preventScroll: true });
+  if (target === "search") element?.setSelectionRange(element.value.length, element.value.length);
 }
 
 function warnCatalogDiagnostics(catalog) {

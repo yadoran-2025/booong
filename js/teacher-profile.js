@@ -8,7 +8,7 @@ export const SCHOOL_OPTIONS = [
 export function normalizeTeacherProfile(value = {}, subjectOptions) {
   const school = SCHOOL_OPTIONS.find(option => option.value === value.school)?.value;
   const subject = String(value.subject || "").trim();
-  if (!school || !(subjectOptions?.[school] || []).includes(subject)) return null;
+  if (!school || !(subjectOptions?.[school] || []).some(option => getSubjectValue(option) === subject)) return null;
   return { school, subject };
 }
 
@@ -32,7 +32,9 @@ export function saveTeacherProfile(profile, subjectOptions) {
 }
 
 export function getAdjacentTeacherProfile(profile, subjectOptions, direction) {
-  const choices = SCHOOL_OPTIONS.flatMap(({ value: school }) => (subjectOptions?.[school] || []).map(subject => ({ school, subject })));
+  const choices = SCHOOL_OPTIONS.flatMap(({ value: school }) => (subjectOptions?.[school] || [])
+    .map(option => ({ school, subject: getSubjectValue(option) }))
+    .filter(({ subject }) => subject));
   if (!choices.length) return null;
   const currentIndex = choices.findIndex(choice => choice.school === profile.school && choice.subject === profile.subject);
   const offset = Math.sign(direction);
@@ -40,8 +42,17 @@ export function getAdjacentTeacherProfile(profile, subjectOptions, direction) {
 }
 
 export function createSubjectOptions(catalog) {
-  return (catalog?.subjects || []).reduce((options, { school, value }) => {
-    if (options[school] && value) options[school].push(value);
+  return (catalog?.subjects || []).reduce((options, { school, value, label }) => {
+    if (options[school] && value) options[school].push({ value, label: label || value });
     return options;
   }, { 중학교: [], 고등학교: [] });
+}
+
+export function getSubjectLabel(subjectOptions, school, subject) {
+  const option = (subjectOptions?.[school] || []).find(item => getSubjectValue(item) === subject);
+  return typeof option === "string" ? option : option?.label || subject;
+}
+
+function getSubjectValue(option) {
+  return typeof option === "string" ? option : String(option?.value || "").trim();
 }

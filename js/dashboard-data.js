@@ -40,8 +40,8 @@ export async function loadDashboardConfig(options = {}) {
     if (useCache) saveCachedDashboardConfig(merged);
     return merged;
   } catch (error) {
-    console.warn("Dashboard catalog load failed, using local lessons index:", error);
-    return local;
+    console.warn(`Dashboard catalog load failed, using ${options.fallbackConfig ? "existing catalog" : "local lessons index"}:`, error);
+    return options.fallbackConfig || local;
   }
 }
 
@@ -253,7 +253,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
     const unit = unitsByKey.get(key);
     unit.codes.push(code);
     const middleUnit = String(row["중단원"] || "").trim();
-    if (middleUnit && !unit.middleUnits.includes(middleUnit)) unit.middleUnits.push(middleUnit);
+    if (middleUnit) unit.middleUnits.push(middleUnit);
   });
 
   const resourceIds = new Set();
@@ -326,16 +326,20 @@ export function buildLegacyDashboardCatalog(groups = [], games = []) {
     const unitSubjects = subjects.length ? subjects : [""];
     const unitTitles = majorUnits.length ? majorUnits : ["단원 미지정"];
     const unitKeys = unique(unitSubjects.flatMap(subject => unitTitles.map(title => `${subject}::${title}`)));
+    const schoolsBySubject = new Map(unitSubjects.map((subject, index) => [
+      subject,
+      schools[index] || schools[0] || SCHOOL_BY_SUBJECT[subject] || "기타",
+    ]));
 
     unitSubjects.filter(Boolean).forEach(subject => {
       if (!subjectsByValue.has(subject)) {
-        subjectsByValue.set(subject, { school: SCHOOL_BY_SUBJECT[subject] || schools[0] || "기타", value: subject, label: SUBJECT_LABELS[subject] || subject, order: subjectsByValue.size });
+        subjectsByValue.set(subject, { school: schoolsBySubject.get(subject), value: subject, label: SUBJECT_LABELS[subject] || subject, order: subjectsByValue.size });
       }
     });
     unitKeys.forEach((key, index) => {
       if (!unitsByKey.has(key)) {
         const [subject, title] = key.split("::");
-        unitsByKey.set(key, { key, school: SCHOOL_BY_SUBJECT[subject] || schools[0] || "기타", subject, title, order: unitsByKey.size, codes: [], middleUnits: [] });
+        unitsByKey.set(key, { key, school: schoolsBySubject.get(subject) || "기타", subject, title, order: unitsByKey.size, codes: [], middleUnits: [] });
       }
       const middleUnit = middleUnits[index] || (middleUnits.length === 1 ? middleUnits[0] : "");
       if (middleUnit && !unitsByKey.get(key).middleUnits.includes(middleUnit)) unitsByKey.get(key).middleUnits.push(middleUnit);
@@ -346,7 +350,7 @@ export function buildLegacyDashboardCatalog(groups = [], games = []) {
     resourceIds.add(id);
     const kind = normalizeKind(item.kind);
     const actions = [
-      createResourceAction("teacher", kind === "game" ? "게임 열기" : "교사용 자료", kind === "game" ? item.link : item.zeroSession?.link),
+      createResourceAction("teacher", kind === "game" ? "게임 열기" : "교사용 자료", kind === "game" ? getGameWorkHref(item) : getGroupWorkHref(item)),
       createResourceAction("worksheet", "활동지", item.worksheet),
     ].filter(Boolean);
     const makers = normalizeMakers(item.makers || item.maker);
@@ -362,7 +366,7 @@ export function buildLegacyDashboardCatalog(groups = [], games = []) {
       unitCodes: [],
       unitKeys,
       subjects,
-      schools,
+      schools: unique(unitKeys.map(key => unitsByKey.get(key)?.school).filter(Boolean)),
       actions,
       searchText: [title, item.discipline, ...subjects, ...majorUnits, ...middleUnits, ...makers].filter(Boolean).join(" ").normalize("NFKC").toLowerCase(),
     });
@@ -393,8 +397,21 @@ function createResourceId(title, unitCodes) {
 }
 
 function createResourceAction(key, label, value) {
-  const href = String(value || "").trim();
+  const href = normalizeActionHref(value);
   return href ? { key, label, href, external: /^https?:\/\//i.test(href) } : null;
+}
+
+function normalizeActionHref(value) {
+  const href = String(value || "").trim();
+  if (!href || /^[\\/]{2}/.test(href)) return "";
+  const scheme = href.match(/^([a-z][a-z\d+.-]*):/i)?.[1]?.toLowerCase();
+  try {
+    if (scheme) return ["http", "https"].includes(scheme) ? new URL(href).href : "";
+    const base = new URL("https://booong.local/");
+    return new URL(href, base).origin === base.origin ? href : "";
+  } catch {
+    return "";
+  }
 }
 
 async function loadSheetDashboardCatalog() {

@@ -1527,6 +1527,10 @@
     min-width: 0;
   }
 
+  .subject-roller__nav button {
+    min-width: 44px;
+  }
+
   .subject-roller__field button,
   .subject-roller__nav button,
   .unit-tab,

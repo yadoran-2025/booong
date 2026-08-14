@@ -10,6 +10,8 @@ const QUICK_TOOLS = [
   { id: "lesson-author", label: "새 수업 만들기", note: "BNG LANG으로 직접 제작", href: "author.html", mark: "04" },
 ];
 
+let didWarnCatalogDiagnostics = false;
+
 export async function showDashboard() {
   document.body.innerHTML = "";
   document.body.style.cssText = "";
@@ -54,22 +56,29 @@ async function refreshDashboardConfig(root, currentConfig, state) {
 }
 
 function renderCurationHome(root, config, state) {
-  const items = createLibraryItems(config);
-  const subjectItems = items
-    .filter(item => item.subjects.includes(state.profile.subject) && item.schools.includes(state.profile.school))
-    .sort((a, b) => a.order - b.order);
-  const units = createUnitIndex(subjectItems);
+  const catalog = config.catalog;
+  const subjectItems = catalog.resources.filter(resource =>
+    resource.subjects.includes(state.profile.subject) && resource.schools.includes(state.profile.school)
+  );
+  const units = catalog.units.filter(unit =>
+    unit.school === state.profile.school && unit.subject === state.profile.subject
+  );
   if (!units.some(unit => unit.key === state.unit)) state.unit = units[0]?.key || "";
   const selectedUnit = units.find(unit => unit.key === state.unit) || null;
-  const unitItems = selectedUnit ? subjectItems.filter(item => item.unitKeys.includes(selectedUnit.key)) : [];
+  const unitItems = selectedUnit
+    ? catalog.resources
+      .filter(resource => resource.unitKeys.includes(selectedUnit.key))
+      .sort((a, b) => Number(b.isNew) - Number(a.isNew))
+    : [];
+
+  warnCatalogDiagnostics(catalog);
 
   root.innerHTML = `
     <div class="curation-shell">
       ${renderTopbar()}
       <main>
         ${renderHero(state.profile, subjectItems.length)}
-        ${renderUnitNavigator(units, selectedUnit, state.profile, unitItems, state.subjectOptions)}
-        ${renderLibrarySection(unitItems, selectedUnit, state)}
+        ${renderUnitNavigator(units, selectedUnit, state.profile, unitItems, catalog.resources, state)}
       </main>
       ${renderFooter()}
     </div>
@@ -118,7 +127,7 @@ function renderHero(profile, count) {
   `;
 }
 
-function renderUnitNavigator(units, selectedUnit, profile, items, subjectOptions) {
+function renderUnitNavigator(units, selectedUnit, profile, items, resources, state) {
   return `
     <section class="unit-axis" aria-labelledby="unit-axis-title">
       <header class="unit-axis__head">
@@ -126,19 +135,19 @@ function renderUnitNavigator(units, selectedUnit, profile, items, subjectOptions
           <span>CURRICULUM MAP</span>
           <h2 id="unit-axis-title">${escapeHtml(profile.subject)} 대단원</h2>
         </div>
-        ${renderSubjectRoller(profile, subjectOptions)}
+        ${renderSubjectRoller(profile, state.subjectOptions)}
         <p>현재 진도에 맞는 대단원을 고르면 그 아래 수업만 꺼내드립니다.</p>
       </header>
       ${units.length ? `
         <div class="unit-workspace">
           <aside class="unit-picker" aria-label="대단원 목록">
-            <header><span>대단원</span><small>${units.length}개</small></header>
+            <header><span>대단원 ${units.length}개</span></header>
             <div class="unit-axis__track" role="tablist" aria-label="대단원 선택">
-              ${units.map((unit, index) => renderUnitTab(unit, index, selectedUnit)).join("")}
+              ${units.map((unit, index) => renderUnitTab(unit, index, selectedUnit, resources)).join("")}
             </div>
           </aside>
           <div class="unit-detail" id="unit-detail" role="tabpanel" aria-live="polite">
-            ${renderRecommendationSection(items, selectedUnit, profile)}
+            ${renderResourcePanel(items, selectedUnit, state)}
           </div>
         </div>
       ` : `
@@ -180,91 +189,55 @@ function renderSubjectRoller(profile, subjectOptions) {
   `;
 }
 
-function renderUnitTab(unit, index, selectedUnit) {
+function renderUnitTab(unit, index, selectedUnit, resources) {
   const selected = selectedUnit?.key === unit.key;
-  const parts = parseUnitLabel(unit.label);
+  const resourceCount = resources.filter(resource => resource.unitKeys.includes(unit.key)).length;
   return `
     <button class="unit-tab" type="button" role="tab" data-unit="${escapeAttr(unit.key)}" aria-selected="${selected}" aria-controls="unit-detail">
-      <span>${escapeHtml(parts.number || String(index + 1).padStart(2, "0"))}</span>
-      <strong>${escapeHtml(parts.title)}</strong>
-      <small>${escapeHtml(`${unit.items.length}개 꾸러미`)}</small>
+      <span>${String(index + 1).padStart(2, "0")}</span>
+      <strong>${escapeHtml(unit.title)}</strong>
+      <small>${resourceCount}개 자료</small>
       ${unit.middleUnits.length ? `<em>${escapeHtml(unit.middleUnits.slice(0, 2).join(" · "))}</em>` : ""}
     </button>
   `;
 }
 
-function renderRecommendationSection(items, selectedUnit, profile) {
-  const unitTitle = selectedUnit?.label || `${profile.subject} 대단원`;
-  if (!items.length) {
-    return `
-      <section class="curation-recommendations" aria-labelledby="recommendation-title">
-        ${renderSectionHeading(unitTitle, `${profile.subject} 수업 꾸러미를 채우는 중입니다.`, "선택한 대단원")}
-        <div class="curation-empty">
-          <span>준비 중</span>
-          <h3>${escapeHtml(unitTitle)} 꾸러미를 기다리고 있어요.</h3>
-          <p>아래 자료 서랍에서 다른 수업을 살펴보거나, 새 수업을 직접 만들 수 있습니다.</p>
-          <a href="author.html">새 수업 만들기 →</a>
-        </div>
-      </section>
-    `;
-  }
-
-  const [featured, ...rest] = items;
+function renderResourcePanel(items, selectedUnit, state) {
   return `
-    <section class="curation-recommendations" aria-labelledby="recommendation-title">
-      ${renderSectionHeading(unitTitle, "이 대단원에 연결된 수업과 활동입니다.", `${items.length}개 꾸러미`)}
-      <div class="curation-recommendation-grid">
-        ${renderFeaturedBundle(featured)}
-        <div class="curation-recommendation-stack">
-          ${rest.slice(0, 3).map(renderCompactBundle).join("") || renderSmallEmpty()}
+    <section class="curation-recommendations" aria-labelledby="resource-panel-title">
+      <header class="curation-section-head">
+        <div>
+          <span data-library-count>${items.length}개 자료</span>
+          <h2 id="resource-panel-title">${escapeHtml(selectedUnit.title)}</h2>
         </div>
+        <div class="unit-detail__summary">
+          <strong>중단원</strong>
+          ${selectedUnit.middleUnits.length
+            ? `<ul>${selectedUnit.middleUnits.map(unit => `<li>${escapeHtml(unit)}</li>`).join("")}</ul>`
+            : `<p>등록된 중단원이 없습니다.</p>`}
+        </div>
+      </header>
+      <div class="curation-kind-filter" role="group" aria-label="자료 종류">
+        ${renderKindButton("all", "전체", state)}
+        ${renderKindButton("lesson", "수업", state)}
+        ${renderKindButton("game", "게임", state)}
       </div>
+      ${items.length ? `
+        <div class="bundle-list" data-library-grid>
+          ${items.map(renderResourceCard).join("")}
+        </div>
+        <div class="curation-library__empty" data-library-empty hidden>
+          <strong>찾는 자료가 없습니다.</strong><span>검색어를 바꾸거나 전체 자료를 선택해보세요.</span>
+        </div>
+      ` : `
+        <div class="curation-empty">
+          <span>자료 0개</span>
+          <h3>${escapeHtml(selectedUnit.title)}</h3>
+          <p>이 대단원은 교육과정에 등록되어 있지만 연결된 자료가 아직 없습니다.</p>
+        </div>
+      `}
     </section>
   `;
-}
-
-function renderSectionHeading(title, desc, label) {
-  return `
-    <header class="curation-section-head">
-      <div><span>${escapeHtml(label)}</span><h2 id="recommendation-title">${escapeHtml(title)}</h2></div>
-      <p>${escapeHtml(desc)}</p>
-    </header>
-  `;
-}
-
-function renderFeaturedBundle(item) {
-  return `
-    <article class="bundle-feature" style="--bundle-color:${escapeAttr(item.color)}">
-      <div class="bundle-feature__tab">${escapeHtml(item.discipline)}</div>
-      <div class="bundle-feature__body">
-        <span class="bundle-meta">${escapeHtml(item.kind === "game" ? "수업 게임" : `${item.lessonCount || item.actions.length}개 차시`)} · ${escapeHtml(item.primarySubject)}</span>
-        <h3>${formatText(item.title)}</h3>
-        <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있도록 자료를 한데 모았습니다.")}</p>
-        <div class="bundle-actions">
-          ${item.actions.slice(0, 4).map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">연결 준비 중</span>`}
-        </div>
-      </div>
-      <span class="bundle-feature__stamp" aria-hidden="true">READY<br>TO CLASS</span>
-    </article>
-  `;
-}
-
-function renderCompactBundle(item) {
-  const action = item.actions[0];
-  const content = `
-    <span class="bundle-compact__index">${escapeHtml(item.discipline.slice(0, 2))}</span>
-    <span class="bundle-compact__body">
-      <small>${escapeHtml(item.primarySubject)} · ${item.kind === "game" ? "게임" : `${item.lessonCount || item.actions.length}차시`}</small>
-      <strong>${formatText(item.title)}</strong>
-    </span>
-    <span class="bundle-compact__arrow" aria-hidden="true">↗</span>`;
-  return action
-    ? `<a class="bundle-compact" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}>${content}</a>`
-    : `<article class="bundle-compact is-disabled">${content}</article>`;
-}
-
-function renderSmallEmpty() {
-  return `<div class="curation-small-empty"><span>+</span><p>다음 추천 꾸러미가 이곳에 쌓입니다.</p></div>`;
 }
 
 function renderQuickTools(config) {
@@ -288,65 +261,38 @@ function renderQuickTools(config) {
   `;
 }
 
-function renderLibrarySection(items, selectedUnit, state) {
-  const unitTitle = selectedUnit?.label || state.profile.subject;
-  return `
-    <section class="curation-library" id="library" aria-labelledby="library-title">
-      <header class="curation-library__head">
-        <div>
-          <span>선택한 단원 자료 서랍</span>
-          <h2 id="library-title">${escapeHtml(unitTitle)} 자료</h2>
-        </div>
-        <div class="curation-kind-filter" role="group" aria-label="자료 종류">
-          ${renderKindButton("all", "전체", state)}
-          ${renderKindButton("lesson", "수업", state)}
-          ${renderKindButton("game", "게임", state)}
-        </div>
-      </header>
-      <div class="curation-library__meta"><span data-library-count>${items.length}개 자료</span><p>추천 자료를 먼저 보여줍니다.</p></div>
-      <div class="curation-library__grid" data-library-grid>
-        ${items.map(renderLibraryCard).join("")}
-      </div>
-      <div class="curation-library__empty" data-library-empty hidden>
-        <strong>찾는 자료가 없습니다.</strong><span>검색어를 바꾸거나 전체 자료를 선택해보세요.</span>
-      </div>
-    </section>
-  `;
-}
-
 function renderKindButton(value, label, state) {
   const selected = state.kind === value;
   return `<button type="button" data-kind="${value}" aria-pressed="${selected}">${label}</button>`;
 }
 
-function renderLibraryCard(item) {
-  const action = item.actions[0];
-  const tag = action ? "a" : "article";
-  const attrs = action
-    ? `href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}`
-    : "aria-disabled=\"true\"";
+function renderResourceCard(item) {
   return `
-    <${tag} class="library-card ${action ? "" : "is-disabled"}" ${attrs}
-      data-library-item data-kind="${item.kind}" data-search="${escapeAttr(item.searchText)}">
-      <span class="library-card__rail" style="--bundle-color:${escapeAttr(item.color)}">${escapeHtml(item.discipline)}</span>
-      <span class="library-card__content">
-        <small>${escapeHtml(item.primarySubject)} · ${item.kind === "game" ? "게임" : `${item.lessonCount || item.actions.length}차시`}</small>
-        <strong>${formatText(item.title)}</strong>
-        <span>${escapeHtml(item.desc || "수업 꾸러미 열기")}</span>
-      </span>
-      <i aria-hidden="true">↗</i>
-    </${tag}>
+    <article class="bundle-card" data-library-item data-kind="${escapeAttr(item.kind)}" data-search="${escapeAttr(item.searchText)}">
+      <div class="bundle-card__badges">
+        <span>${item.kind === "game" ? "게임" : "수업"}</span>
+        ${item.isNew ? `<span>NEW</span>` : ""}
+        ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
+      </div>
+      <h3>${escapeHtml(item.title)}</h3>
+      <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
+      ${item.makers.length ? `<small class="bundle-card__makers">제작 ${escapeHtml(item.makers.join(" · "))}</small>` : ""}
+      <div class="bundle-actions">
+        ${item.actions.map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">자료 준비 중</span>`}
+      </div>
+    </article>
   `;
 }
 
 function renderActionLink(action, item) {
+  const title = action.key === "worksheet" ? "활동지 열기" : "자료 열기";
   return `<a class="bundle-action" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}>
-    <small>${escapeHtml(action.label)}</small><strong>${escapeHtml(action.title)}</strong><span aria-hidden="true">→</span>
+    <small>${escapeHtml(action.label)}</small><strong>${title}</strong><span aria-hidden="true">→</span>
   </a>`;
 }
 
 function renderTrackingData(item, action) {
-  return `data-track-action data-group-id="${escapeAttr(item.id)}" data-group-title="${escapeAttr(stripHtml(item.title))}" data-group-type="${escapeAttr(item.kind)}" data-action-key="${escapeAttr(action.key)}"`;
+  return `data-track-action data-group-id="${escapeAttr(item.id)}" data-group-title="${escapeAttr(item.title)}" data-group-type="${escapeAttr(item.kind)}" data-action-key="${escapeAttr(action.key)}"`;
 }
 
 function renderFooter() {
@@ -554,175 +500,25 @@ function renderTeacherOnboarding(root, onComplete, initialProfile = {}, subjectO
   render();
 }
 
-function createLibraryItems(config) {
-  const groups = Array.isArray(config.groups) ? config.groups : [];
-  const games = Array.isArray(config.games) ? config.games : [];
-  const knownIds = new Set(groups.map(group => group.id).filter(Boolean));
-  const items = groups.map(createGroupItem);
-  games.filter(game => !knownIds.has(game.id)).forEach(game => items.push(createGameItem(game)));
-  return items.map((item, order) => ({ ...item, order }));
-}
-
-function createGroupItem(group) {
-  if (normalizeKind(group.kind) === "game") return createGameItem(group);
-  const lessons = Array.isArray(group.lessons) ? group.lessons : [];
-  const actions = [createLessonAction(group.zeroSession, group, true), ...lessons.map(lesson => createLessonAction(lesson, group, false))].filter(Boolean);
-  return createBaseItem(group, {
-    kind: "lesson",
-    lessonCount: lessons.length,
-    actions,
-  });
-}
-
-function createGameItem(game) {
-  const links = Array.isArray(game.links) ? game.links : [];
-  const actions = links.map((link, index) => createGameAction(link, game, index)).filter(Boolean);
-  if (!actions.length && game.link) actions.push(createGameAction({ link: game.link, label: game.tag || "게임", title: "게임 열기" }, game, 0));
-  if (game.worksheet) {
-    const href = /^https?:\/\//i.test(game.worksheet)
-      ? game.worksheet
-      : `worksheet-maker.html?${new URLSearchParams({ game: game.id || "", worksheet: game.worksheet })}`;
-    actions.push(createGameAction({ link: href, label: "학습지", title: "학습지 열기" }, game, actions.length));
-  }
-  return createBaseItem(game, { kind: "game", lessonCount: 0, actions });
-}
-
-function createBaseItem(source, extra) {
-  const subjects = splitList(source.subject);
-  const schools = splitList(source.school);
-  const primarySubject = subjects[0] || "미분류";
-  const discipline = normalizeDiscipline(source.discipline || primarySubject);
-  const majorUnits = splitList(source.majorUnit);
-  const middleUnits = splitList(source.middleUnit);
-  const unitKeys = majorUnits.length ? majorUnits.map(normalizeUnitKey) : ["__unassigned__"];
-  return {
-    id: source.id || `item-${Math.random().toString(36).slice(2)}`,
-    title: source.title || "수업 꾸러미",
-    desc: source.desc || "",
-    subjects,
-    subject: primarySubject,
-    primarySubject,
-    discipline,
-    majorUnits,
-    middleUnits,
-    unitKeys,
-    schools: schools.length ? schools : ["기타"],
-    color: getDisciplineColor(discipline),
-    searchText: normalizeSearch([source.title, source.desc, source.subject, source.discipline, source.majorUnit, source.middleUnit].join(" ")),
-    ...extra,
-  };
-}
-
-function createUnitIndex(items) {
-  const units = new Map();
-  items.forEach(item => {
-    item.unitKeys.forEach((key, index) => {
-      if (!units.has(key)) {
-        units.set(key, {
-          key,
-          label: key === "__unassigned__" ? "단원 미지정" : item.majorUnits[index] || item.majorUnits[0] || "단원 미지정",
-          items: [],
-          middleUnits: [],
-        });
-      }
-      const unit = units.get(key);
-      unit.items.push(item);
-      const middleUnit = item.middleUnits[index] || (item.middleUnits.length === 1 ? item.middleUnits[0] : "");
-      if (middleUnit && !unit.middleUnits.includes(middleUnit)) unit.middleUnits.push(middleUnit);
-    });
-  });
-  return [...units.values()].sort(compareUnits);
-}
-
-function compareUnits(a, b) {
-  if (a.key === "__unassigned__") return 1;
-  if (b.key === "__unassigned__") return -1;
-  const aOrder = getCurriculumUnitOrder(a.label);
-  const bOrder = getCurriculumUnitOrder(b.label);
-  return aOrder - bOrder || a.label.localeCompare(b.label, "ko");
-}
-
-function getCurriculumUnitOrder(label) {
-  const head = String(label || "").trim().match(/^([IVXLCDM]+|\d+)/i)?.[1] || "";
-  if (/^\d+$/.test(head)) return Number(head);
-  const values = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
-  let total = 0;
-  let previous = 0;
-  [...head.toUpperCase()].reverse().forEach(char => {
-    const value = values[char] || 0;
-    total += value < previous ? -value : value;
-    previous = Math.max(previous, value);
-  });
-  return total || Number.MAX_SAFE_INTEGER;
-}
-
-function parseUnitLabel(label) {
-  if (label === "단원 미지정") return { number: "ETC", title: label };
-  const match = String(label || "").match(/^([^\s.]+)\.?\s*(.*)$/);
-  return { number: match?.[1] || "", title: match?.[2] || label };
-}
-
-function normalizeUnitKey(value) {
-  return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function createLessonAction(lesson, group, isZero) {
-  if (!lesson) return null;
-  const href = lesson.link || lesson.href || (!isZero && lesson.id ? `?lesson=${encodeURIComponent(lesson.id)}` : "");
-  if (!href) return null;
-  return {
-    key: `lesson:${group.id || "group"}:${lesson.id || lesson.label || "item"}`,
-    label: lesson.label || (isZero ? "지도안" : "차시"),
-    title: lesson.title || (isZero ? "지도안 및 수업자료" : "수업 열기"),
-    href,
-    external: /^https?:\/\//i.test(href),
-  };
-}
-
-function createGameAction(link, game, index) {
-  const href = link.link || link.href || "";
-  if (!href) return null;
-  return {
-    key: `game:${game.id || "game"}:${link.id || index}`,
-    label: link.label || game.tag || "게임",
-    title: link.title || "게임 열기",
-    href,
-    external: /^https?:\/\//i.test(href),
-  };
-}
-
 function renderScooterPictogram() {
   return `<svg viewBox="0 0 24 24" role="img" focusable="false"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V11l2-2h3.5l1.5 1.5v5M10 9V5h3"/></svg>`;
 }
 
-function normalizeKind(value) {
-  return String(value || "").toLowerCase() === "game" ? "game" : "lesson";
-}
-
-function normalizeDiscipline(value) {
-  const discipline = String(value || "미분류").trim();
-  return discipline === "사회학" ? "사회" : discipline;
-}
-
-function getDisciplineColor(value) {
-  const colors = { 사회: "#2357d9", 법: "#2d6a4f", 정치: "#e45c3a", 경제: "#8a9f26", 지리: "#a36a32", 역사: "#6e4ba3", 윤리: "#be4b74" };
-  return colors[value] || "#53645d";
-}
-
-function splitList(value) {
-  return String(value || "").split(/[,\n;/|]+/).map(item => item.trim()).filter(Boolean);
-}
-
 function normalizeSearch(value) {
-  return stripHtml(value).toLowerCase().replace(/\s+/g, " ").trim();
+  return String(value || "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function stripHtml(value) {
-  return String(value || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function formatText(value) {
-  return escapeHtml(String(value || "")).replace(/&lt;br\s*\/?&gt;/gi, "<br>");
+function warnCatalogDiagnostics(catalog) {
+  if (didWarnCatalogDiagnostics || !["", "localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+  const diagnostics = catalog.diagnostics || {};
+  const messages = [
+    diagnostics.unknownUnitCodes?.length ? `unknown unit codes: ${diagnostics.unknownUnitCodes.join(", ")}` : "",
+    diagnostics.duplicateUnitCodes?.length ? `duplicate unit codes: ${diagnostics.duplicateUnitCodes.join(", ")}` : "",
+    diagnostics.duplicateResourceIds?.length ? `duplicate resource ids: ${diagnostics.duplicateResourceIds.join(", ")}` : "",
+  ].filter(Boolean);
+  if (!messages.length) return;
+  didWarnCatalogDiagnostics = true;
+  console.warn(`Dashboard catalog diagnostics — ${messages.join("; ")}`);
 }
 
 function escapeAttr(value) {

@@ -17,11 +17,16 @@ export async function showDashboard() {
   document.body.style.cssText = "";
 
   const config = await loadDashboardConfig();
-  const subjectOptions = createSubjectOptions(config.catalog);
   const root = document.createElement("div");
   root.className = "curation-app";
   document.body.appendChild(root);
 
+  if (new URLSearchParams(window.location.search).get("view") === "new") {
+    renderNewLessonsView(root, config);
+    return;
+  }
+
+  const subjectOptions = createSubjectOptions(config.catalog);
   const profile = loadTeacherProfile(subjectOptions);
   if (profile) startCurationHome(root, config, profile, subjectOptions);
   else renderTeacherOnboarding(root, profile => startCurationHome(root, config, profile, subjectOptions), {}, subjectOptions);
@@ -93,6 +98,41 @@ function renderCurationHome(root, config, state, focusTarget = "") {
   restoreCurationFocus(root, focusTarget);
 }
 
+function renderNewLessonsView(root, config) {
+  const items = config.catalog.resources.filter(resource => resource.isNew);
+
+  root.innerHTML = `
+    <div class="curation-shell">
+      ${renderTopbar()}
+      <main>
+        <section class="curation-new-lessons" aria-labelledby="new-lessons-title">
+          <header class="curation-section-head">
+            <div>
+              <span>ALL SUBJECTS</span>
+              <h1 id="new-lessons-title">새로 들어온 수업</h1>
+            </div>
+            <a href="index.html">홈으로</a>
+          </header>
+          ${items.length ? `
+            <div class="bundle-list">
+              ${items.map(renderResourceCard).join("")}
+            </div>
+          ` : `
+            <div class="curation-library__empty">
+              <strong>새로 들어온 수업이 없습니다.</strong>
+              <span>새 수업이 등록되면 이곳에서 만날 수 있습니다.</span>
+              <a href="index.html">홈으로</a>
+            </div>
+          `}
+        </section>
+      </main>
+      ${renderFooter()}
+    </div>
+  `;
+
+  bindCurationEvents(root, config, {});
+}
+
 function renderTopbar() {
   return `
     <header class="curation-topbar">
@@ -110,7 +150,7 @@ function renderHero(profile, count, query, subjectLabel) {
     <section class="curation-hero" aria-labelledby="curation-hero-title">
       <div class="curation-hero__copy">
         <span class="curation-kicker">${escapeHtml(profile.school)} · ${escapeHtml(subjectLabel)} 수업 준비실</span>
-        <h1 id="curation-hero-title">오늘 수업,<br><em>어디서 시작할까요?</em></h1>
+        <h1 id="curation-hero-title">오늘 수업,<br><em>이런 건 어떠세요?</em></h1>
         <p>${count
           ? `선생님의 과목에 맞는 수업 꾸러미 ${count}개를 먼저 꺼내두었습니다.`
           : "아직 꼭 맞는 꾸러미는 없지만, 바로 쓸 수 있는 제작 도구와 전체 자료를 열어두었습니다."}</p>
@@ -120,12 +160,12 @@ function renderHero(profile, count, query, subjectLabel) {
           <kbd>검색</kbd>
         </label>
       </div>
-      <div class="curation-subject-slip" aria-hidden="true">
-        <span>${profile.school === "중학교" ? "MIDDLE" : "HIGH"}</span>
-        <strong>${escapeHtml(subjectLabel)}</strong>
-        <small>TEACHER'S EDITION</small>
+      <a class="curation-subject-slip" href="index.html?view=new">
+        <span>NEW</span>
+        <strong>새로 들어온 수업</strong>
+        <small>ALL SUBJECTS</small>
         <i>BOOONG<br>CURATION</i>
-      </div>
+      </a>
     </section>
   `;
 }

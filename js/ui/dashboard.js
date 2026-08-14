@@ -320,7 +320,12 @@ function renderResourceCard(item) {
       </div>
       <h3>${escapeHtml(item.title)}</h3>
       <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
-      ${item.makers.length ? `<small class="bundle-card__makers">제작 ${escapeHtml(item.makers.join(" · "))}</small>` : ""}
+      ${item.makers.length ? `
+        <div class="bundle-card__makers" aria-label="제작자">
+          <span class="bundle-card__makers-label">MADE BY</span>
+          ${item.makers.map(maker => `<span class="bundle-card__maker">${escapeHtml(maker)}</span>`).join("")}
+        </div>
+      ` : ""}
       <div class="bundle-actions">
         ${item.actions.map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">자료 준비 중</span>`}
       </div>

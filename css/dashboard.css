@@ -1548,6 +1548,94 @@
   }
 }
 
+.curation-subject-slip {
+  color: var(--desk-ink);
+  text-decoration: none;
+}
+
+.curation-subject-slip:hover {
+  color: var(--desk-ink);
+  transform: rotate(1deg) translateY(calc(-1 * var(--space-1)));
+}
+
+.curation-subject-slip:focus-visible {
+  outline: 3px solid var(--desk-blue);
+  outline-offset: 5px;
+}
+
+.curation-new-lessons {
+  padding-top: clamp(40px, 6vw, 80px);
+}
+
+.curation-new-lessons .curation-section-head {
+  position: static;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  margin-bottom: var(--space-6);
+}
+
+.curation-new-lessons .curation-section-head > a,
+.curation-library__empty > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--space-11);
+  border: 1px solid var(--desk-line);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-3);
+  color: var(--desk-ink);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.curation-new-lessons .curation-section-head > a:hover,
+.curation-new-lessons .curation-section-head > a:focus-visible,
+.curation-library__empty > a:hover,
+.curation-library__empty > a:focus-visible {
+  border-color: var(--desk-blue);
+  background: var(--desk-lime);
+  color: var(--desk-ink);
+}
+
+.curation-new-lessons .bundle-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bundle-card__makers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+  color: var(--desk-muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.bundle-card__makers-label {
+  letter-spacing: 0.08em;
+}
+
+.bundle-card__maker {
+  border: 1px solid var(--desk-line);
+  border-radius: var(--radius-sm);
+  background: var(--desk-paper);
+  padding: var(--space-0-5) var(--space-2);
+  color: var(--desk-ink);
+  text-transform: uppercase;
+}
+
+@media (max-width: 620px) {
+  .curation-new-lessons .curation-section-head {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .curation-new-lessons .bundle-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .curation-app *,
   .curation-app *::before,

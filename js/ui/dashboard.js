@@ -327,7 +327,7 @@ function bindCurationEvents(root, config, state) {
 
   let dragStartX = null;
   roller?.addEventListener("pointerdown", event => {
-    if (event.target.closest("[data-subject-step]")) return;
+    if (event.target.closest("button")) return;
     dragStartX = event.clientX;
     roller.setPointerCapture(event.pointerId);
   });

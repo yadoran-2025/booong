@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { buildDashboardCatalog, mergeDashboardCatalog, normalizeDashboardConfig } from "../js/dashboard-data.js";
+
+const dashboardSource = readFileSync(new URL("../js/ui/dashboard.js", import.meta.url), "utf8");
+assert.match(dashboardSource, /pointerdown[\s\S]*?event\.target\.closest\("button"\)/);
 
 const unitRows = [
   { "단원_코드": "36", "과목": "사회1", "대단원": "XII. 세계화와 평화", "중단원": "2. 세계화의 양상" },

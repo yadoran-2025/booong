@@ -8,6 +8,26 @@ const DASHBOARD_SHEET_URLS = {
 const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v2";
 const DASHBOARD_CONFIG_CACHE_TTL = 10 * 60 * 1000;
 
+const SCHOOL_BY_SUBJECT = {
+  사회1: "중학교",
+  사회2: "중학교",
+  통합사회1: "고등학교",
+  통합사회2: "고등학교",
+  사회와문화: "고등학교",
+  정치: "고등학교",
+  법과사회: "고등학교",
+  경제: "고등학교",
+  국제관계의이해: "고등학교",
+  금융과경제생활: "고등학교",
+};
+
+const SUBJECT_LABELS = {
+  사회와문화: "사회와 문화",
+  법과사회: "법과 사회",
+  국제관계의이해: "국제 관계의 이해",
+  금융과경제생활: "금융과 경제생활",
+};
+
 export async function loadDashboardConfig(options = {}) {
   const useCache = options.cache !== false;
   const cached = useCache ? loadCachedDashboardConfig() : null;
@@ -197,6 +217,117 @@ export function normalizeMakers(value) {
     .split(/[,\n;/|]+/)
     .map(normalizeMakerKey)
     .filter(Boolean));
+}
+
+export function buildDashboardCatalog(groupRows = [], unitRows = []) {
+  const diagnostics = { unknownUnitCodes: [], duplicateUnitCodes: [], duplicateResourceIds: [] };
+  const unitsByCode = new Map();
+  const unitsByKey = new Map();
+  const subjectsByValue = new Map();
+
+  unitRows.forEach(row => {
+    const code = normalizeUnitCode(row["단원_코드"]);
+    if (code == null) return;
+    if (unitsByCode.has(code)) {
+      diagnostics.duplicateUnitCodes.push(code);
+      return;
+    }
+
+    const subject = String(row["과목"] || "").trim();
+    const school = SCHOOL_BY_SUBJECT[subject];
+    unitsByCode.set(code, school ? { code, subject, school, majorUnit: String(row["대단원"] || "").trim(), middleUnit: String(row["중단원"] || "").trim() } : null);
+    if (!school) return;
+
+    if (!subjectsByValue.has(subject)) {
+      subjectsByValue.set(subject, { school, value: subject, label: SUBJECT_LABELS[subject] || subject, order: subjectsByValue.size });
+    }
+    const key = `${subject}::${String(row["대단원"] || "").trim()}`;
+    if (!unitsByKey.has(key)) {
+      unitsByKey.set(key, { key, school, subject, title: String(row["대단원"] || "").trim(), order: unitsByKey.size, codes: [], middleUnits: [] });
+    }
+    const unit = unitsByKey.get(key);
+    unit.codes.push(code);
+    const middleUnit = String(row["중단원"] || "").trim();
+    if (middleUnit && !unit.middleUnits.includes(middleUnit)) unit.middleUnits.push(middleUnit);
+  });
+
+  const resourceIds = new Set();
+  const resources = [];
+  groupRows.forEach(row => {
+    const title = String(row.group_title || "").trim();
+    if (!title || !isPublished(row.published)) return;
+    const unitCodes = splitSheetList(row["단원_코드"]).map(normalizeUnitCode).filter(code => code != null);
+    const id = createResourceId(title, unitCodes);
+    if (resourceIds.has(id)) {
+      diagnostics.duplicateResourceIds.push(id);
+      return;
+    }
+    resourceIds.add(id);
+
+    const joinedUnits = [];
+    unitCodes.forEach(code => {
+      const unit = unitsByCode.get(code);
+      if (!unit) {
+        if (!diagnostics.unknownUnitCodes.includes(code)) diagnostics.unknownUnitCodes.push(code);
+        return;
+      }
+      joinedUnits.push(unit);
+    });
+    const subjects = unique(joinedUnits.map(unit => unit.subject));
+    const schools = unique([...joinedUnits.map(unit => unit.school), ...splitSheetList(row.school)]);
+    const unitKeys = unique(joinedUnits.map(unit => `${unit.subject}::${unit.majorUnit}`));
+    const makers = normalizeMakers(row.maker);
+    const actions = [
+      createResourceAction("teacher", "교사용 자료", row.teacher_link),
+      createResourceAction("worksheet", "활동지", row.worksheet_link),
+    ].filter(Boolean);
+    const sourceUnitName = String(row["단원명"] || "").trim();
+    resources.push({
+      id,
+      title,
+      desc: String(row.desc || "").trim(),
+      sourceUnitName,
+      kind: normalizeKind(row.kind),
+      discipline: String(row.discipline || "").trim(),
+      makers,
+      isNew: normalizeNewFlag(getNewFlagValue(row)),
+      unitCodes,
+      unitKeys,
+      subjects,
+      schools,
+      actions,
+      searchText: [title, row.discipline, ...subjects, ...joinedUnits.flatMap(unit => [unit.majorUnit, unit.middleUnit]), sourceUnitName, ...makers]
+        .filter(Boolean).join(" ").normalize("NFKC").toLowerCase(),
+    });
+  });
+
+  return { subjects: [...subjectsByValue.values()], units: [...unitsByKey.values()], resources, diagnostics };
+}
+
+function normalizeUnitCode(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const code = Number(raw);
+  return Number.isSafeInteger(code) && code >= 0 ? code : null;
+}
+
+function splitSheetList(value) {
+  return String(value || "").split(/[,;\n]+/).map(item => item.trim()).filter(Boolean);
+}
+
+function createResourceId(title, unitCodes) {
+  const slug = String(title || "resource")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-|-$/g, "");
+  // ponytail: 동일 제목+단원코드는 중복 행으로 취급한다. 합법적 중복이 필요해지면 DB에 resource_id 열을 추가한다.
+  return ["resource", slug || "untitled", ...unitCodes].join("-");
+}
+
+function createResourceAction(key, label, value) {
+  const href = String(value || "").trim();
+  return href ? { key, label, href, external: /^https?:\/\//i.test(href) } : null;
 }
 
 async function loadSheetLessonGroups() {
@@ -406,7 +537,7 @@ function normalizeNewFlag(value) {
 
 function isPublished(value) {
   const normalized = String(value ?? "").trim().toLowerCase();
-  return !["false", "0", "no", "n", "hidden", "draft", "비공개"].includes(normalized);
+  return ["true", "1", "yes", "y", "공개"].includes(normalized);
 }
 
 function compareByOrder(a, b) {

@@ -301,7 +301,8 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
     });
   });
 
-  return { subjects: [...subjectsByValue.values()], units: [...unitsByKey.values()], resources, diagnostics };
+  const visibleSubjects = new Set(resources.flatMap(resource => resource.subjects));
+  return { subjects: [...subjectsByValue.values()].filter(subject => visibleSubjects.has(subject.value)), units: [...unitsByKey.values()], resources, diagnostics };
 }
 
 function normalizeUnitCode(value) {

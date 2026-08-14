@@ -16,7 +16,7 @@ const groupRows = [
 ];
 
 const catalog = buildDashboardCatalog(groupRows, unitRows);
-assert.deepEqual(catalog.subjects.map(({ value }) => value), ["사회1", "사회2", "통합사회2", "경제"]);
+assert.deepEqual(catalog.subjects.map(({ value }) => value), ["사회1", "사회2", "통합사회2"]);
 assert.equal(catalog.units.length, 4);
 assert.equal(catalog.resources.some(({ title }) => title === "숨긴 자료"), false);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").subjects, ["사회1", "통합사회2"]);

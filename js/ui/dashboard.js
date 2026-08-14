@@ -39,6 +39,14 @@ async function refreshDashboardConfig(root, currentConfig, state) {
   try {
     const nextConfig = await loadDashboardConfig({ cache: false });
     if (!root.isConnected || JSON.stringify(nextConfig) === JSON.stringify(currentConfig)) return;
+    const subjectOptions = createSubjectOptions(nextConfig.catalog);
+    const profile = normalizeTeacherProfile(state.profile, subjectOptions);
+    if (!profile) {
+      renderTeacherOnboarding(root, nextProfile => startCurationHome(root, nextConfig, nextProfile, subjectOptions), {}, subjectOptions);
+      return;
+    }
+    state.subjectOptions = subjectOptions;
+    state.profile = profile;
     renderCurationHome(root, nextConfig, state);
   } catch (error) {
     console.warn("Dashboard refresh failed:", error);

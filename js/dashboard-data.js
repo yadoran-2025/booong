@@ -301,7 +301,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
       subjects,
       schools,
       actions,
-      searchText: [title, row.discipline, ...subjects, ...joinedUnits.flatMap(unit => [unit.majorUnit, unit.middleUnit]), sourceUnitName, ...makers]
+      searchText: [title, row.desc, row.discipline, ...subjects, ...joinedUnits.flatMap(unit => [unit.majorUnit, unit.middleUnit]), sourceUnitName, ...makers]
         .filter(Boolean).join(" ").normalize("NFKC").toLowerCase(),
     });
   });

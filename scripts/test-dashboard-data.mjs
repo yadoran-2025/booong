@@ -10,7 +10,7 @@ const unitRows = [
 ];
 const groupRows = [
   { published: "TRUE", group_title: "놀라운 수요일", kind: "game", discipline: "사회", school: "중학교, 고등학교", "단원_코드": "36, 90", teacher_link: "https://example.com/game" },
-  { published: "TRUE", group_title: "우리가 만드는 수요곡선", kind: "lesson", discipline: "경제", "단원_코드": "45", teacher_link: "https://example.com/teacher", worksheet_link: "https://example.com/worksheet" },
+  { published: "TRUE", group_title: "우리가 만드는 수요곡선", kind: "lesson", discipline: "경제", desc: "설명전용검색어", "단원_코드": "45", teacher_link: "https://example.com/teacher", worksheet_link: "https://example.com/worksheet" },
   { published: "", group_title: "숨긴 자료", kind: "lesson", "단원_코드": "46", teacher_link: "https://example.com/hidden" },
   { published: "TRUE", group_title: "잘못 연결된 자료", kind: "lesson", "단원_코드": "999", teacher_link: "https://example.com/unknown" },
 ];
@@ -21,6 +21,7 @@ assert.equal(catalog.units.length, 4);
 assert.equal(catalog.resources.some(({ title }) => title === "숨긴 자료"), false);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").subjects, ["사회1", "통합사회2"]);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").actions.length, 2);
+assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").searchText.includes("설명전용검색어"), true);
 assert.deepEqual(catalog.diagnostics.unknownUnitCodes, [999]);
 
 const local = { groups: [{ id: "local-lesson", lessons: [{ id: "lesson-1" }] }], games: [{ id: "local-game" }] };

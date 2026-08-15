@@ -869,6 +869,13 @@
 
 .bundle-card__makers {
   grid-area: makers;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
   color: var(--desk-muted);
   font-size: 12px;
   font-weight: 750;
@@ -876,8 +883,8 @@
 
 .bundle-actions {
   grid-area: actions;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr);
   gap: var(--space-2);
   margin-top: 0;
   justify-self: end;

@@ -1,8 +1,8 @@
-id,name,aliases,avatar,interests,career,bio,homepage
-CHOI,최진영,,https://m.media-amazon.com/images/I/61aS58rvOeL._AC_SL1500_.jpg,"경제, 사회, 노동","안성 안성중학교(2022)|대한민국공군 제18전투비행단(2023-2024)|수원 잠원중학교(2025-)","하나의 단일한 시스템 안에서, 우리는 모일수록 강하다.",
-Hyum,김현석,,"https://blog.kakaocdn.net/dna/liSM8/btsC4dHtAaN/AAAAAAAAAAAAAAAAAAAAAECIn5ZCk1IC5aKDvp6iW3Aw6isATYd7zXhMQmrfFfsV/img.png?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&allow_ip=&allow_referer=&signature=8ogIL%2FoePHkatzqRvAu%2FLVIf0hQ%3D","금융교육, 정치교육","세종 한솔고등학교 (2023-2025)|공익근무 Agent (2026-)","학생들과 함께, 교실에서 세상을 바라봅니다.",
-Do,이도빈,doh,,"법교육, 북한 사투리, 한화 이글스","수원 망포고등학교(2025)|국군제0000부대 00담당(2026-)","신문이 어떻게 만들어지는지 알면, 신문을 어떻게 봐야 할지도 알 수 있다.",
-Han,한인준,, ,"정치교육, 학교민주주의, 전투뜀걸음","평택 현화고등학교(2025)|대한민국공군 장교교육대(2026-)","社會 : 사람이 모이고 모이면 무슨 일이 일어나는가?",
-Heo,허원재,, ,"계산사회과학, 롯데자이언츠, 자연어처리","의료연구지원법인 차라투 데이터분석/개발 인턴 (2022)|부산영도구청 영선2동주민센터 복지팀 사회복무 Agent (2022-2024)|ETH Zurich 교환학생 (2024)","삼중전공 중입니다.",
-Moon,문영종,, ,"프로젝트 수업, 철학, 창업교육, 강의없는 수업","농업법인 팜프라(2023)|미래교실 네트워크(2024-2025)|거꾸로캠퍼스 강사(2025-2026)","학교 밖에서 사회교육을 전파합니다.",
-DOL,김민석,,,,,,
+id,name,avatar,interests,career,bio,making
+CHOI,최진영,https://m.media-amazon.com/images/I/61aS58rvOeL._AC_SL1500_.jpg,"경제, 사회, 노동","안성 안성중학교(2022)|대한민국공군 제18전투비행단(2023-2024)|수원 잠원중학교(2025-)","하나의 단일한 시스템 안에서, 우리는 모일수록 강하다.",
+Hyum,김현석,"https://blog.kakaocdn.net/dna/liSM8/btsC4dHtAaN/AAAAAAAAAAAAAAAAAAAAAECIn5ZCk1IC5aKDvp6iW3Aw6isATYd7zXhMQmrfFfsV/img.png?credential=yqXZFxpELC7KVnFOS48ylbz2pIh7yKj8&expires=1777561199&allow_ip=&allow_referer=&signature=8ogIL%2FoePHkatzqRvAu%2FLVIf0hQ%3D","금융교육, 정치교육","세종 한솔고등학교 (2023-2025)|공익근무 Agent (2026-)","학생들과 함께, 교실에서 세상을 바라봅니다.",
+Do,이도빈,,"법교육, 북한 사투리, 한화 이글스","수원 망포고등학교(2025)|국군제0000부대 00담당(2026-)","신문이 어떻게 만들어지는지 알면, 신문을 어떻게 봐야 할지도 알 수 있다.",
+Han,한인준,,"정치교육, 학교민주주의, 전투뜀걸음","평택 현화고등학교(2025)|대한민국공군 장교교육대(2026-)","社會 : 사람이 모이고 모이면 무슨 일이 일어나는가?",
+Heo,허원재,,"계산사회과학, 롯데자이언츠, 자연어처리","의료연구지원법인 차라투 데이터분석/개발 인턴 (2022)|부산영도구청 영선2동주민센터 복지팀 사회복무 Agent (2022-2024)|ETH Zurich 교환학생 (2024)","삼중전공 중입니다.",
+Moon,문영종,,"프로젝트 수업, 철학, 창업교육, 강의없는 수업","농업법인 팜프라(2023)|미래교실 네트워크(2024-2025)|거꾸로캠퍼스 강사(2025-2026)","학교 밖에서 사회교육을 전파합니다.",
+DOL,김민석,,,,,

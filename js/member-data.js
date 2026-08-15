@@ -16,6 +16,7 @@ export function normalizeMemberRow(row) {
     interests: String(row.interests || "").trim(),
     career: splitList(row.career),
     bio: String(row.bio || "").trim(),
+    making: splitList(row.making),
     homepage: String(row.homepage || "").trim(),
   };
   return member.id ? member : null;

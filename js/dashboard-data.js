@@ -107,7 +107,7 @@ export function isJsonLessonUrl(value) {
   }
 }
 
-export function createWorkMap(groups = [], games = []) {
+export function createWorkMap(groups = [], games = [], resources = []) {
   const map = new Map();
   groups.forEach(group => {
     if (normalizeKind(group.kind) === "game") {
@@ -147,6 +147,21 @@ export function createWorkMap(groups = [], games = []) {
       href: game.link || "#",
       external: true,
       makers: normalizeMakers(game.makers),
+    });
+  });
+  resources.forEach(resource => {
+    const type = normalizeKind(resource.kind) === "game" ? "game" : "lesson";
+    const action = (resource.actions || []).find(item => item?.href);
+    const href = action?.href || "#";
+    map.set(`${type}:${resource.id}`, {
+      type,
+      id: resource.id,
+      label: resource.discipline || (type === "game" ? "게임" : "수업"),
+      title: stripHtml(resource.title),
+      groupTitle: stripHtml(resource.discipline || resource.sourceUnitName || (type === "game" ? "게임" : "수업")),
+      href,
+      external: action?.external ?? /^https?:\/\//i.test(href),
+      makers: normalizeMakers(resource.makers),
     });
   });
   return map;
@@ -201,6 +216,21 @@ export function createMakerWorkMap(workMap, members = []) {
       if (!memberId) return;
       if (!makerMap.has(memberId)) makerMap.set(memberId, []);
       makerMap.get(memberId).push(work);
+    });
+  });
+
+  const worksByLookup = new Map();
+  workMap.forEach(work => {
+    [work.id, work.title].map(normalizeMakerKey).filter(Boolean).forEach(key => worksByLookup.set(key, work));
+  });
+  members.forEach(member => {
+    const memberId = normalizeMakerKey(member?.id);
+    if (!memberId) return;
+    (member.making || []).map(normalizeMakerKey).filter(Boolean).forEach(key => {
+      const work = worksByLookup.get(key);
+      if (!work) return;
+      if (!makerMap.has(memberId)) makerMap.set(memberId, []);
+      if (!makerMap.get(memberId).some(item => item.type === work.type && item.id === work.id)) makerMap.get(memberId).push(work);
     });
   });
 

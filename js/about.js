@@ -55,7 +55,7 @@ function applyDashboardConfig(config) {
     state.makerWorkMap = new Map();
     return;
   }
-  state.workMap = createWorkMap(config.groups || [], config.games || []);
+  state.workMap = createWorkMap(config.groups || [], config.games || [], config.catalog?.resources || []);
   state.makerWorkMap = createMakerWorkMap(state.workMap, state.members);
 }
 

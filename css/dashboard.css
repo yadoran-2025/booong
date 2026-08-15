@@ -107,22 +107,22 @@
   display: inline-flex;
   align-items: center;
   justify-self: end;
-  min-height: var(--space-11);
+  min-height: 34px;
   border: 1px solid var(--desk-line);
-  border-radius: var(--radius-sm);
-  background: var(--desk-white);
-  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: transparent;
+  padding: 0 14px;
   color: var(--desk-ink-soft);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-decoration: none;
 }
 
 .curation-topbar__about:hover,
 .curation-topbar__about:focus-visible {
   border-color: var(--desk-blue);
-  background: color-mix(in srgb, var(--desk-blue) 6%, var(--desk-white));
+  background: color-mix(in srgb, var(--desk-blue) 8%, transparent);
   color: var(--desk-blue);
 }
 

@@ -795,13 +795,20 @@
   border: 1px solid var(--desk-line);
   border-radius: var(--radius);
   background: var(--desk-white);
-  padding: var(--space-5);
+  padding: var(--space-4);
   color: var(--desk-ink);
 }
 
 .bundle-card__content {
   display: grid;
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "badges badges"
+    "title title"
+    "description description"
+    "makers actions";
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
   min-width: 0;
 }
 
@@ -810,6 +817,7 @@
 }
 
 .bundle-card__badges {
+  grid-area: badges;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
@@ -841,6 +849,7 @@
 }
 
 .bundle-card h3 {
+  grid-area: title;
   margin: 0;
   font-size: 20px;
   font-weight: 900;
@@ -849,6 +858,7 @@
 }
 
 .bundle-card__content > p {
+  grid-area: description;
   max-width: 64ch;
   margin: 0;
   color: var(--desk-muted);
@@ -858,18 +868,19 @@
 }
 
 .bundle-card__makers {
+  grid-area: makers;
   color: var(--desk-muted);
   font-size: 12px;
   font-weight: 750;
 }
 
 .bundle-actions {
+  grid-area: actions;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  margin-top: var(--space-1);
-  border-top: 1px solid var(--desk-line);
-  padding-top: var(--space-3);
+  margin-top: 0;
+  justify-self: end;
 }
 
 .bundle-action {
@@ -1481,9 +1492,23 @@
     padding: var(--space-4);
   }
 
+  .bundle-card__content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "badges"
+      "title"
+      "description"
+      "makers"
+      "actions";
+  }
+
   .bundle-actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    justify-self: stretch;
+    margin-top: var(--space-1);
+    border-top: 1px solid var(--desk-line);
+    padding-top: var(--space-3);
   }
 
   .bundle-action {

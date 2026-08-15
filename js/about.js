@@ -91,9 +91,11 @@ function renderAbout() {
               <span>타자로서</span> 돕는<br>
               사람들
             </h1>
-            <p class="about__intro">
-              모두에게, 더 질 좋은 수업을.
-            </p>
+            <blockquote class="about__intro about__quote">
+              타자를 돕고, 타자로서 돕고, 타자를 돕는 일을 도우며,<br>
+              미래-타자의 출현에 열린 지식과 기술은 어떤 얼굴일까.
+              <cite>출처: 『사이보그가 되다』, 김원영·김초엽, 사계절, 2021</cite>
+            </blockquote>
           </div>
           <div class="about__scene" aria-label="공적 질문이 모이는 밤의 장면">
             <div class="about__scene-image" aria-hidden="true">

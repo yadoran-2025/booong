@@ -149,6 +149,23 @@
   line-height: 1.8;
 }
 
+.about__quote {
+  margin-left: 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--accent);
+  font-style: italic;
+}
+
+.about__quote cite {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-faint);
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-style: normal;
+  line-height: 1.5;
+}
+
 .about__scene {
   position: relative;
   align-self: stretch;

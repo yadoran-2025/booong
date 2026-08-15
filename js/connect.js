@@ -1,4 +1,5 @@
 import { escapeHtml } from "./utils.js";
+import { loadMembers } from "./member-data.js";
 
 const root = document.getElementById("connect-root");
 
@@ -15,14 +16,13 @@ init();
 async function init() {
   root.innerHTML = renderLoading();
   try {
-    const [indexRes, membersRes] = await Promise.all([
+    const [indexRes, members] = await Promise.all([
       fetch(`lessons/index.json?_=${Date.now()}`, { cache: "no-store" }),
-      fetch(`members.json?_=${Date.now()}`, { cache: "no-store" }),
+      loadMembers(),
     ]);
     if (!indexRes.ok) throw new Error(`lessons/index.json ${indexRes.status}`);
-    if (!membersRes.ok) throw new Error(`members.json ${membersRes.status}`);
     state.index = await indexRes.json();
-    state.membersData = await membersRes.json();
+    state.membersData = { members };
     normalizeMembersData();
     state.originalJson = getOutputJson();
     state.selectedMemberId = state.membersData.members?.[0]?.id || "";

@@ -1,4 +1,5 @@
 import { createMakerWorkMap, createWorkMap, getMemberLookupKeys, loadCachedDashboardConfig, loadDashboardConfig } from "./dashboard-data.js";
+import { loadMembers } from "./member-data.js";
 import { escapeHtml } from "./utils.js";
 
 const root = document.getElementById("about-root");
@@ -28,11 +29,7 @@ async function init() {
   root.innerHTML = renderLoading();
 
   try {
-    const membersRes = await fetch(`members.json?_=${Date.now()}`, { cache: "no-store" });
-    if (!membersRes.ok) throw new Error(`members.json ${membersRes.status}`);
-
-    const memberData = await membersRes.json();
-    state.members = Array.isArray(memberData.members) ? memberData.members : [];
+    state.members = await loadMembers();
     applyDashboardConfig(loadCachedDashboardConfig());
     state.selectedMemberId = getInitialSelectedMemberId(state.members);
 

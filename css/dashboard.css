@@ -497,7 +497,7 @@
 
 .unit-workspace {
   display: grid;
-  grid-template-columns: minmax(15rem, 0.32fr) minmax(0, 0.68fr);
+  grid-template-columns: minmax(14rem, 0.29fr) minmax(0, 0.71fr);
   gap: var(--space-8);
   align-items: start;
   border-top: 2px solid var(--desk-ink);

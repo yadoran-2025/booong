@@ -320,6 +320,12 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
     const subjects = unique(joinedUnits.map(unit => unit.subject));
     const schools = unique([...joinedUnits.map(unit => unit.school), ...splitSheetList(row.school)]);
     const unitKeys = unique(joinedUnits.map(unit => `${unit.subject}::${unit.majorUnit}`));
+    const middleUnitsByKey = {};
+    joinedUnits.forEach(unit => {
+      const key = `${unit.subject}::${unit.majorUnit}`;
+      if (!middleUnitsByKey[key]) middleUnitsByKey[key] = [];
+      if (unit.middleUnit && !middleUnitsByKey[key].includes(unit.middleUnit)) middleUnitsByKey[key].push(unit.middleUnit);
+    });
     const makers = normalizeMakers(row.maker);
     const actions = [
       createResourceAction("teacher", "교사용 자료", row.teacher_link),
@@ -338,6 +344,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
       unitCodes,
       unitKeys,
       middleUnits: unique(joinedUnits.map(unit => unit.middleUnit).filter(Boolean)),
+      middleUnitsByKey,
       subjects,
       schools,
       actions,

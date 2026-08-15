@@ -25,6 +25,7 @@ assert.deepEqual(catalog.subjects.map(({ value }) => value), ["사회1", "사회
 assert.equal(catalog.units.length, 4);
 assert.equal(catalog.resources.some(({ title }) => title === "숨긴 자료"), false);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").subjects, ["사회1", "통합사회2"]);
+assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").middleUnitsByKey["사회1::XII. 세계화와 평화"], ["2. 세계화의 양상"]);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").actions.length, 2);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").actions.every(({ external }) => external), true);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").searchText.includes("설명전용검색어"), true);

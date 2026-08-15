@@ -267,7 +267,7 @@ function renderResourcePanel(items, selectedUnit, state) {
       </div>
       ${sortedItems.length ? `
         <div class="bundle-list" data-library-grid>
-          ${sortedItems.map(renderResourceCard).join("")}
+          ${sortedItems.map(item => renderResourceCard(item, selectedUnit.key)).join("")}
         </div>
         <div class="curation-library__empty" data-library-empty hidden>
           <strong>찾는 자료가 없습니다.</strong><span>검색어를 바꾸거나 전체 자료를 선택해보세요.</span>
@@ -318,12 +318,13 @@ function renderKindButton(value, label, state) {
   return `<button type="button" data-kind="${value}" aria-pressed="${selected}">${label}</button>`;
 }
 
-function renderResourceCard(item) {
+function renderResourceCard(item, selectedUnitKey = "") {
+  const middleUnits = item.middleUnitsByKey?.[selectedUnitKey] || item.middleUnits || [];
   return `
     <article class="bundle-card" data-library-item data-kind="${escapeAttr(item.kind)}" data-search="${escapeAttr(item.searchText)}">
       <div class="bundle-card__content">
         <div class="bundle-card__badges">
-          ${item.middleUnits?.length ? `<span>${escapeHtml(formatUnitList(item.middleUnits))}</span>` : ""}
+          ${middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
           <span>${item.kind === "game" ? "게임" : "수업"}</span>
           ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
         </div>

@@ -68,7 +68,9 @@ function renderCurationHome(root, config, state, focusTarget = "") {
     resource.subjects.includes(state.profile.subject) && resource.schools.includes(state.profile.school)
   );
   const units = catalog.units.filter(unit =>
-    unit.school === state.profile.school && unit.subject === state.profile.subject
+    unit.school === state.profile.school
+    && unit.subject === state.profile.subject
+    && subjectItems.some(resource => resource.unitKeys.includes(unit.key))
   );
   if (!units.some(unit => unit.key === state.unit)) state.unit = units[0]?.key || "";
   const selectedUnit = units.find(unit => unit.key === state.unit) || null;
@@ -161,8 +163,8 @@ function renderHero(profile, count, query, subjectLabel) {
         </label>
       </div>
       <a class="curation-subject-slip" href="index.html?view=new">
-        <span>NEW</span>
-        <strong>새로 들어온 수업</strong>
+        <span>새로 들어온 수업</span>
+        <strong>NEW</strong>
         <small>ALL SUBJECTS</small>
         <i>BOOONG<br>CURATION</i>
       </a>
@@ -179,14 +181,13 @@ function renderUnitNavigator(units, selectedUnit, profile, items, resources, sta
           <h2 id="unit-axis-title">${escapeHtml(subjectLabel)} 대단원</h2>
         </div>
         ${renderSubjectRoller(profile, state.subjectOptions)}
-        <p>현재 진도에 맞는 대단원을 고르면 그 아래 수업만 꺼내드립니다.</p>
       </header>
       ${units.length ? `
         <div class="unit-workspace">
           <aside class="unit-picker" aria-label="대단원 목록">
             <header><span>대단원 ${units.length}개</span></header>
             <div class="unit-axis__track" role="group" aria-label="대단원 선택">
-              ${units.map((unit, index) => renderUnitTab(unit, index, selectedUnit, resources)).join("")}
+              ${units.map(unit => renderUnitTab(unit, selectedUnit, resources)).join("")}
             </div>
           </aside>
           <div class="unit-detail" id="unit-detail" aria-live="polite">
@@ -208,7 +209,7 @@ function renderSubjectRoller(profile, subjectOptions) {
   return `
     <div class="subject-roller" data-subject-roller role="group" aria-label="과목 돌려서 변경">
       <div class="subject-roller__meta">
-        <span>ALL SUBJECTS</span>
+        <span>과목 바꾸기</span>
         <strong>${escapeHtml(`${profile.school} · ${currentSubjectLabel}`)}</strong>
       </div>
       <div class="subject-roller__groups" role="radiogroup" aria-label="과목 선택" aria-live="polite">
@@ -226,22 +227,19 @@ function renderSubjectRoller(profile, subjectOptions) {
       </div>
       <div class="subject-roller__nav">
         <button type="button" data-subject-step="-1" aria-label="이전 과목">←</button>
-        <small>WHEEL · DRAG · ← →</small>
         <button type="button" data-subject-step="1" aria-label="다음 과목">→</button>
       </div>
     </div>
   `;
 }
 
-function renderUnitTab(unit, index, selectedUnit, resources) {
+function renderUnitTab(unit, selectedUnit, resources) {
   const selected = selectedUnit?.key === unit.key;
   const resourceCount = resources.filter(resource => resource.unitKeys.includes(unit.key)).length;
   return `
     <button class="unit-tab" type="button" data-unit="${escapeAttr(unit.key)}" aria-pressed="${selected}">
-      <span>${String(index + 1).padStart(2, "0")}</span>
       <strong>${escapeHtml(unit.title)}</strong>
       <small>${resourceCount}개 자료</small>
-      ${unit.middleUnits.length ? `<em>${escapeHtml(unit.middleUnits.slice(0, 2).join(" · "))}</em>` : ""}
     </button>
   `;
 }
@@ -313,30 +311,51 @@ function renderKindButton(value, label, state) {
 function renderResourceCard(item) {
   return `
     <article class="bundle-card" data-library-item data-kind="${escapeAttr(item.kind)}" data-search="${escapeAttr(item.searchText)}">
-      <div class="bundle-card__badges">
-        <span>${item.kind === "game" ? "게임" : "수업"}</span>
-        ${item.isNew ? `<span>NEW</span>` : ""}
-        ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
-      </div>
-      <h3>${escapeHtml(item.title)}</h3>
-      <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
-      ${item.makers.length ? `
-        <div class="bundle-card__makers" aria-label="제작자">
-          <span class="bundle-card__makers-label">MADE BY</span>
-          ${item.makers.map(maker => `<span class="bundle-card__maker">${escapeHtml(maker)}</span>`).join("")}
+      <div class="bundle-card__content">
+        <div class="bundle-card__badges">
+          <span>${item.kind === "game" ? "게임" : "수업"}</span>
+          ${item.isNew ? `<span>NEW</span>` : ""}
+          ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
         </div>
-      ` : ""}
-      <div class="bundle-actions">
-        ${item.actions.map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">자료 준비 중</span>`}
+        <h3>${escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
+        ${item.makers.length ? `
+          <div class="bundle-card__makers" aria-label="제작자">
+          <span class="bundle-card__makers-label">MADE BY</span>
+          ${item.makers.map(maker => `<a class="bundle-card__maker" href="about.html#${escapeAttr(encodeURIComponent(maker))}">${escapeHtml(maker)}</a>`).join("")}
+        </div>
+        ` : ""}
+        <div class="bundle-actions">
+          ${item.actions.map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">자료 준비 중</span>`}
+        </div>
       </div>
+      ${renderLinkPreview(item)}
     </article>
   `;
+}
+
+function renderLinkPreview(item) {
+  const action = item.actions[0];
+  if (!action) {
+    return `<div class="bundle-link-preview is-pending"><span>링크 미리보기</span><strong>연결 준비 중</strong><small>공개 자료가 등록되면 여기에서 바로 확인할 수 있습니다.</small></div>`;
+  }
+  return `<div class="bundle-link-preview">
+    <iframe class="bundle-link-preview__frame" src="${escapeAttr(action.href)}" title="${escapeAttr(item.title)} 실제 화면 미리보기" loading="lazy" sandbox="allow-same-origin allow-scripts" tabindex="-1"></iframe>
+    <a class="bundle-link-preview__link" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} aria-label="${escapeAttr(`${item.title} ${action.label} 열기`)}" ${renderTrackingData(item, action)}>
+      <span>실제 화면</span><small>${escapeHtml(getPreviewHost(action.href))}</small><i aria-hidden="true">↗</i>
+    </a>
+  </div>`;
+}
+
+function getPreviewHost(href) {
+  const url = new URL(href, "https://booong.local/");
+  return url.hostname === "booong.local" ? "BOOONG" : url.hostname.replace(/^www\./, "");
 }
 
 function renderActionLink(action, item) {
   const title = action.key === "worksheet" ? "활동지 열기" : "자료 열기";
   return `<a class="bundle-action" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}>
-    <small>${escapeHtml(action.label)}</small><strong>${title}</strong><span aria-hidden="true">→</span>
+    <strong>${title}</strong><span aria-hidden="true">→</span>
   </a>`;
 }
 

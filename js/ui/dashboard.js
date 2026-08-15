@@ -154,7 +154,7 @@ function renderHero(profile, count, query, subjectLabel) {
         <span class="curation-kicker">${escapeHtml(profile.school)} · ${escapeHtml(subjectLabel)} 수업 준비실</span>
         <h1 id="curation-hero-title">오늘 수업,<br><em>이런 건 어떠세요?</em></h1>
         <p>${count
-          ? `선생님의 과목에 맞는 수업 꾸러미 ${count}개를 먼저 꺼내두었습니다.`
+          ? `선생님의 과목에 맞는 수업 ${count}개를 먼저 꺼내두었습니다.`
           : "아직 꼭 맞는 꾸러미는 없지만, 바로 쓸 수 있는 제작 도구와 전체 자료를 열어두었습니다."}</p>
         <label class="curation-search">
           <span aria-hidden="true">⌕</span>
@@ -197,7 +197,7 @@ function renderUnitNavigator(units, selectedUnit, profile, items, resources, sta
       ` : `
         <div class="unit-axis__empty" aria-live="polite">
           <strong>대단원 지도를 불러오고 있습니다.</strong>
-          <span>과목에 맞는 교육과정과 수업 꾸러미를 연결하는 중입니다.</span>
+          <span>과목에 맞는 교육과정과 수업을 연결하는 중입니다.</span>
         </div>
       `}
     </section>
@@ -497,7 +497,7 @@ function renderTeacherOnboarding(root, onComplete, initialProfile = {}, subjectO
       {
         label: "과목",
         title: "무엇을 가르치시나요?",
-        desc: "선택한 과목의 수업 꾸러미를 첫 화면에 준비해둘게요.",
+        desc: "선택한 과목의 수업을 첫 화면에 준비해둘게요.",
         value: draft.subject,
         options: (subjectOptions[draft.school] || []).map(({ value, label }) => ({ value, label })),
       },

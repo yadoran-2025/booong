@@ -108,14 +108,21 @@
   align-items: center;
   justify-self: end;
   min-height: var(--space-11);
+  border: 1px solid var(--desk-line);
+  border-radius: var(--radius-sm);
+  background: var(--desk-white);
+  padding: 0 var(--space-3);
   color: var(--desk-ink-soft);
   font-size: 13px;
   font-weight: 800;
+  letter-spacing: 0.08em;
   text-decoration: none;
 }
 
 .curation-topbar__about:hover,
 .curation-topbar__about:focus-visible {
+  border-color: var(--desk-blue);
+  background: color-mix(in srgb, var(--desk-blue) 6%, var(--desk-white));
   color: var(--desk-blue);
 }
 

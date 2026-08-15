@@ -142,7 +142,7 @@ function renderTopbar() {
         <span class="curation-brand__mark" aria-hidden="true">${renderScooterPictogram()}</span>
         <span><b>BOOONG</b><small>수업 준비실</small></span>
       </a>
-      <a class="curation-topbar__about" href="about.html">만든 사람들</a>
+      <a class="curation-topbar__about" href="about.html">ABOUT US</a>
     </header>
   `;
 }

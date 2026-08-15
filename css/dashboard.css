@@ -803,10 +803,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
-    "badges badges"
+    "badges makers"
     "title title"
     "description description"
-    "makers actions";
+    "actions actions";
   gap: var(--space-2) var(--space-4);
   align-items: center;
   min-width: 0;
@@ -875,6 +875,7 @@
   gap: var(--space-1);
   min-width: 0;
   overflow-x: auto;
+  justify-self: end;
   white-space: nowrap;
   color: var(--desk-muted);
   font-size: 12px;
@@ -1506,6 +1507,10 @@
       "description"
       "makers"
       "actions";
+  }
+
+  .bundle-card__makers {
+    justify-self: start;
   }
 
   .bundle-actions {

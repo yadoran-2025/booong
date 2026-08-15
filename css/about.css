@@ -63,6 +63,17 @@
   text-transform: uppercase;
 }
 
+.about__back {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.65rem 0.8rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 0 rgba(10, 18, 32, 0.06);
+}
+
 .about__manage {
   color: var(--text-faint);
 }
@@ -70,8 +81,12 @@
 .about__back:hover,
 .about__manage:hover {
   color: var(--accent-deep);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+}
+
+.about__back:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: var(--accent-soft, #F2F6FF);
+  text-decoration: none;
 }
 
 .about__hero {

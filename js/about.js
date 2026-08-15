@@ -92,8 +92,7 @@ function renderAbout() {
               사람들
             </h1>
             <p class="about__intro">
-              교실에 앉아 사회변혁을 꿈꾸다.<br>
-              그런 허황된 꿈을 꾸어 온 교사모임입니다.
+              모두에게, 더 질 좋은 수업을.
             </p>
           </div>
           <div class="about__scene" aria-label="공적 질문이 모이는 밤의 장면">

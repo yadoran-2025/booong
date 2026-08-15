@@ -788,7 +788,7 @@
 
 .bundle-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.38fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: stretch;
   min-width: 0;
@@ -913,67 +913,6 @@
   border-style: dashed;
   color: var(--desk-muted);
 }
-
-.bundle-link-preview {
-  position: relative;
-  min-height: 100%;
-  overflow: hidden;
-  border: 1px solid var(--desk-line);
-  border-radius: var(--radius-sm);
-  background: var(--desk-paper);
-  color: var(--desk-ink);
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-
-.bundle-link-preview__frame {
-  position: absolute;
-  inset: 0;
-  width: 400%;
-  height: 400%;
-  border: 0;
-  background: var(--desk-white);
-  pointer-events: none;
-  transform: scale(0.25);
-  transform-origin: top left;
-}
-
-.bundle-link-preview:not(.is-pending):hover {
-  border-color: var(--desk-ink);
-  transform: translateY(-2px);
-}
-
-.bundle-link-preview.is-pending {
-  display: grid;
-  align-content: start;
-  gap: var(--space-2);
-  border-style: dashed;
-  background: var(--desk-paper);
-  padding: var(--space-5);
-  color: var(--desk-muted);
-}
-
-.bundle-link-preview.is-pending > span {
-  color: var(--desk-muted);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.bundle-link-preview.is-pending strong {
-  max-width: 12ch;
-  font-size: clamp(19px, 2vw, 26px);
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  line-height: 1.18;
-}
-
-.bundle-link-preview.is-pending small {
-  margin-top: auto;
-  color: var(--desk-ink-soft);
-  font-size: 12px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
 
 .curation-library__empty {
   display: grid;
@@ -1539,10 +1478,6 @@
   .bundle-card {
     grid-template-columns: minmax(0, 1fr);
     padding: var(--space-4);
-  }
-
-  .bundle-link-preview {
-    min-height: 10rem;
   }
 
   .bundle-actions {

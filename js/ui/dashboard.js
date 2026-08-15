@@ -330,19 +330,8 @@ function renderResourceCard(item) {
           ${item.actions.map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">자료 준비 중</span>`}
         </div>
       </div>
-      ${renderLinkPreview(item)}
     </article>
   `;
-}
-
-function renderLinkPreview(item) {
-  const action = item.actions[0];
-  if (!action) {
-    return `<div class="bundle-link-preview is-pending"><span>링크 미리보기</span><strong>연결 준비 중</strong><small>공개 자료가 등록되면 여기에서 바로 확인할 수 있습니다.</small></div>`;
-  }
-  return `<div class="bundle-link-preview">
-    <iframe class="bundle-link-preview__frame" src="${escapeAttr(action.href)}" title="${escapeAttr(item.title)} 실제 화면 미리보기" loading="lazy" sandbox="allow-same-origin allow-scripts" tabindex="-1"></iframe>
-  </div>`;
 }
 
 function formatUnitList(units) {

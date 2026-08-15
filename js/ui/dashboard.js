@@ -1,4 +1,5 @@
 import { loadDashboardConfig as loadSharedDashboardConfig } from "../dashboard-data.js";
+import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from "../favorites.js";
 import { SCHOOL_OPTIONS, createSubjectOptions, getAdjacentTeacherProfile, getSubjectLabel, loadTeacherProfile, normalizeTeacherProfile, saveTeacherProfile } from "../teacher-profile.js";
 import { escapeHtml } from "../utils.js";
 import { trackGroupClick } from "../visitor-analytics.js";
@@ -21,8 +22,13 @@ export async function showDashboard() {
   root.className = "curation-app";
   document.body.appendChild(root);
 
-  if (new URLSearchParams(window.location.search).get("view") === "new") {
+  const view = new URLSearchParams(window.location.search).get("view");
+  if (view === "new") {
     renderNewLessonsView(root, config);
+    return;
+  }
+  if (view === "favorites") {
+    renderFavoritesView(root, config);
     return;
   }
 
@@ -135,14 +141,53 @@ function renderNewLessonsView(root, config) {
   bindCurationEvents(root, config, {});
 }
 
-function renderTopbar() {
+function renderFavoritesView(root, config) {
+  const resourceById = new Map(config.catalog.resources.map(resource => [resource.id, resource]));
+  const items = loadFavoriteIds().map(id => resourceById.get(id)).filter(Boolean);
+
+  root.innerHTML = `
+    <div class="curation-shell">
+      ${renderTopbar(true)}
+      <main>
+        <section class="curation-new-lessons curation-favorites" aria-labelledby="favorite-lessons-title">
+          <header class="curation-section-head">
+            <div>
+              <span>MY LESSONS</span>
+              <h1 id="favorite-lessons-title">즐겨찾기 수업</h1>
+            </div>
+            <a href="index.html">홈으로</a>
+          </header>
+          <div class="bundle-list" data-favorites-list ${items.length ? "" : "hidden"}>
+            ${items.map(renderResourceCard).join("")}
+          </div>
+          <div class="curation-library__empty" data-favorites-empty ${items.length ? "hidden" : ""}>
+            <strong>아직 즐겨찾기한 수업이 없습니다.</strong>
+            <span>수업 카드의 별을 누르면 이곳에 모아둘 수 있습니다.</span>
+            <a href="index.html">수업 둘러보기</a>
+          </div>
+        </section>
+      </main>
+      ${renderFooter()}
+    </div>
+  `;
+
+  bindCurationEvents(root, config, {});
+}
+
+function renderTopbar(favoritesCurrent = false) {
+  const favoriteCount = loadFavoriteIds().length;
   return `
     <header class="curation-topbar">
       <a class="curation-brand" href="index.html" aria-label="BOOONG 홈">
         <span class="curation-brand__mark" aria-hidden="true">${renderScooterPictogram()}</span>
         <span><b>BOOONG</b><small>수업 준비실</small></span>
       </a>
-      <a class="curation-topbar__about" href="about.html">ABOUT US</a>
+      <nav class="curation-topbar__actions" aria-label="빠른 이동">
+        <a class="curation-topbar__favorites ${favoritesCurrent ? "is-current" : ""}" href="index.html?view=favorites" ${favoritesCurrent ? `aria-current="page"` : ""}>
+          <span aria-hidden="true">★</span> 즐겨찾기 <b data-favorite-count>${favoriteCount}</b>
+        </a>
+        <a class="curation-topbar__about" href="about.html">ABOUT US</a>
+      </nav>
     </header>
   `;
 }
@@ -320,6 +365,7 @@ function renderKindButton(value, label, state) {
 
 function renderResourceCard(item, selectedUnitKey = "") {
   const middleUnits = item.middleUnitsByKey?.[selectedUnitKey] || item.middleUnits || [];
+  const isFavorite = loadFavoriteIds().includes(item.id);
   return `
     <article class="bundle-card" data-library-item data-kind="${escapeAttr(item.kind)}" data-search="${escapeAttr(item.searchText)}">
       <div class="bundle-card__content">
@@ -327,6 +373,7 @@ function renderResourceCard(item, selectedUnitKey = "") {
           ${middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
           <span>${item.kind === "game" ? "게임" : "수업"}</span>
           ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
+          <button class="bundle-favorite" type="button" data-favorite-id="${escapeAttr(item.id)}" aria-pressed="${isFavorite}" aria-label="${escapeAttr(`${item.title} 즐겨찾기 ${isFavorite ? "해제" : "등록"}`)}" title="즐겨찾기 ${isFavorite ? "해제" : "등록"}"><span aria-hidden="true">${isFavorite ? "★" : "☆"}</span></button>
         </div>
         <h3>${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
@@ -370,6 +417,10 @@ function renderFooter() {
 }
 
 function bindCurationEvents(root, config, state) {
+  root.querySelectorAll("[data-favorite-id]").forEach(button => {
+    button.addEventListener("click", () => toggleFavorite(root, button));
+  });
+
   root.querySelectorAll("[data-subject-step]").forEach(button => {
     button.addEventListener("click", () => rollSubject(root, config, state, Number(button.dataset.subjectStep), true));
   });
@@ -438,6 +489,30 @@ function bindCurationEvents(root, config, state) {
       });
     });
   });
+}
+
+function toggleFavorite(root, button) {
+  const id = button.dataset.favoriteId || "";
+  const favoriteIds = saveFavoriteIds(toggleFavoriteId(loadFavoriteIds(), id));
+  const isFavorite = favoriteIds.includes(id);
+
+  root.querySelectorAll("[data-favorite-id]").forEach(item => {
+    if (item.dataset.favoriteId !== id) return;
+    item.setAttribute("aria-pressed", String(isFavorite));
+    item.setAttribute("aria-label", `${item.closest(".bundle-card")?.querySelector("h3")?.textContent || "수업"} 즐겨찾기 ${isFavorite ? "해제" : "등록"}`);
+    item.title = `즐겨찾기 ${isFavorite ? "해제" : "등록"}`;
+    item.querySelector("span").textContent = isFavorite ? "★" : "☆";
+  });
+
+  root.querySelectorAll("[data-favorite-count]").forEach(item => { item.textContent = favoriteIds.length; });
+  if (!root.querySelector(".curation-favorites") || isFavorite) return;
+
+  button.closest(".bundle-card")?.remove();
+  const hasItems = Boolean(root.querySelector("[data-favorites-list] .bundle-card"));
+  const list = root.querySelector("[data-favorites-list]");
+  const empty = root.querySelector("[data-favorites-empty]");
+  if (list) list.hidden = !hasItems;
+  if (empty) empty.hidden = hasItems;
 }
 
 function rollSubject(root, config, state, direction, restoreFocus = root.querySelector("[data-subject-roller]")?.contains(document.activeElement)) {

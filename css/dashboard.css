@@ -103,10 +103,18 @@
   font-weight: 750;
 }
 
-.curation-topbar__about {
-  display: inline-flex;
+.curation-topbar__actions {
+  display: flex;
   align-items: center;
   justify-self: end;
+  gap: var(--space-2);
+}
+
+.curation-topbar__about,
+.curation-topbar__favorites {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   min-height: 34px;
   border: 1px solid var(--desk-line);
   border-radius: var(--radius-full);
@@ -119,8 +127,24 @@
   text-decoration: none;
 }
 
+.curation-topbar__favorites b {
+  min-width: 1.4rem;
+  border-radius: var(--radius-full);
+  background: var(--desk-paper);
+  padding: var(--space-0-5) var(--space-1);
+  text-align: center;
+}
+
+.curation-topbar__favorites.is-current {
+  border-color: var(--desk-ink);
+  background: var(--desk-ink);
+  color: var(--desk-white);
+}
+
 .curation-topbar__about:hover,
-.curation-topbar__about:focus-visible {
+.curation-topbar__about:focus-visible,
+.curation-topbar__favorites:hover,
+.curation-topbar__favorites:focus-visible {
   border-color: var(--desk-blue);
   background: color-mix(in srgb, var(--desk-blue) 8%, transparent);
   color: var(--desk-blue);
@@ -823,7 +847,36 @@
   gap: var(--space-1);
 }
 
-.bundle-card__badges span {
+.bundle-favorite {
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-11);
+  height: var(--space-11);
+  margin-left: auto;
+  border: 1px solid var(--desk-line);
+  border-radius: var(--radius-full);
+  background: var(--desk-white);
+  color: var(--desk-ink-soft);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.bundle-favorite:hover,
+.bundle-favorite:focus-visible {
+  border-color: var(--desk-blue);
+  color: var(--desk-blue);
+  transform: rotate(-5deg) scale(1.05);
+}
+
+.bundle-favorite[aria-pressed="true"] {
+  border-color: var(--desk-ink);
+  background: var(--desk-ink);
+  color: var(--desk-lime);
+}
+
+.bundle-card__badges > span {
   display: inline-flex;
   align-items: center;
   min-height: 26px;
@@ -836,13 +889,13 @@
   font-weight: 900;
 }
 
-.bundle-card__badges span:first-child {
+.bundle-card__badges > span:first-child {
   border-color: var(--desk-blue);
   background: var(--desk-blue);
   color: var(--desk-white);
 }
 
-.bundle-card__badges span:not(:first-child) {
+.bundle-card__badges > span:not(:first-child) {
   border-color: var(--desk-lime);
   background: var(--desk-lime);
   color: var(--desk-ink);

@@ -313,10 +313,9 @@ function renderResourceCard(item) {
     <article class="bundle-card" data-library-item data-kind="${escapeAttr(item.kind)}" data-search="${escapeAttr(item.searchText)}">
       <div class="bundle-card__content">
         <div class="bundle-card__badges">
-          <span>${item.kind === "game" ? "게임" : "수업"}</span>
-          ${item.isNew ? `<span>NEW</span>` : ""}
-          ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
           ${item.middleUnits?.length ? `<span>${escapeHtml(formatUnitList(item.middleUnits))}</span>` : ""}
+          <span>${item.kind === "game" ? "게임" : "수업"}</span>
+          ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
         </div>
         <h3>${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>

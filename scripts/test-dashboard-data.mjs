@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildDashboardCatalog, loadDashboardConfig, mergeDashboardCatalog, normalizeDashboardConfig } from "../js/dashboard-data.js";
+import { buildDashboardCatalog, createWorkMap, loadDashboardConfig, mergeDashboardCatalog, normalizeDashboardConfig } from "../js/dashboard-data.js";
 
 const unitRows = [
   { "단원_코드": "36", "과목": "사회1", "대단원": "XII. 세계화와 평화", "중단원": "2. 세계화의 양상" },
@@ -43,6 +43,10 @@ assert.deepEqual(catalog.units.find(({ key }) => key === "사회2::III. 시장�
   "3. 시장 가격의 변동",
 ]);
 assert.deepEqual(catalog.diagnostics.unknownUnitCodes, [999]);
+
+const workMap = createWorkMap([], [], catalog.resources);
+assert.deepEqual(workMap.get("game:resource-놀라운-수요일-36-90")?.units, ["XII. 세계화와 평화", "I. 인권 보장과 헌법"]);
+assert.deepEqual(workMap.get("lesson:resource-우리가-만드는-수요곡선-45")?.units, ["III. 시장과 가격"]);
 
 const local = { groups: [{ id: "local-lesson", lessons: [{ id: "lesson-1" }] }], games: [{ id: "local-game" }] };
 const merged = mergeDashboardCatalog(local, catalog);

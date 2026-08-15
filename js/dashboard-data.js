@@ -118,6 +118,7 @@ export function createWorkMap(groups = [], games = [], resources = []) {
         label: group.tag || "게임",
         title: stripHtml(group.title),
         groupTitle: stripHtml(group.discipline || group.subject || "게임"),
+        units: getWorkUnits(group),
         href: href || "#",
         external: /^https?:\/\//i.test(href),
         makers: getGroupMakers(group),
@@ -132,6 +133,7 @@ export function createWorkMap(groups = [], games = [], resources = []) {
       label: group.subject || group.discipline || "수업",
       title: stripHtml(group.title) || "수업",
       groupTitle: stripHtml(group.discipline || group.subject || "수업"),
+      units: getWorkUnits(group),
       href: href || "#",
       external: /^https?:\/\//i.test(href),
       makers: getGroupMakers(group),
@@ -144,6 +146,7 @@ export function createWorkMap(groups = [], games = [], resources = []) {
       label: game.tag || "게임",
       title: stripHtml(game.title),
       groupTitle: "게임",
+      units: getWorkUnits(game),
       href: game.link || "#",
       external: true,
       makers: normalizeMakers(game.makers),
@@ -159,6 +162,7 @@ export function createWorkMap(groups = [], games = [], resources = []) {
       label: resource.discipline || (type === "game" ? "게임" : "수업"),
       title: stripHtml(resource.title),
       groupTitle: stripHtml(resource.discipline || resource.sourceUnitName || (type === "game" ? "게임" : "수업")),
+      units: (resource.unitKeys || []).map(key => String(key).split("::").pop()).filter(Boolean),
       href,
       external: action?.external ?? /^https?:\/\//i.test(href),
       makers: normalizeMakers(resource.makers),
@@ -177,6 +181,11 @@ function getGroupMakers(group) {
     ...lessonMakers,
     ...linkMakers,
   ]);
+}
+
+function getWorkUnits(item) {
+  const majorUnits = splitSheetList(item.majorUnit || item["대단원"]);
+  return unique(majorUnits.length ? majorUnits : splitSheetList(item.middleUnit || item["중단원"]));
 }
 
 function getGroupWorkHref(group) {

@@ -297,8 +297,9 @@ function getWorkTitle(work) {
 }
 
 function getWorkMeta(work) {
-  if (work.type === "lesson") return "";
-  return work.groupTitle || "";
+  const units = Array.isArray(work.units) ? work.units.filter(Boolean) : [];
+  if (units.length > 1) return `${units[0]} +${units.length - 1}`;
+  return units[0] || work.groupTitle || "";
 }
 
 function uniqueWorks(works) {

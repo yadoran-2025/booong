@@ -99,10 +99,6 @@ function renderAbout() {
             <div class="about__scene-image" aria-hidden="true">
               <img src="assets/about-hero.jpg?v=20260427" alt="">
             </div>
-            <div class="about__hero-note">
-              <span>PUBLIC QUESTIONS</span>
-              <strong>사람이 모이는 장면을 수업으로 옮깁니다.</strong>
-            </div>
           </div>
         </header>
 

@@ -316,6 +316,7 @@ function renderResourceCard(item) {
           <span>${item.kind === "game" ? "게임" : "수업"}</span>
           ${item.isNew ? `<span>NEW</span>` : ""}
           ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
+          ${item.middleUnits?.length ? `<span>${escapeHtml(formatUnitList(item.middleUnits))}</span>` : ""}
         </div>
         <h3>${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
@@ -341,15 +342,11 @@ function renderLinkPreview(item) {
   }
   return `<div class="bundle-link-preview">
     <iframe class="bundle-link-preview__frame" src="${escapeAttr(action.href)}" title="${escapeAttr(item.title)} 실제 화면 미리보기" loading="lazy" sandbox="allow-same-origin allow-scripts" tabindex="-1"></iframe>
-    <a class="bundle-link-preview__link" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} aria-label="${escapeAttr(`${item.title} ${action.label} 열기`)}" ${renderTrackingData(item, action)}>
-      <span>실제 화면</span><small>${escapeHtml(getPreviewHost(action.href))}</small><i aria-hidden="true">↗</i>
-    </a>
   </div>`;
 }
 
-function getPreviewHost(href) {
-  const url = new URL(href, "https://booong.local/");
-  return url.hostname === "booong.local" ? "BOOONG" : url.hostname.replace(/^www\./, "");
+function formatUnitList(units) {
+  return units.length > 1 ? `${units[0]} +${units.length - 1}` : units[0];
 }
 
 function renderActionLink(action, item) {

@@ -245,11 +245,12 @@ function renderUnitTab(unit, selectedUnit, resources) {
 }
 
 function renderResourcePanel(items, selectedUnit, state) {
+  const sortedItems = [...items].sort(compareResourceByMiddleUnit);
   return `
     <section class="curation-recommendations" aria-labelledby="resource-panel-title">
       <header class="curation-section-head">
         <div>
-          <span data-library-count>${items.length}개 자료</span>
+          <span data-library-count>${sortedItems.length}개 자료</span>
           <h2 id="resource-panel-title">${escapeHtml(selectedUnit.title)}</h2>
         </div>
         <div class="unit-detail__summary">
@@ -264,9 +265,9 @@ function renderResourcePanel(items, selectedUnit, state) {
         ${renderKindButton("lesson", "수업", state)}
         ${renderKindButton("game", "게임", state)}
       </div>
-      ${items.length ? `
+      ${sortedItems.length ? `
         <div class="bundle-list" data-library-grid>
-          ${items.map(renderResourceCard).join("")}
+          ${sortedItems.map(renderResourceCard).join("")}
         </div>
         <div class="curation-library__empty" data-library-empty hidden>
           <strong>찾는 자료가 없습니다.</strong><span>검색어를 바꾸거나 전체 자료를 선택해보세요.</span>
@@ -280,6 +281,15 @@ function renderResourcePanel(items, selectedUnit, state) {
       `}
     </section>
   `;
+}
+
+function compareResourceByMiddleUnit(a, b) {
+  const aNumber = Number.parseInt(a.middleUnits?.[0]?.match(/^\s*(\d+)/)?.[1] || "", 10);
+  const bNumber = Number.parseInt(b.middleUnits?.[0]?.match(/^\s*(\d+)/)?.[1] || "", 10);
+  if (Number.isNaN(aNumber) && Number.isNaN(bNumber)) return 0;
+  if (Number.isNaN(aNumber)) return 1;
+  if (Number.isNaN(bNumber)) return -1;
+  return aNumber - bNumber;
 }
 
 function renderQuickTools(config) {

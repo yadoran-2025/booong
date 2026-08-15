@@ -408,6 +408,8 @@
   font-size: 0.82rem;
   font-style: italic;
   line-height: 1.8;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .member-card__section-title {

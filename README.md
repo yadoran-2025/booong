@@ -37,7 +37,7 @@ npm run smoke
 - `worksheet-maker.html`: 수업 블록을 활동지 형태로 조합합니다.
 - `print.html`: 선택한 문제/자료를 출력용 페이지로 렌더링합니다.
 - `select.html`: 출력할 문제를 고르는 페이지입니다.
-- `about.html`, `connect.html`: 소개와 연결/편집 보조 페이지입니다.
+- `about.html`: 제작자 소개와 만든 자료 페이지입니다.
 
 ## 현재 구조
 

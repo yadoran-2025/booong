@@ -12,7 +12,6 @@ const pages = [
   "print.html",
   "select.html",
   "about.html",
-  "connect.html",
 ];
 const legacyRefs = [
   "js/" + "author.js",

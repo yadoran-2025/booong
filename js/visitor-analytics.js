@@ -8,7 +8,6 @@ const PAGE_LABELS = {
   about: "소개",
   "asset-search": "수업자료 검색",
   author: "BNG LANG 에디터",
-  connect: "시작과 연결",
   print: "인쇄 페이지",
   select: "문제 선택",
   "worksheet-maker": "활동지 메이커",

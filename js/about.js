@@ -79,7 +79,6 @@ function renderAbout() {
             <span class="about__brand-meta">사회교육공동체</span>
           </a>
           <div class="about__nav-links">
-            <a class="about__manage" href="connect.html">제작자 연결 편집</a>
             <a class="about__back" href="index.html">← 대시보드</a>
           </div>
         </nav>

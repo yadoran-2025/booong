@@ -6,12 +6,14 @@ const unitRows = [
   { "단원_코드": "45", "과목": "사회2", "대단원": "III. 시장과 가격", "중단원": "2. 시장 가격의 결정" },
   { "단원_코드": "46", "과목": "사회2", "대단원": "III. 시장과 가격", "중단원": "3. 시장 가격의 변동" },
   { "단원_코드": "47", "과목": "사회2", "대단원": "III. 시장과 가격", "중단원": "3. 시장 가격의 변동" },
+  { "단원_코드": "48", "과목": "사회2[15개정]", "대단원": "I. 헌법과 국가기관", "중단원": "1. 민주주의와 헌법" },
   { "단원_코드": "90", "과목": "통합사회2", "대단원": "I. 인권 보장과 헌법", "중단원": "2. 인권 문제의 양상" },
   { "단원_코드": "149", "과목": "경제", "대단원": "I. 경제생활과 경제 문제", "중단원": "1. 희소성과 선택" },
 ];
 const groupRows = [
   { published: "TRUE", group_title: "놀라운 수요일", kind: "game", discipline: "사회", school: "중학교, 고등학교", "단원_코드": "36, 90", teacher_link: "https://example.com/game" },
   { published: "TRUE", group_title: "우리가 만드는 수요곡선", kind: "lesson", discipline: "경제", desc: "설명전용검색어", "단원_코드": "45", teacher_link: "https://example.com/teacher", worksheet_link: "https://example.com/worksheet" },
+  { published: "TRUE", group_title: "15개정 사회 자료", kind: "lesson", discipline: "사회", "단원_코드": "48", teacher_link: "https://example.com/15개정" },
   { published: "TRUE", group_title: "상대 경로 자료", kind: "lesson", "단원_코드": "45", teacher_link: "lesson.html?mode=teacher", worksheet_link: "/worksheet.html" },
   { published: "TRUE", group_title: "HTTP 자료", kind: "lesson", "단원_코드": "45", teacher_link: "http://example.com/teacher" },
   { published: "TRUE", group_title: "위험한 링크", kind: "lesson", "단원_코드": "45", teacher_link: "javascript:alert(1)", worksheet_link: "data:text/html,unsafe" },
@@ -21,8 +23,9 @@ const groupRows = [
 ];
 
 const catalog = buildDashboardCatalog(groupRows, unitRows);
-assert.deepEqual(catalog.subjects.map(({ value }) => value), ["사회1", "사회2", "통합사회2"]);
-assert.equal(catalog.units.length, 4);
+assert.deepEqual(catalog.subjects.map(({ value }) => value), ["사회1", "사회2", "사회2[15개정]", "통합사회2"]);
+assert.equal(catalog.units.length, 5);
+assert.equal(catalog.subjects.find(({ value }) => value === "사회2[15개정]").school, "중학교");
 assert.equal(catalog.resources.some(({ title }) => title === "숨긴 자료"), false);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").subjects, ["사회1", "통합사회2"]);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수요일").middleUnitsByKey["사회1::XII. 세계화와 평화"], ["2. 세계화의 양상"]);

@@ -153,7 +153,7 @@ function renderFavoritesView(root, config) {
           <header class="curation-section-head">
             <div>
               <span>MY LESSONS</span>
-              <h1 id="favorite-lessons-title">즐겨찾기 수업</h1>
+              <h1 id="favorite-lessons-title">내 수업함</h1>
             </div>
             <a href="index.html">홈으로</a>
           </header>
@@ -161,7 +161,7 @@ function renderFavoritesView(root, config) {
             ${items.map(renderResourceCard).join("")}
           </div>
           <div class="curation-library__empty" data-favorites-empty ${items.length ? "hidden" : ""}>
-            <strong>아직 즐겨찾기한 수업이 없습니다.</strong>
+            <strong>내 수업함이 비어 있습니다.</strong>
             <span>수업 카드의 별을 누르면 이곳에 모아둘 수 있습니다.</span>
             <a href="index.html">수업 둘러보기</a>
           </div>
@@ -183,10 +183,9 @@ function renderTopbar(favoritesCurrent = false) {
         <span><b>BOOONG</b><small>수업 준비실</small></span>
       </a>
       <nav class="curation-topbar__actions" aria-label="빠른 이동">
-        <a class="curation-topbar__favorites ${favoritesCurrent ? "is-current" : ""}" href="index.html?view=favorites" ${favoritesCurrent ? `aria-current="page"` : ""}>
-          <span aria-hidden="true">★</span> 즐겨찾기 <b data-favorite-count>${favoriteCount}</b>
+        <a class="curation-topbar__favorites ${favoritesCurrent ? "is-current" : ""}" href="index.html?view=favorites" aria-label="내 수업함, 저장한 수업 ${favoriteCount}개" ${favoritesCurrent ? `aria-current="page"` : ""}>
+          <span>내 수업함</span><b data-favorite-count>${favoriteCount}</b>
         </a>
-        <a class="curation-topbar__about" href="about.html">ABOUT US</a>
       </nav>
     </header>
   `;
@@ -373,9 +372,13 @@ function renderResourceCard(item, selectedUnitKey = "") {
           ${middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
           <span>${item.kind === "game" ? "게임" : "수업"}</span>
           ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
-          <button class="bundle-favorite" type="button" data-favorite-id="${escapeAttr(item.id)}" aria-pressed="${isFavorite}" aria-label="${escapeAttr(`${item.title} 즐겨찾기 ${isFavorite ? "해제" : "등록"}`)}" title="즐겨찾기 ${isFavorite ? "해제" : "등록"}"><span aria-hidden="true">${isFavorite ? "★" : "☆"}</span></button>
         </div>
-        <h3>${escapeHtml(item.title)}</h3>
+        <div class="bundle-card__title-row">
+          <h3>${escapeHtml(item.title)}</h3>
+          <button class="bundle-favorite" type="button" data-favorite-id="${escapeAttr(item.id)}" aria-pressed="${isFavorite}" aria-label="${escapeAttr(`${item.title} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`)}" title="${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}">
+            <span class="bundle-favorite__icon" aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
+          </button>
+        </div>
         <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
         ${item.makers.length ? `
           <div class="bundle-card__makers" aria-label="제작자">
@@ -499,12 +502,15 @@ function toggleFavorite(root, button) {
   root.querySelectorAll("[data-favorite-id]").forEach(item => {
     if (item.dataset.favoriteId !== id) return;
     item.setAttribute("aria-pressed", String(isFavorite));
-    item.setAttribute("aria-label", `${item.closest(".bundle-card")?.querySelector("h3")?.textContent || "수업"} 즐겨찾기 ${isFavorite ? "해제" : "등록"}`);
-    item.title = `즐겨찾기 ${isFavorite ? "해제" : "등록"}`;
-    item.querySelector("span").textContent = isFavorite ? "★" : "☆";
+    item.setAttribute("aria-label", `${item.closest(".bundle-card")?.querySelector("h3")?.textContent || "수업"} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`);
+    item.title = isFavorite ? "수업함에서 빼기" : "수업함에 담기";
+    item.querySelector(".bundle-favorite__icon").textContent = isFavorite ? "★" : "☆";
   });
 
-  root.querySelectorAll("[data-favorite-count]").forEach(item => { item.textContent = favoriteIds.length; });
+  root.querySelectorAll("[data-favorite-count]").forEach(item => {
+    item.textContent = favoriteIds.length;
+    item.closest(".curation-topbar__favorites")?.setAttribute("aria-label", `내 수업함, 저장한 수업 ${favoriteIds.length}개`);
+  });
   if (!root.querySelector(".curation-favorites") || isFavorite) return;
 
   button.closest(".bundle-card")?.remove();
@@ -583,7 +589,7 @@ function renderTeacherOnboarding(root, onComplete, initialProfile = {}, subjectO
           </a>
           <div>
             <span>교사를 위한 수업 준비실</span>
-            <h1 id="teacher-entry-title">자료를 찾기 전에,<br>선생님의 과목부터.</h1>
+            <h1 id="teacher-entry-title">자료를 찾기 전에,<br>과목부터.</h1>
             <p>학교급과 과목, 두 가지만 알려주시면 필요한 수업을 먼저 꺼내놓겠습니다.</p>
           </div>
           <ol aria-label="수업 설정 단계">

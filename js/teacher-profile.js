@@ -5,6 +5,10 @@ export const SCHOOL_OPTIONS = [
   { value: "고등학교", label: "고등학교" },
 ];
 
+const SUBJECT_SCHEMA = [
+  { school: "중학교", value: "사회2[15개정]", label: "사회2[15개정]" },
+];
+
 export function normalizeTeacherProfile(value = {}, subjectOptions) {
   const school = SCHOOL_OPTIONS.find(option => option.value === value.school)?.value;
   const subject = String(value.subject || "").trim();
@@ -42,8 +46,10 @@ export function getAdjacentTeacherProfile(profile, subjectOptions, direction) {
 }
 
 export function createSubjectOptions(catalog) {
-  return (catalog?.subjects || []).reduce((options, { school, value, label }) => {
-    if (options[school] && value) options[school].push({ value, label: label || value });
+  return [...(catalog?.subjects || []), ...SUBJECT_SCHEMA].reduce((options, { school, value, label }) => {
+    if (options[school] && value && !options[school].some(option => option.value === value)) {
+      options[school].push({ value, label: label || value });
+    }
     return options;
   }, { 중학교: [], 고등학교: [] });
 }

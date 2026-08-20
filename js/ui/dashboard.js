@@ -2,7 +2,8 @@ import { loadDashboardConfig as loadSharedDashboardConfig } from "../dashboard-d
 import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from "../favorites.js";
 import { SCHOOL_OPTIONS, createSubjectOptions, getAdjacentTeacherProfile, getSubjectLabel, loadTeacherProfile, normalizeTeacherProfile, saveTeacherProfile } from "../teacher-profile.js";
 import { escapeHtml } from "../utils.js";
-import { trackGroupClick } from "../visitor-analytics.js";
+import { getLessonPageKey, trackGroupClick } from "../visitor-analytics.js";
+import { hydrateViewCounts, renderResourceCount, renderViewCounter } from "./view-counter.js";
 
 const QUICK_TOOLS = [
   { id: "worksheet-maker", label: "활동지 만들기", note: "수업 흐름을 한 장으로", href: "worksheet-maker.html", mark: "01" },
@@ -187,6 +188,7 @@ function renderTopbar(favoritesCurrent = false) {
           <span>내 수업함</span><b data-favorite-count>${favoriteCount}</b>
         </a>
       </nav>
+      ${renderViewCounter()}
     </header>
   `;
 }
@@ -372,6 +374,7 @@ function renderResourceCard(item, selectedUnitKey = "") {
           ${middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
           <span>${item.kind === "game" ? "게임" : "수업"}</span>
           ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
+          ${renderResourceCount(escapeAttr(getResourceViewKey(item)), escapeAttr(item.id))}
         </div>
         <div class="bundle-card__title-row">
           <h3>${escapeHtml(item.title)}</h3>
@@ -394,12 +397,23 @@ function renderResourceCard(item, selectedUnitKey = "") {
   `;
 }
 
+function getResourceViewKey(item) {
+  const internal = (item.actions || []).find(action => action && !action.external && /[?&]lesson=/.test(action.href || ""));
+  const match = internal && /[?&]lesson=([^&]+)/.exec(internal.href);
+  if (!match) return "";
+  try {
+    return getLessonPageKey(decodeURIComponent(match[1]));
+  } catch {
+    return getLessonPageKey(match[1]);
+  }
+}
+
 function formatUnitList(units) {
   return units.length > 1 ? `${units[0]} +${units.length - 1}` : units[0];
 }
 
 function renderActionLink(action, item) {
-  const title = action.key === "worksheet" ? "활동지 열기" : "자료 열기";
+  const title = action.key === "worksheet" ? "활동지 열기" : action.key === "blog" ? "수업 소개" : "자료 열기";
   return `<a class="bundle-action" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}>
     <strong>${title}</strong><span aria-hidden="true">→</span>
   </a>`;
@@ -413,13 +427,15 @@ function renderFooter() {
   return `
     <footer class="curation-footer">
       <span>사회교육공동체 BOOONG</span>
-      <p>교사의 준비 시간을 줄이고, 수업의 선택지는 넓힙니다.</p>
+      <p>우리는 함께일 때 강하다</p>
       <a href="about.html">BOOONG 소개 →</a>
     </footer>
   `;
 }
 
 function bindCurationEvents(root, config, state) {
+  hydrateViewCounts(root);
+
   root.querySelectorAll("[data-favorite-id]").forEach(button => {
     button.addEventListener("click", () => toggleFavorite(root, button));
   });

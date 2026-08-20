@@ -44,7 +44,7 @@
   z-index: 100;
   top: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 24px;
   min-height: 80px;
@@ -126,6 +126,7 @@
   font-weight: 850;
   letter-spacing: -0.01em;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .curation-topbar__favorites b {
@@ -1726,4 +1727,54 @@
     scroll-behavior: auto !important;
     transition: none !important;
   }
+}
+
+
+/* topbar view counts */
+
+.curation-topbar__views {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+  justify-self: end;
+  color: var(--desk-muted);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.curation-topbar__views b {
+  color: var(--desk-ink);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* narrow screens: let the counter drop to its own line only when it cannot fit */
+@media (max-width: 640px) {
+  .curation-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .curation-topbar__views {
+    margin-left: auto;
+    font-size: 11px;
+  }
+}
+
+.bundle-card .bundle-card__badges > span.bundle-card__count {
+  min-height: 0;
+  margin-left: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--desk-muted);
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }

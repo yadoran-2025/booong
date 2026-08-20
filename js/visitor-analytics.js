@@ -2,6 +2,8 @@ import { db, get, ref, runTransaction, serverTimestamp, set, update } from "./fi
 
 const ANALYTICS_ROOT = "analytics";
 const VISITOR_ID_KEY = "booong-visitor-id-v1";
+const SESSION_VIEW_PREFIX = "booong-seen-v1:";
+const DAILY_TIME_ZONE = "Asia/Seoul";
 
 const PAGE_LABELS = {
   dashboard: "대시보드",
@@ -24,6 +26,7 @@ export async function trackPage(page) {
   const visitorId = getVisitorId();
   const pageRef = ref(db, `${ANALYTICS_ROOT}/pages/${normalized.key}`);
   const visitorRef = ref(db, `${ANALYTICS_ROOT}/pageVisitors/${normalized.key}/${visitorId}`);
+  const isFirstViewInSession = markSessionView(normalized.key);
 
   try {
     await update(pageRef, {
@@ -33,6 +36,16 @@ export async function trackPage(page) {
       type: normalized.type,
       updatedAt: serverTimestamp(),
     });
+
+    if (isFirstViewInSession) {
+      const today = getDayKey();
+      await Promise.all([
+        runTransaction(ref(db, `${ANALYTICS_ROOT}/pages/${normalized.key}/views`), value => (Number(value) || 0) + 1),
+        runTransaction(ref(db, `${ANALYTICS_ROOT}/daily/${today}/views`), value => (Number(value) || 0) + 1),
+        runTransaction(ref(db, `${ANALYTICS_ROOT}/daily/${today}/pages/${normalized.key}`), value => (Number(value) || 0) + 1),
+        runTransaction(ref(db, `${ANALYTICS_ROOT}/totals/views`), value => (Number(value) || 0) + 1),
+      ]);
+    }
 
     const existingVisitor = await get(visitorRef);
     if (!existingVisitor.exists()) {
@@ -94,6 +107,78 @@ export async function trackGroupClick(group) {
   }
 
   return normalized;
+}
+
+export async function loadTodayStats() {
+  const today = getDayKey();
+  try {
+    const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/daily/${today}/views`));
+    return { date: today, views: Number(snapshot.val()) || 0 };
+  } catch (err) {
+    console.warn("Today stats load failed:", err);
+    return { date: today, views: 0 };
+  }
+}
+
+export async function loadOverviewStats() {
+  const today = getDayKey();
+  try {
+    const [todaySnapshot, totalSnapshot] = await Promise.all([
+      get(ref(db, `${ANALYTICS_ROOT}/daily/${today}/views`)),
+      get(ref(db, `${ANALYTICS_ROOT}/totals/views`)),
+    ]);
+    return {
+      date: today,
+      todayViews: Number(todaySnapshot.val()) || 0,
+      totalViews: Number(totalSnapshot.val()) || 0,
+    };
+  } catch (err) {
+    console.warn("Overview stats load failed:", err);
+    return null;
+  }
+}
+
+export async function loadDailyViewStats(days = 7) {
+  const wanted = getRecentDayKeys(days);
+  return Promise.all(wanted.map(async date => {
+    try {
+      const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/daily/${date}/views`));
+      return { date, views: Number(snapshot.val()) || 0 };
+    } catch (err) {
+      console.warn("Daily view stats load failed:", err);
+      return { date, views: 0 };
+    }
+  }));
+}
+
+export async function loadTodayPageStats() {
+  const today = getDayKey();
+  try {
+    const [dailySnapshot, pageSnapshot] = await Promise.all([
+      get(ref(db, `${ANALYTICS_ROOT}/daily/${today}/pages`)),
+      get(ref(db, `${ANALYTICS_ROOT}/pages`)),
+    ]);
+    const dailyValue = dailySnapshot.val() || {};
+    const pageValue = pageSnapshot.val() || {};
+
+    return Object.entries(dailyValue)
+      .map(([key, views]) => {
+        const meta = pageValue[key] || {};
+        return {
+          key,
+          title: meta.title || key,
+          path: meta.path || "",
+          type: meta.type || "page",
+          views: Number(views) || 0,
+          totalViews: Number(meta.views) || 0,
+        };
+      })
+      .filter(item => item.views > 0)
+      .sort((a, b) => b.views - a.views || a.title.localeCompare(b.title, "ko"));
+  } catch (err) {
+    console.warn("Today page stats load failed:", err);
+    return [];
+  }
 }
 
 export async function loadPageVisitStats() {
@@ -181,6 +266,45 @@ function normalizeGroupClick(group = {}) {
     href: String(group.href || "").trim(),
     actionKey: String(group.actionKey || "").trim(),
   };
+}
+
+export function getLessonPageKey(lessonId) {
+  const slug = slugify(lessonId);
+  return slug ? `lesson-${slug}`.slice(0, 96) : "";
+}
+
+export function getDayKey(date = new Date()) {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: DAILY_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
+function getRecentDayKeys(days) {
+  const count = Math.max(1, Math.min(Number(days) || 1, 90));
+  const today = new Date();
+  const keys = [];
+  for (let offset = count - 1; offset >= 0; offset -= 1) {
+    keys.push(getDayKey(new Date(today.getTime() - offset * 86400000)));
+  }
+  return keys;
+}
+
+function markSessionView(key) {
+  const storageKey = `${SESSION_VIEW_PREFIX}${key}`;
+  try {
+    if (sessionStorage.getItem(storageKey)) return false;
+    sessionStorage.setItem(storageKey, "1");
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 function getVisitorId() {

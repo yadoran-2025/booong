@@ -1,0 +1,69 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "analytics": {
+      ".read": true,
+
+      "pages": {
+        "$page": {
+          ".write": "newData.exists()",
+          "views": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
+          "visitors": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
+          "key": { ".validate": "newData.isString() && newData.val().length <= 96" },
+          "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "path": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "type": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "updatedAt": { ".validate": "newData.isNumber()" }
+        }
+      },
+
+      "pageVisitors": {
+        "$page": {
+          "$visitor": {
+            ".write": "!data.exists() && newData.exists()"
+          }
+        }
+      },
+
+      "daily": {
+        "$date": {
+          "views": {
+            ".write": true,
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+          },
+          "pages": {
+            "$page": {
+              ".write": true,
+              ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+            }
+          }
+        }
+      },
+
+      "totals": {
+        "views": {
+          ".write": true,
+          ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+        }
+      },
+
+      "groupClicks": {
+        "$group": {
+          ".write": "newData.exists()",
+          "totalClicks": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
+          "visitorCount": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" }
+        }
+      },
+
+      "groupClickVisitors": {
+        "$group": {
+          "$visitor": {
+            ".write": "newData.exists()"
+          }
+        }
+      }
+    }
+  }
+}

@@ -66,10 +66,14 @@ export async function trackGroupClick(group) {
   const visitorId = getVisitorId();
   const groupRef = ref(db, `${ANALYTICS_ROOT}/groupClicks/${normalized.groupId}`);
   const visitorRef = ref(db, `${ANALYTICS_ROOT}/groupClickVisitors/${normalized.groupId}/${visitorId}`);
+  const isFirstClickInSession = markSessionView(`group-${normalized.groupId}`);
 
   try {
     await Promise.all([
       runTransaction(ref(db, `${ANALYTICS_ROOT}/groupClicks/${normalized.groupId}/totalClicks`), value => (Number(value) || 0) + 1),
+      ...(isFirstClickInSession
+        ? [runTransaction(ref(db, `${ANALYTICS_ROOT}/groupClicks/${normalized.groupId}/views`), value => (Number(value) || 0) + 1)]
+        : []),
       update(groupRef, {
         groupId: normalized.groupId,
         title: normalized.title,
@@ -213,6 +217,7 @@ export async function loadGroupClickStats() {
         groupId: item.groupId,
         title: item.title || item.groupId,
         type: item.type || "group",
+        views: Number(item.views) || 0,
         totalClicks: Number(item.totalClicks) || 0,
         visitorCount: Number(item.visitorCount) || 0,
         lastHref: item.lastHref || "",

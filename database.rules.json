@@ -52,6 +52,7 @@
       "groupClicks": {
         "$group": {
           ".write": "newData.exists()",
+          "views": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
           "totalClicks": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
           "visitorCount": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" }
         }

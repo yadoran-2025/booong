@@ -38,7 +38,7 @@ async function hydrateResources(root) {
   if (!pages.length && !clicks.length) return;
 
   const viewsByKey = new Map(pages.map(page => [page.key, page.views]));
-  const clicksById = new Map(clicks.map(click => [click.groupId, click.totalClicks]));
+  const clicksById = new Map(clicks.map(click => [click.groupId, click.views]));
 
   slots.forEach(slot => {
     if (!slot.isConnected) return;

@@ -329,6 +329,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
     });
     const makers = normalizeMakers(row.maker);
     const actions = [
+      createResourceAction("blog", "수업 소개", row.blog_link),
       createResourceAction("teacher", "교사용 자료", row.teacher_link),
       createResourceAction("worksheet", "활동지", row.worksheet_link),
     ].filter(Boolean);

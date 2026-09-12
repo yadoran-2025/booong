@@ -1,4 +1,5 @@
-import { db, get, ref, runTransaction, serverTimestamp, set, update } from "./firebase-config.js";
+import { db, get, ref, remove, runTransaction, serverTimestamp, set, update } from "./firebase-config.js";
+import { summarizeVisitorJourneys, summarizeWeeklyLessonClicks } from "./visitor-journeys.js";
 
 const ANALYTICS_ROOT = "analytics";
 const VISITOR_ID_KEY = "booong-visitor-id-v1";
@@ -72,7 +73,10 @@ export async function trackGroupClick(group) {
     await Promise.all([
       runTransaction(ref(db, `${ANALYTICS_ROOT}/groupClicks/${normalized.groupId}/totalClicks`), value => (Number(value) || 0) + 1),
       ...(isFirstClickInSession
-        ? [runTransaction(ref(db, `${ANALYTICS_ROOT}/groupClicks/${normalized.groupId}/views`), value => (Number(value) || 0) + 1)]
+        ? [
+          runTransaction(ref(db, `${ANALYTICS_ROOT}/groupClicks/${normalized.groupId}/views`), value => (Number(value) || 0) + 1),
+          runTransaction(ref(db, `${ANALYTICS_ROOT}/daily/${getDayKey()}/groupClicks/${normalized.groupId}`), value => (Number(value) || 0) + 1),
+        ]
         : []),
       update(groupRef, {
         groupId: normalized.groupId,
@@ -111,6 +115,46 @@ export async function trackGroupClick(group) {
   }
 
   return normalized;
+}
+
+export async function setFavoriteState(resourceId, isFavorite) {
+  const id = slugify(resourceId).slice(0, 96);
+  if (!id) return null;
+
+  const visitorId = getVisitorId();
+  const favoriteRef = ref(db, `${ANALYTICS_ROOT}/favorites/${id}`);
+  const visitorRef = ref(db, `${ANALYTICS_ROOT}/favoriteVisitors/${id}/${visitorId}`);
+
+  try {
+    const existing = await get(visitorRef);
+    if (existing.exists() === Boolean(isFavorite)) return null;
+
+    const [, count] = await Promise.all([
+      isFavorite ? set(visitorRef, { savedAt: serverTimestamp() }) : remove(visitorRef),
+      runTransaction(ref(db, `${ANALYTICS_ROOT}/favorites/${id}/count`), value => {
+        const current = Number(value) || 0;
+        return isFavorite ? current + 1 : Math.max(0, current - 1);
+      }),
+      update(favoriteRef, { updatedAt: serverTimestamp() }),
+    ]);
+    return Number(count.snapshot.val()) || 0;
+  } catch (err) {
+    console.warn("Favorite analytics update failed:", err);
+    return null;
+  }
+}
+
+export async function loadFavoriteStats() {
+  try {
+    const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/favorites`));
+    return Object.entries(snapshot.val() || {}).map(([resourceId, value]) => ({
+      resourceId,
+      count: Number(value?.count) || 0,
+    }));
+  } catch (err) {
+    console.warn("Favorite analytics load failed:", err);
+    return [];
+  }
 }
 
 export async function loadTodayStats() {
@@ -153,6 +197,30 @@ export async function loadDailyViewStats(days = 7) {
       return { date, views: 0 };
     }
   }));
+}
+
+export async function loadDailyLessonClickStats(days = 14) {
+  const dates = getRecentDayKeys(days);
+  try {
+    const [groupsSnapshot, ...dailySnapshots] = await Promise.all([
+      get(ref(db, `${ANALYTICS_ROOT}/groupClicks`)),
+      ...dates.map(date => get(ref(db, `${ANALYTICS_ROOT}/daily/${date}/groupClicks`))),
+    ]);
+    const groups = groupsSnapshot.val() || {};
+    return dailySnapshots.map((snapshot, index) => ({
+      date: dates[index],
+      lessons: Object.entries(snapshot.val() || {})
+        .map(([groupId, views]) => ({
+          groupId,
+          title: groups[groupId]?.title || groupId,
+          views: Number(views) || 0,
+        }))
+        .sort((a, b) => b.views - a.views || a.title.localeCompare(b.title, "ko")),
+    }));
+  } catch (err) {
+    console.warn("Daily lesson click analytics load failed:", err);
+    return dates.map(date => ({ date, lessons: [] }));
+  }
 }
 
 export async function loadTodayPageStats() {
@@ -223,11 +291,43 @@ export async function loadGroupClickStats() {
         lastHref: item.lastHref || "",
         updatedAt: item.updatedAt || 0,
       }))
-      .sort((a, b) => b.totalClicks - a.totalClicks || b.visitorCount - a.visitorCount || a.title.localeCompare(b.title, "ko"));
+      .sort((a, b) => b.views - a.views || b.visitorCount - a.visitorCount || a.title.localeCompare(b.title, "ko"));
   } catch (err) {
     console.warn("Group click analytics load failed:", err);
     return [];
   }
+}
+
+export async function loadVisitorJourneyStats() {
+  try {
+    const [pageVisitorsSnapshot, groupsSnapshot, groupVisitorsSnapshot] = await Promise.all([
+      get(ref(db, `${ANALYTICS_ROOT}/pageVisitors`)),
+      get(ref(db, `${ANALYTICS_ROOT}/groupClicks`)),
+      get(ref(db, `${ANALYTICS_ROOT}/groupClickVisitors`)),
+    ]);
+    return summarizeVisitorJourneys(pageVisitorsSnapshot.val(), groupsSnapshot.val(), groupVisitorsSnapshot.val());
+  } catch (err) {
+    console.warn("Visitor journey analytics load failed:", err);
+    return null;
+  }
+}
+
+export async function loadWeeklyLessonClickStats() {
+  try {
+    const [groupsSnapshot, groupVisitorsSnapshot] = await Promise.all([
+      get(ref(db, `${ANALYTICS_ROOT}/groupClicks`)),
+      get(ref(db, `${ANALYTICS_ROOT}/groupClickVisitors`)),
+    ]);
+    return summarizeWeeklyLessonClicks(groupsSnapshot.val(), groupVisitorsSnapshot.val(), getWeekStartTimestamp());
+  } catch (err) {
+    console.warn("Weekly lesson click analytics load failed:", err);
+    return [];
+  }
+}
+
+export async function loadAnalyticsSnapshot() {
+  const snapshot = await get(ref(db, ANALYTICS_ROOT));
+  return snapshot.val() || {};
 }
 
 export function getCurrentPageInfo(extra = {}) {
@@ -299,6 +399,12 @@ function getRecentDayKeys(days) {
     keys.push(getDayKey(new Date(today.getTime() - offset * 86400000)));
   }
   return keys;
+}
+
+function getWeekStartTimestamp() {
+  const weekdays = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: DAILY_TIME_ZONE, weekday: "short" }).format(new Date());
+  return new Date(`${getDayKey()}T00:00:00+09:00`).getTime() - (weekdays[weekday] || 0) * 86400000;
 }
 
 function markSessionView(key) {

@@ -1,6 +1,6 @@
 import { loadAnalyticsSnapshot, loadDailyLessonClickStats, loadDailyViewStats, loadOverviewStats, loadVisitorJourneyStats, loadWeeklyLessonClickStats } from "./visitor-analytics.js";
 import { loadDashboardConfig } from "./dashboard-data.js";
-import { summarizeAnalyticsInsights } from "./visitor-journeys.js";
+import { summarizeAnalyticsInsights, summarizeResourceViewTrends } from "./visitor-journeys.js";
 
 const root = document.querySelector("#analytics-root");
 const ANALYSIS_DESCRIPTIONS = {
@@ -25,6 +25,7 @@ async function render() {
       loadOverviewStats(), loadDailyViewStats(14), loadDailyLessonClickStats(14), loadVisitorJourneyStats(), loadWeeklyLessonClickStats(), loadDashboardConfig(), loadAnalyticsSnapshot(),
     ]);
     const catalog = catalogConfig.catalog?.resources || [];
+    const resourceTrends = summarizeResourceViewTrends(analytics);
     root.innerHTML = shell(renderDashboard({
       overview,
       daily,
@@ -32,11 +33,13 @@ async function render() {
       journey,
       weeklyLessons,
       insights: summarizeAnalyticsInsights(analytics, catalog),
+      resourceTrends,
       makersByTitle: new Map(catalog.map(item => [item.title, item.makers || []])),
     }));
     root.querySelector("[data-refresh]")?.addEventListener("click", render);
     root.querySelectorAll("[data-daily-point]").forEach(button => button.addEventListener("click", () => showDailyLessons(root, dailyLessons[Number(button.dataset.dailyPoint)])));
     root.querySelector("[data-close-daily-dialog]")?.addEventListener("click", () => root.querySelector("[data-daily-dialog]")?.close());
+    setupResourceTrend(root, resourceTrends);
   } catch (err) {
     root.innerHTML = shell(`<p class="analytics__notice">분석 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>`);
   }
@@ -54,7 +57,7 @@ function shell(content) {
   `;
 }
 
-function renderDashboard({ overview, daily, dailyLessons, journey, weeklyLessons, insights, makersByTitle }) {
+function renderDashboard({ overview, daily, dailyLessons, journey, weeklyLessons, insights, resourceTrends, makersByTitle }) {
   const dashboardVisitors = journey?.dashboardVisitors || 0;
   const clickedVisitors = journey?.dashboardClickVisitors || 0;
   return `
@@ -95,10 +98,58 @@ function renderDashboard({ overview, daily, dailyLessons, journey, weeklyLessons
       <header><span>14-DAY PULSE</span><h2 id="trend-title">최근 14일 열람</h2></header>
       ${renderLineChart(daily)}
     </section>
+    ${renderResourceTrend(resourceTrends)}
     ${renderAnalyses(insights, dashboardVisitors)}
     <dialog class="analytics__dialog" data-daily-dialog><button type="button" data-close-daily-dialog aria-label="닫기">×</button><div data-daily-dialog-content></div></dialog>
     <p class="analytics__updated">Firebase Realtime Database에서 실시간 집계 · ${new Date().toLocaleString("ko-KR")}</p>
   `;
+}
+
+function renderResourceTrend(series) {
+  return `
+    <section class="analytics__panel analytics__trend analytics__resource-trend" aria-labelledby="resource-trend-title">
+      <header><span>RESOURCE VIEWS</span><h2 id="resource-trend-title">자료별 열람 추이</h2></header>
+      <div class="analytics__trend-controls">
+        <label>자료<select class="field__input" data-resource-select>${series.map((item, index) => `<option value="${index}">${escape(item.title)}</option>`).join("")}</select></label>
+        <div role="group" aria-label="집계 단위">
+          <button type="button" data-resource-grain="daily" aria-pressed="true">일별</button>
+          <button type="button" data-resource-grain="weekly" aria-pressed="false">주별</button>
+          <button type="button" data-resource-grain="monthly" aria-pressed="false">월별</button>
+        </div>
+      </div>
+      <div data-resource-chart>${renderResourceLineChart(series[0])}</div>
+      <p class="analytics__chart-note">자료를 연 세션의 첫 클릭을 집계합니다. 같은 제목의 구·신 자료 ID는 합치며, 일별 그래프에서는 주말을 제외합니다.</p>
+    </section>
+  `;
+}
+
+function setupResourceTrend(root, series) {
+  const select = root.querySelector("[data-resource-select]");
+  const chart = root.querySelector("[data-resource-chart]");
+  const buttons = [...root.querySelectorAll("[data-resource-grain]")];
+  if (!select || !chart) return;
+  const updateChart = grain => {
+    buttons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.resourceGrain === grain)));
+    chart.innerHTML = renderResourceLineChart(series[Number(select.value)] || series[0], grain);
+  };
+  select.addEventListener("change", () => updateChart(buttons.find(button => button.getAttribute("aria-pressed") === "true")?.dataset.resourceGrain || "daily"));
+  buttons.forEach(button => button.addEventListener("click", () => updateChart(button.dataset.resourceGrain)));
+}
+
+function renderResourceLineChart(series, grain = "daily") {
+  const points = (grain === "monthly" ? series.monthly : grain === "weekly" ? series.weekly : series.weekdays)
+    .slice(grain === "monthly" ? -12 : grain === "weekly" ? -26 : -31);
+  const range = points.length === 1 ? points[0].period : points.length ? `${points[0].period} – ${points.at(-1).period}` : "수집 기록 없음";
+  return renderLineChart(points, {
+    fillId: "resource-trend-fill",
+    period: item => item.period,
+    periodLabel: item => grain === "monthly" ? item.period : item.period.slice(5),
+    pointLabel: item => `${series.title}, ${item.period}${grain === "weekly" ? " 시작 주" : ""}, 열람 ${format(item.views)}회`,
+    tooltipLabel: item => `${item.period}${grain === "weekly" ? " 시작 주" : ""} · ${format(item.views)}회`,
+    range,
+    total: series.total,
+    averageLabel: grain === "monthly" ? "월평균" : grain === "weekly" ? "주평균" : "일평균",
+  });
 }
 
 function renderAnalyses(insights, dashboardVisitors) {
@@ -185,31 +236,43 @@ function renderMakers(title, makersByTitle) {
   return makers.length ? `MADE BY ${makers.map(maker => `<b>${escape(maker)}</b>`).join("")}` : "MADE BY —";
 }
 
-function renderLineChart(daily) {
+function renderLineChart(daily, options = {}) {
   if (!daily.length) return "<p class=\"analytics__empty\">표시할 열람 기록이 없습니다.</p>";
+  const period = options.period || (item => item.date);
+  const periodLabel = options.periodLabel || (item => item.date.slice(5));
+  const fillId = options.fillId || "trend-fill";
   const max = Math.max(1, ...daily.map(item => item.views));
   const roundedMax = Math.ceil(max / 4) * 4;
   const points = daily.map((item, index) => {
-    const x = 72 + (index / Math.max(1, daily.length - 1)) * 918;
+    const x = 72 + (daily.length === 1 ? .5 : index / (daily.length - 1)) * 918;
     const y = 216 - item.views / roundedMax * 200;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
   const ticks = Array.from({ length: 5 }, (_, index) => Math.round(roundedMax * (4 - index) / 4));
   const average = Math.round(daily.reduce((sum, item) => sum + item.views, 0) / daily.length);
+  const markers = daily.map((item, index) => {
+    const x = daily.length === 1 ? .5 : index / (daily.length - 1);
+    const label = options.pointLabel?.(item) || `${period(item)} 열람 ${format(item.views)}회, 수업 클릭 상세 보기`;
+    const tooltip = options.tooltipLabel?.(item) || `${period(item)} · ${format(item.views)}회`;
+    const common = `data-chart-point data-tooltip="${escape(tooltip)}" style="--x:${x};--y:${1 - item.views / roundedMax}" aria-label="${escape(label)}" title="${escape(label)}"`;
+    return options.pointLabel
+      ? `<span ${common} role="img" tabindex="0"></span>`
+      : `<button type="button" data-daily-point="${index}" ${common}></button>`;
+  }).join("");
   return `
     <div class="analytics__chart-meta">
-      <span>열람 횟수</span>
-      <dl><div><dt>일평균</dt><dd>${format(average)}회</dd></div><div><dt>최고</dt><dd>${format(max)}회</dd></div></dl>
+      <span>${escape(options.range || "열람 횟수")}</span>
+      <dl>${options.total === undefined ? "" : `<div><dt>누적</dt><dd>${format(options.total)}회</dd></div>`}<div><dt>${escape(options.averageLabel || "일평균")}</dt><dd>${format(average)}회</dd></div><div><dt>최고</dt><dd>${format(max)}회</dd></div></dl>
     </div>
     <div class="analytics__line-chart">
       <svg viewBox="0 0 1000 216" aria-hidden="true" preserveAspectRatio="none">
-        <defs><linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--brand)" stop-opacity=".14"/><stop offset="1" stop-color="var(--brand)" stop-opacity="0"/></linearGradient></defs>
+        <defs><linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--brand)" stop-opacity=".14"/><stop offset="1" stop-color="var(--brand)" stop-opacity="0"/></linearGradient></defs>
         ${ticks.map(value => { const y = 216 - value / roundedMax * 200; return `<line x1="72" x2="990" y1="${y}" y2="${y}"/><text x="0" y="${y + 4}">${format(value)}</text>`; }).join("")}
-        <polygon points="72,216 ${points} 990,216" />
+        ${daily.length > 1 ? `<polygon style="fill:url(#${fillId})" points="72,216 ${points} 990,216" />` : ""}
         <polyline points="${points}" />
       </svg>
-      ${daily.map((item, index) => `<button type="button" data-daily-point="${index}" style="--x:${index / Math.max(1, daily.length - 1)};--y:${1 - item.views / roundedMax}" aria-label="${escape(item.date)} 열람 ${format(item.views)}회, 수업 클릭 상세 보기" title="${escape(item.date)} · ${format(item.views)}회"></button>`).join("")}
-      <div class="analytics__line-labels">${daily.map(item => `<small>${item.date.slice(5)}</small>`).join("")}</div>
+      ${markers}
+      <div class="analytics__line-labels">${daily.map((item, index) => `<small class="${daily.length > 16 && index > 0 && index < daily.length - 1 && index % Math.ceil((daily.length - 1) / 6) ? "is-skipped" : ""}">${escape(periodLabel(item))}</small>`).join("")}</div>
     </div>
   `;
 }

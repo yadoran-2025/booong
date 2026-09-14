@@ -67,6 +67,53 @@ export function summarizeWeeklyLessonClicks(groups = {}, groupVisitors = {}, sta
     .sort((a, b) => b.visitors - a.visitors || a.title.localeCompare(b.title, "ko"));
 }
 
+export function summarizeResourceViewTrends(analytics = {}) {
+  const groups = analytics.groupClicks || {};
+  const recordedDays = Object.entries(analytics.daily || {}).sort(([left], [right]) => left.localeCompare(right));
+  const firstRecordedDay = recordedDays.findIndex(([, value]) => value?.groupClicks);
+  const daily = (firstRecordedDay < 0 ? [] : recordedDays.slice(firstRecordedDay))
+    .map(([date, value]) => {
+      const resources = new Map();
+      Object.entries(value?.groupClicks || {}).forEach(([groupId, views]) => {
+        const title = groups[groupId]?.title || groupId;
+        resources.set(title, (resources.get(title) || 0) + (Number(views) || 0));
+      });
+      return { date, resources };
+    });
+  const titles = [...new Set(daily.flatMap(item => [...item.resources.keys()]))]
+    .sort((left, right) => left.localeCompare(right, "ko"));
+  const series = [{
+    title: "전체 자료",
+    daily: daily.map(item => ({ period: item.date, views: [...item.resources.values()].reduce((sum, views) => sum + views, 0) })),
+  }, ...titles.map(title => ({
+    title,
+    daily: daily.map(item => ({ period: item.date, views: item.resources.get(title) || 0 })),
+  }))];
+
+  const summarized = series.map(item => {
+    return {
+      ...item,
+      total: item.daily.reduce((sum, point) => sum + point.views, 0),
+      weekdays: item.daily.filter(item => ![0, 6].includes(new Date(`${item.period}T12:00:00Z`).getUTCDay())),
+      weekly: aggregatePeriods(item.daily, item => getWeekStart(item.period)),
+      monthly: aggregatePeriods(item.daily, item => item.period.slice(0, 7)),
+    };
+  });
+  return [summarized[0], ...summarized.slice(1).sort((left, right) => right.total - left.total || left.title.localeCompare(right.title, "ko"))];
+}
+
+function aggregatePeriods(points, getPeriod) {
+  const periods = new Map();
+  points.forEach(item => periods.set(getPeriod(item), (periods.get(getPeriod(item)) || 0) + item.views));
+  return [...periods].map(([period, views]) => ({ period, views }));
+}
+
+function getWeekStart(period) {
+  const date = new Date(`${period}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 6) % 7);
+  return date.toISOString().slice(0, 10);
+}
+
 export function summarizeAnalyticsInsights(analytics = {}, catalog = [], now = Date.now()) {
   const pageVisitors = analytics.pageVisitors || {};
   const groups = analytics.groupClicks || {};

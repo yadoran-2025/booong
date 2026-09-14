@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { summarizeAnalyticsInsights, summarizeVisitorJourneys, summarizeWeeklyLessonClicks } from "../js/visitor-journeys.js";
+import { summarizeAnalyticsInsights, summarizeResourceViewTrends, summarizeVisitorJourneys, summarizeWeeklyLessonClicks } from "../js/visitor-journeys.js";
 
 const stats = summarizeVisitorJourneys(
   { dashboard: { a: {}, b: {} }, about: { c: {} } },
@@ -21,6 +21,56 @@ const weeklyLessons = summarizeWeeklyLessonClicks(
   10,
 );
 assert.deepEqual(weeklyLessons, [{ title: "인구 땅따먹기", visitors: 2 }]);
+
+const trends = summarizeResourceViewTrends({
+  groupClicks: {
+    currentA: { title: "자료 A" },
+    legacyA: { title: "자료 A" },
+    currentB: { title: "자료 B" },
+  },
+  daily: {
+    "2026-08-30": { views: 9 },
+    "2026-08-31": { groupClicks: { currentA: 2 } },
+    "2026-09-01": { groupClicks: { currentA: 1, legacyA: 2, currentB: 4 } },
+    "2026-09-02": { views: 3 },
+    "2026-09-05": { groupClicks: { currentA: 2, currentB: 1 } },
+  },
+});
+assert.deepEqual(trends[0], {
+  title: "전체 자료",
+  total: 12,
+  daily: [
+    { period: "2026-08-31", views: 2 },
+    { period: "2026-09-01", views: 7 },
+    { period: "2026-09-02", views: 0 },
+    { period: "2026-09-05", views: 3 },
+  ],
+  weekdays: [
+    { period: "2026-08-31", views: 2 },
+    { period: "2026-09-01", views: 7 },
+    { period: "2026-09-02", views: 0 },
+  ],
+  weekly: [{ period: "2026-08-31", views: 12 }],
+  monthly: [{ period: "2026-08", views: 2 }, { period: "2026-09", views: 10 }],
+});
+assert.deepEqual(trends[1], {
+  title: "자료 A",
+  total: 7,
+  daily: [
+    { period: "2026-08-31", views: 2 },
+    { period: "2026-09-01", views: 3 },
+    { period: "2026-09-02", views: 0 },
+    { period: "2026-09-05", views: 2 },
+  ],
+  weekdays: [
+    { period: "2026-08-31", views: 2 },
+    { period: "2026-09-01", views: 3 },
+    { period: "2026-09-02", views: 0 },
+  ],
+  weekly: [{ period: "2026-08-31", views: 7 }],
+  monthly: [{ period: "2026-08", views: 2 }, { period: "2026-09", views: 5 }],
+});
+assert.equal(summarizeResourceViewTrends({ groupClicks: { a: { title: "가" } }, daily: { "2026-09-01": { groupClicks: { a: 1 } } } })[0].title, "전체 자료");
 
 const insights = summarizeAnalyticsInsights({
   pages: { about: { title: "소개" } },

@@ -6,7 +6,6 @@ const BLOCK_OPENERS = new Map([
 ]);
 
 const ANSWER_TAG = "답";
-const COMMENT_TAG = "댓";
 
 export function parseLessonMarkup(source) {
   const lines = String(source ?? "").replace(/\r\n?/g, "\n").split("\n");
@@ -36,11 +35,7 @@ export function parseLessonMarkup(source) {
       continue;
     }
 
-    if (trimmed === `<${COMMENT_TAG}>`) {
-      blocks.push({ type: "댓글" });
-      i += 1;
-      continue;
-    }
+    if (trimmed === "<댓>") { i += 1; continue; }
 
     if (trimmed === "---") {
       blocks.push({ type: "구분선" });
@@ -81,7 +76,7 @@ export function parseLessonMarkup(source) {
       }
       if (
         BLOCK_OPENERS.has(nextTrimmed) ||
-        nextTrimmed === `<${COMMENT_TAG}>` ||
+        nextTrimmed === "<댓>" ||
         nextTrimmed === "---" ||
         parseObjectSequence(nextTrimmed) ||
         isMalformedTextBoxLine(nextTrimmed) ||
@@ -107,7 +102,6 @@ function blockToMarkup(block) {
   if (block.type === "소제목") return `## ${block.text || ""}`.trimEnd();
   if (block.type === "절") return `### ${block.text || ""}`.trimEnd();
   if (block.type === "구분선") return "---";
-  if (block.type === "댓글") return `<${COMMENT_TAG}>`;
   if (block.type === "단락") return block.text || "";
   if (block.type === "텍스트박스") return textBoxLine(block.body || block.text || "");
   if (block.type === "미디어") return materialLine(block.items || block.materials || block.item, block.layout);
@@ -138,7 +132,6 @@ function objectContentMarkup(block) {
     block.body || block.text || "",
     materialLine(block.materials, block.materialsLayout),
     answerTag(block.answer),
-    block.comments ? `<${COMMENT_TAG}>` : "",
   ].filter(Boolean).join("\n");
 }
 
@@ -151,7 +144,6 @@ function flowToMarkup(flow = []) {
     if (item.type === "textBox") return textBoxLine(item.body || item.text || "");
     if (item.type === "group") return objectSequenceLine(item.items || [], item.layout || "row");
     if (item.type === "answer") return answerTag(item.answer);
-    if (item.type === "comment") return `<${COMMENT_TAG}>`;
     return "";
   }).filter(Boolean).join("\n");
 }
@@ -294,11 +286,7 @@ function parseObjectContent(lines, errors = []) {
       continue;
     }
 
-    if (trimmed === `<${COMMENT_TAG}>`) {
-      flushText();
-      flow.push({ type: "comment" });
-      continue;
-    }
+    if (trimmed === "<댓>") continue;
 
     kept.push(lines[i]);
   }

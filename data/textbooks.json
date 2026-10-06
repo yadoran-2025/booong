@@ -1,0 +1,3772 @@
+{
+  "version": 1,
+  "bucket": "yadoran-2025.firebasestorage.app",
+  "books": [
+    {
+      "id": "visang-social2-2015",
+      "publisher": "비상교육",
+      "title": "중학교 사회 ② · 교사용 교과서",
+      "school": "중학교",
+      "subject": "사회2[15개정]",
+      "revision": "2015 개정",
+      "sourceFilename": "[비상교육] 중등_사회 ②_교사용 교과서.pdf",
+      "sourceSha256": "bcf027fdb64e0031f9dcfada5788346480d325c4cbdc134cde6006ba0c63b081",
+      "sourceBytes": 88769784,
+      "sourcePages": 240,
+      "sourcePath": "booong/textbooks/visang-social2-2015/source.pdf",
+      "units": [
+        {
+          "key": "사회2[15개정]::I. 인권과 헌법",
+          "title": "I. 인권과 헌법",
+          "printedStart": 8,
+          "printedEnd": 25,
+          "pdfStart": 6,
+          "pdfEnd": 23,
+          "path": "booong/textbooks/visang-social2-2015/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권 보장과 기본권",
+              "printedStart": 10,
+              "printedEnd": 15,
+              "pdfStart": 8,
+              "pdfEnd": 13,
+              "path": "booong/textbooks/visang-social2-2015/unit-01-chapter-01.pdf",
+              "bytes": 4238667,
+              "sha256": "0d74c24e20ccd88af17105b9335377ee8f72bcddc11bd9a0f58263b11c09f59f"
+            },
+            {
+              "title": "2. 인권의 침해 및 구제",
+              "printedStart": 16,
+              "printedEnd": 19,
+              "pdfStart": 14,
+              "pdfEnd": 17,
+              "path": "booong/textbooks/visang-social2-2015/unit-01-chapter-02.pdf",
+              "bytes": 3709474,
+              "sha256": "229f4502955589d5a2ebd40724ad9df707b2f28cd2e3bee9349b0b9a25be01e7"
+            },
+            {
+              "title": "3. 근로자의 권리와 노동권 침해 및 구제",
+              "printedStart": 20,
+              "printedEnd": 25,
+              "pdfStart": 18,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/visang-social2-2015/unit-01-chapter-03.pdf",
+              "bytes": 4366409,
+              "sha256": "f9a54f98fb9b717ac05525d12084bd529160544a91de104ddcbed07451e25833"
+            }
+          ],
+          "bytes": 7012940,
+          "sha256": "094ca331c63a1050d8a70b11b8f75db27f7f16d5ca44357e4957cb72735ac2b3"
+        },
+        {
+          "key": "사회2[15개정]::II. 헌법과 국가 기관",
+          "title": "II. 헌법과 국가 기관",
+          "printedStart": 26,
+          "printedEnd": 43,
+          "pdfStart": 24,
+          "pdfEnd": 41,
+          "path": "booong/textbooks/visang-social2-2015/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 국회",
+              "printedStart": 28,
+              "printedEnd": 31,
+              "pdfStart": 26,
+              "pdfEnd": 29,
+              "path": "booong/textbooks/visang-social2-2015/unit-02-chapter-01.pdf",
+              "bytes": 4050951,
+              "sha256": "55b89896ce1ab67cf686f31e974d8e50e66d04a7d696f0f9688e097055a6f7a9"
+            },
+            {
+              "title": "2. 행정부와 대통령",
+              "printedStart": 32,
+              "printedEnd": 35,
+              "pdfStart": 30,
+              "pdfEnd": 33,
+              "path": "booong/textbooks/visang-social2-2015/unit-02-chapter-02.pdf",
+              "bytes": 4007665,
+              "sha256": "eca89ad0485802b47ba552a1ac93379847f82304593411e01c81730750d79cb1"
+            },
+            {
+              "title": "3. 법원과 헌법재판소",
+              "printedStart": 36,
+              "printedEnd": 43,
+              "pdfStart": 34,
+              "pdfEnd": 41,
+              "path": "booong/textbooks/visang-social2-2015/unit-02-chapter-03.pdf",
+              "bytes": 6007017,
+              "sha256": "95a4fe7ded6cab48fe6069f88016112100192e2a58cef300df6d0b0bcb38a1ba"
+            }
+          ],
+          "bytes": 9145093,
+          "sha256": "c33f5ff0acc4f04a12982161f37e0894d4a37d2db3f76084dd223940cd020640"
+        },
+        {
+          "key": "사회2[15개정]::III. 경제생활과 선택",
+          "title": "III. 경제생활과 선택",
+          "printedStart": 44,
+          "printedEnd": 63,
+          "pdfStart": 42,
+          "pdfEnd": 61,
+          "path": "booong/textbooks/visang-social2-2015/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 경제생활과 경제 문제",
+              "printedStart": 46,
+              "printedEnd": 51,
+              "pdfStart": 44,
+              "pdfEnd": 49,
+              "path": "booong/textbooks/visang-social2-2015/unit-03-chapter-01.pdf",
+              "bytes": 4045116,
+              "sha256": "95db2bea625ff7ff73d1056d1698f1bc0aa79bc57bd7b4ccb9ea6aac3f5c6406"
+            },
+            {
+              "title": "2. 기업의 역할과 사회적 책임",
+              "printedStart": 52,
+              "printedEnd": 55,
+              "pdfStart": 50,
+              "pdfEnd": 53,
+              "path": "booong/textbooks/visang-social2-2015/unit-03-chapter-02.pdf",
+              "bytes": 3775961,
+              "sha256": "cf4602e8d32ea3dcc1078ac895b66f815241b49fe6132e18063c450e789128dc"
+            },
+            {
+              "title": "3. 금융 생활의 중요성",
+              "printedStart": 56,
+              "printedEnd": 63,
+              "pdfStart": 54,
+              "pdfEnd": 61,
+              "path": "booong/textbooks/visang-social2-2015/unit-03-chapter-03.pdf",
+              "bytes": 4995105,
+              "sha256": "77fcd07a4fd7389d66524dbad17c7fbcb64d0ad042d06b750f673c3e04cedb27"
+            }
+          ],
+          "bytes": 7545174,
+          "sha256": "e5d6eaad07070560e5126e8d371b79e77ae6ac194ad5b8d846e8061ef3a021ab"
+        },
+        {
+          "key": "사회2[15개정]::IV. 시장 경제와 가격",
+          "title": "IV. 시장 경제와 가격",
+          "printedStart": 64,
+          "printedEnd": 81,
+          "pdfStart": 62,
+          "pdfEnd": 79,
+          "path": "booong/textbooks/visang-social2-2015/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 시장의 의미와 종류",
+              "printedStart": 66,
+              "printedEnd": 69,
+              "pdfStart": 64,
+              "pdfEnd": 67,
+              "path": "booong/textbooks/visang-social2-2015/unit-04-chapter-01.pdf",
+              "bytes": 1426622,
+              "sha256": "c32d9de4fd85eb073a247dcabe238c8695afc2f8151ed093adc0585f5ca1ef56"
+            },
+            {
+              "title": "2. 시장 가격의 결정",
+              "printedStart": 70,
+              "printedEnd": 73,
+              "pdfStart": 68,
+              "pdfEnd": 71,
+              "path": "booong/textbooks/visang-social2-2015/unit-04-chapter-02.pdf",
+              "bytes": 1185665,
+              "sha256": "df7275fe8f8133129c07afc7464a92921c523d59d42a3c51e797425b4b0436e2"
+            },
+            {
+              "title": "3. 시장 가격의 변동",
+              "printedStart": 74,
+              "printedEnd": 81,
+              "pdfStart": 72,
+              "pdfEnd": 79,
+              "path": "booong/textbooks/visang-social2-2015/unit-04-chapter-03.pdf",
+              "bytes": 4282991,
+              "sha256": "746211c3d1ff40a178152cf5d4b5c581f3155c2262d2b69d94745c6701aaf4ea"
+            }
+          ],
+          "bytes": 6269144,
+          "sha256": "8083015395000ac3831342bafc23e48b0072ab154d48240a797b6e5d3b0dcfae"
+        },
+        {
+          "key": "사회2[15개정]::V. 국민 경제와 국제 거래",
+          "title": "V. 국민 경제와 국제 거래",
+          "printedStart": 82,
+          "printedEnd": 101,
+          "pdfStart": 80,
+          "pdfEnd": 99,
+          "path": "booong/textbooks/visang-social2-2015/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 국내 총생산과 경제 성장",
+              "printedStart": 84,
+              "printedEnd": 87,
+              "pdfStart": 82,
+              "pdfEnd": 85,
+              "path": "booong/textbooks/visang-social2-2015/unit-05-chapter-01.pdf",
+              "bytes": 3799940,
+              "sha256": "c6a03d864368a4e49f4da929077d22fca667a2de3887acd1a213ff076ebb5521"
+            },
+            {
+              "title": "2. 물가와 실업",
+              "printedStart": 88,
+              "printedEnd": 93,
+              "pdfStart": 86,
+              "pdfEnd": 91,
+              "path": "booong/textbooks/visang-social2-2015/unit-05-chapter-02.pdf",
+              "bytes": 4052504,
+              "sha256": "13227f65429f4f9c19ee59acd17ffd491037b3c1312f42a0052db562079c056c"
+            },
+            {
+              "title": "3. 국제 거래와 환율",
+              "printedStart": 94,
+              "printedEnd": 101,
+              "pdfStart": 92,
+              "pdfEnd": 99,
+              "path": "booong/textbooks/visang-social2-2015/unit-05-chapter-03.pdf",
+              "bytes": 5677466,
+              "sha256": "47d3dbf9af3a231174d816b577f3f5ed57122ce40294a503ffc91081c162c084"
+            }
+          ],
+          "bytes": 8174501,
+          "sha256": "7ad7fd41a6c55b675ba19a06174681d01d8d85d8191541bc65cd370549db525f"
+        },
+        {
+          "key": "사회2[15개정]::VI. 국제 사회와 국제 정치",
+          "title": "VI. 국제 사회와 국제 정치",
+          "printedStart": 102,
+          "printedEnd": 119,
+          "pdfStart": 100,
+          "pdfEnd": 117,
+          "path": "booong/textbooks/visang-social2-2015/unit-06.pdf",
+          "chapters": [
+            {
+              "title": "1. 국제 사회의 이해",
+              "printedStart": 104,
+              "printedEnd": 107,
+              "pdfStart": 102,
+              "pdfEnd": 105,
+              "path": "booong/textbooks/visang-social2-2015/unit-06-chapter-01.pdf",
+              "bytes": 3834472,
+              "sha256": "0a1ae1f49993a4e6be3b3e6bd490a118f4ba46717959e7388851488504a6b473"
+            },
+            {
+              "title": "2. 국제 사회의 모습과 공존 노력",
+              "printedStart": 108,
+              "printedEnd": 113,
+              "pdfStart": 106,
+              "pdfEnd": 111,
+              "path": "booong/textbooks/visang-social2-2015/unit-06-chapter-02.pdf",
+              "bytes": 4098241,
+              "sha256": "86347dda0722c6da13c86ace0028625a729e077e726af6f2d918063440ce86ab"
+            },
+            {
+              "title": "3. 우리나라의 국가 간 갈등 문제",
+              "printedStart": 114,
+              "printedEnd": 119,
+              "pdfStart": 112,
+              "pdfEnd": 117,
+              "path": "booong/textbooks/visang-social2-2015/unit-06-chapter-03.pdf",
+              "bytes": 2129782,
+              "sha256": "b1d300c7943abe73b8cb2baba66304f15249a9da9e619c340d90d896040aad69"
+            }
+          ],
+          "bytes": 6959791,
+          "sha256": "4488e4e0966fbd7168b329691caeb8185dff166e1d0d6021cb82d7a660822581"
+        },
+        {
+          "key": "사회2[15개정]::VII. 인구 변화와 인구 문제",
+          "title": "VII. 인구 변화와 인구 문제",
+          "printedStart": 120,
+          "printedEnd": 139,
+          "pdfStart": 118,
+          "pdfEnd": 137,
+          "path": "booong/textbooks/visang-social2-2015/unit-07.pdf",
+          "chapters": [
+            {
+              "title": "1. 인구 분포",
+              "printedStart": 122,
+              "printedEnd": 125,
+              "pdfStart": 120,
+              "pdfEnd": 123,
+              "path": "booong/textbooks/visang-social2-2015/unit-07-chapter-01.pdf",
+              "bytes": 5409646,
+              "sha256": "edde2a5f7ce15d5d2b80b56b09ee149b334197da968743fa38bbb570b166ebc6"
+            },
+            {
+              "title": "2. 인구 이동",
+              "printedStart": 126,
+              "printedEnd": 131,
+              "pdfStart": 124,
+              "pdfEnd": 129,
+              "path": "booong/textbooks/visang-social2-2015/unit-07-chapter-02.pdf",
+              "bytes": 7549775,
+              "sha256": "33ac01ed5f96738252e4758bc88022991adf2d0fcef43c50e3673678cb440d02"
+            },
+            {
+              "title": "3. 인구 문제",
+              "printedStart": 132,
+              "printedEnd": 139,
+              "pdfStart": 130,
+              "pdfEnd": 137,
+              "path": "booong/textbooks/visang-social2-2015/unit-07-chapter-03.pdf",
+              "bytes": 4710136,
+              "sha256": "e80804ee757923630fbc2eaa9c3b0af8d4dd99281b90e9e05de42a0a2daff3b2"
+            }
+          ],
+          "bytes": 12349397,
+          "sha256": "80e904db96bbb3c3f8d23ab2b6571ba59b65b4910f9460d71b9a905866e48bcf"
+        },
+        {
+          "key": "사회2[15개정]::VIII. 사람이 만든 삶터, 도시",
+          "title": "VIII. 사람이 만든 삶터, 도시",
+          "printedStart": 140,
+          "printedEnd": 159,
+          "pdfStart": 138,
+          "pdfEnd": 157,
+          "path": "booong/textbooks/visang-social2-2015/unit-08.pdf",
+          "chapters": [
+            {
+              "title": "1. 도시의 위치와 특징",
+              "printedStart": 142,
+              "printedEnd": 145,
+              "pdfStart": 140,
+              "pdfEnd": 143,
+              "path": "booong/textbooks/visang-social2-2015/unit-08-chapter-01.pdf",
+              "bytes": 5658723,
+              "sha256": "f8bbcac02dd930775888b6a12d1c8c7041a736c70579d50f2beb303dbf6d177a"
+            },
+            {
+              "title": "2. 도시 내부의 경관",
+              "printedStart": 146,
+              "printedEnd": 149,
+              "pdfStart": 144,
+              "pdfEnd": 147,
+              "path": "booong/textbooks/visang-social2-2015/unit-08-chapter-02.pdf",
+              "bytes": 9418107,
+              "sha256": "ffd88f4a22519b742a647a37790faad3282f0493d9b49d29b7c428b1e61dd440"
+            },
+            {
+              "title": "3. 도시화와 도시 문제",
+              "printedStart": 150,
+              "printedEnd": 153,
+              "pdfStart": 148,
+              "pdfEnd": 151,
+              "path": "booong/textbooks/visang-social2-2015/unit-08-chapter-03.pdf",
+              "bytes": 4254498,
+              "sha256": "7727944cce76ebd9cf76b5b0fc0658d9bd9083772fcbacff8ebbe2f452146db3"
+            },
+            {
+              "title": "4. 살기 좋은 도시",
+              "printedStart": 154,
+              "printedEnd": 159,
+              "pdfStart": 152,
+              "pdfEnd": 157,
+              "path": "booong/textbooks/visang-social2-2015/unit-08-chapter-04.pdf",
+              "bytes": 4674755,
+              "sha256": "be5fac5de0428a10bba5cca69fd0d8d5d636e2d2a0d6186231dcf4bb10265d61"
+            }
+          ],
+          "bytes": 16002518,
+          "sha256": "37c83741cc348a6e2695912e554d61248dea5f8befbf16cb7338255ee25f31d3"
+        },
+        {
+          "key": "사회2[15개정]::IX. 글로벌 경제 활동과 지역 변화",
+          "title": "IX. 글로벌 경제 활동과 지역 변화",
+          "printedStart": 160,
+          "printedEnd": 175,
+          "pdfStart": 158,
+          "pdfEnd": 173,
+          "path": "booong/textbooks/visang-social2-2015/unit-09.pdf",
+          "chapters": [
+            {
+              "title": "1. 농업 생산의 기업화와 세계화",
+              "printedStart": 162,
+              "printedEnd": 165,
+              "pdfStart": 160,
+              "pdfEnd": 163,
+              "path": "booong/textbooks/visang-social2-2015/unit-09-chapter-01.pdf",
+              "bytes": 7368002,
+              "sha256": "d5850de8251bea83d79002f69b71d760771b100ae177372db2973707136cea23"
+            },
+            {
+              "title": "2. 다국적 기업과 생산공간 변화",
+              "printedStart": 166,
+              "printedEnd": 169,
+              "pdfStart": 164,
+              "pdfEnd": 167,
+              "path": "booong/textbooks/visang-social2-2015/unit-09-chapter-02.pdf",
+              "bytes": 4423271,
+              "sha256": "b08502033a5d8bdc38fc7edb30693831eefc10edea1fd59e86bd1cda8dfb3846"
+            },
+            {
+              "title": "3. 세계화에 따른 서비스업의 변화",
+              "printedStart": 170,
+              "printedEnd": 175,
+              "pdfStart": 168,
+              "pdfEnd": 173,
+              "path": "booong/textbooks/visang-social2-2015/unit-09-chapter-03.pdf",
+              "bytes": 6440794,
+              "sha256": "633fdb97a3795ab907747f0a86979122ac913ca4c93e619d135372f79ec6296e"
+            }
+          ],
+          "bytes": 12988021,
+          "sha256": "0bb60d210b9996e1ff23114bdaaf89ca9f3200ba7549811d4923edb6452aedd6"
+        },
+        {
+          "key": "사회2[15개정]::X. 환경 문제와 지속 가능한 환경",
+          "title": "X. 환경 문제와 지속 가능한 환경",
+          "printedStart": 176,
+          "printedEnd": 195,
+          "pdfStart": 174,
+          "pdfEnd": 193,
+          "path": "booong/textbooks/visang-social2-2015/unit-10.pdf",
+          "chapters": [
+            {
+              "title": "1. 전 지구적 차원의 기후 변화",
+              "printedStart": 178,
+              "printedEnd": 183,
+              "pdfStart": 176,
+              "pdfEnd": 181,
+              "path": "booong/textbooks/visang-social2-2015/unit-10-chapter-01.pdf",
+              "bytes": 6558262,
+              "sha256": "5d0218a4aa39c775b7588177f15659493972f2844f037b6918ccbf7a2b2dad8c"
+            },
+            {
+              "title": "2. 환경 문제 유발 산업의 이동",
+              "printedStart": 184,
+              "printedEnd": 187,
+              "pdfStart": 182,
+              "pdfEnd": 185,
+              "path": "booong/textbooks/visang-social2-2015/unit-10-chapter-02.pdf",
+              "bytes": 6337037,
+              "sha256": "f68cb0a8670eaed4f88db45612059e85fe2bb3696ece9b74cd2d21e9172035fd"
+            },
+            {
+              "title": "3. 생활 속의 환경 이슈",
+              "printedStart": 188,
+              "printedEnd": 195,
+              "pdfStart": 186,
+              "pdfEnd": 193,
+              "path": "booong/textbooks/visang-social2-2015/unit-10-chapter-03.pdf",
+              "bytes": 6717165,
+              "sha256": "132ff6218ea194f4855d4addf6a5b21a5eb90243dbd384d351fec021fb7f1403"
+            }
+          ],
+          "bytes": 14624140,
+          "sha256": "deac40d4e9243c1c61ea865666cbe740bc28f5ec9bb1d9be93d93cdbaba18d58"
+        },
+        {
+          "key": "사회2[15개정]::XI. 세계 속의 우리나라",
+          "title": "XI. 세계 속의 우리나라",
+          "printedStart": 196,
+          "printedEnd": 213,
+          "pdfStart": 194,
+          "pdfEnd": 211,
+          "path": "booong/textbooks/visang-social2-2015/unit-11.pdf",
+          "chapters": [
+            {
+              "title": "1. 우리나라의 영역과 독도",
+              "printedStart": 198,
+              "printedEnd": 203,
+              "pdfStart": 196,
+              "pdfEnd": 201,
+              "path": "booong/textbooks/visang-social2-2015/unit-11-chapter-01.pdf",
+              "bytes": 6279500,
+              "sha256": "3e83090cecc588598b00a8dba8364f70e9574dff6d4c1e7102ecc94c50e53672"
+            },
+            {
+              "title": "2. 우리나라 여러 지역의 경쟁력",
+              "printedStart": 204,
+              "printedEnd": 207,
+              "pdfStart": 202,
+              "pdfEnd": 205,
+              "path": "booong/textbooks/visang-social2-2015/unit-11-chapter-02.pdf",
+              "bytes": 6612360,
+              "sha256": "ba9ad743008af16ad7e4b558475cb9c547b8a376370f11cbdebcb7bc6fa77906"
+            },
+            {
+              "title": "3. 국토 통일과 통일 한국의 미래",
+              "printedStart": 208,
+              "printedEnd": 213,
+              "pdfStart": 206,
+              "pdfEnd": 211,
+              "path": "booong/textbooks/visang-social2-2015/unit-11-chapter-03.pdf",
+              "bytes": 5752201,
+              "sha256": "0657be113ccc806ed8d6772baf0332d276ce8b97fbfed40961d850169c78340f"
+            }
+          ],
+          "bytes": 13495518,
+          "sha256": "21a56cb1c684271bb0971ff5de907063dde1b18fd4641cc098a920b5668215f4"
+        },
+        {
+          "key": "사회2[15개정]::XII. 더불어 사는 세계",
+          "title": "XII. 더불어 사는 세계",
+          "printedStart": 214,
+          "printedEnd": 229,
+          "pdfStart": 212,
+          "pdfEnd": 227,
+          "path": "booong/textbooks/visang-social2-2015/unit-12.pdf",
+          "chapters": [
+            {
+              "title": "1. 지구상의 지리적 문제",
+              "printedStart": 216,
+              "printedEnd": 219,
+              "pdfStart": 214,
+              "pdfEnd": 217,
+              "path": "booong/textbooks/visang-social2-2015/unit-12-chapter-01.pdf",
+              "bytes": 6065457,
+              "sha256": "827f72c077d2ae3cc9a76811f26e33bde483956892c49c9a27a8c94bb91d3cca"
+            },
+            {
+              "title": "2. 저개발 지역의 발전을 위한 노력",
+              "printedStart": 220,
+              "printedEnd": 223,
+              "pdfStart": 218,
+              "pdfEnd": 221,
+              "path": "booong/textbooks/visang-social2-2015/unit-12-chapter-02.pdf",
+              "bytes": 4105488,
+              "sha256": "e8f7b9b367f3b7d553821726c22ab5c3c67e2ac044dc341934254e32aaa4e8e5"
+            },
+            {
+              "title": "3. 지역 간 불평등 완화를 위한 노력",
+              "printedStart": 224,
+              "printedEnd": 229,
+              "pdfStart": 222,
+              "pdfEnd": 227,
+              "path": "booong/textbooks/visang-social2-2015/unit-12-chapter-03.pdf",
+              "bytes": 2426491,
+              "sha256": "cc0755637b75c187bf3301d62c301dec2c77ed0d8f5983d29d871535bfe1bcf3"
+            }
+          ],
+          "bytes": 9510855,
+          "sha256": "6f4b2839a4621d70199b9bb7ade01946e876ce5b0c4ea8e1d3e3cf880d41015a"
+        }
+      ]
+    },
+    {
+      "id": "changbi-integrated2-2022",
+      "publisher": "창비",
+      "title": "통합사회2 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[창비]_교사용_교과서.pdf",
+      "sourceSha256": "1c3b64c9a8769780447940130226412a2f8f6c2c7925cb15d0970a041c94684f",
+      "sourceBytes": 44127190,
+      "sourcePages": 168,
+      "sourcePath": "booong/textbooks/changbi-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 6,
+          "printedEnd": 35,
+          "pdfStart": 6,
+          "pdfEnd": 35,
+          "path": "booong/textbooks/changbi-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 8,
+              "printedEnd": 15,
+              "pdfStart": 8,
+              "pdfEnd": 15,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 1978237,
+              "sha256": "e3d0e13db9b78da250058d90cea3c7c73d4d753337b7634e06089d4baa57adb4"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 16,
+              "printedEnd": 23,
+              "pdfStart": 16,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 2502594,
+              "sha256": "c6571f6a2bb8a984fe6702ab2279dd8c49e75608a3d94ce1e8f4a1895cb03711"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 24,
+              "printedEnd": 35,
+              "pdfStart": 24,
+              "pdfEnd": 35,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 3510763,
+              "sha256": "b4e81e8d6fdf12de7b928338600f789eb9913c84d25d9d67e7bdef26aa5f2081"
+            }
+          ],
+          "bytes": 7384909,
+          "sha256": "e32948d7564ccfadb4fe81d686e13ecc3223b0fa185ede094f298948f88799f3"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 36,
+          "printedEnd": 65,
+          "pdfStart": 36,
+          "pdfEnd": 65,
+          "path": "booong/textbooks/changbi-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 38,
+              "printedEnd": 45,
+              "pdfStart": 38,
+              "pdfEnd": 45,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 2106147,
+              "sha256": "292e50668fefc186847d2031dd16fc74e945d42eec1d76a12bddc082596585fc"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 46,
+              "printedEnd": 53,
+              "pdfStart": 46,
+              "pdfEnd": 53,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 2394428,
+              "sha256": "18da4f1e6be72cec391c3e99333a67ad1131c75f68efc15e9062d46d5cb78be1"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 54,
+              "printedEnd": 65,
+              "pdfStart": 54,
+              "pdfEnd": 65,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 3009838,
+              "sha256": "2bc82a2aad0b96b2c6b8231c3e2c4f31dd9939f5d442a26ecc0f88e47603fea4"
+            }
+          ],
+          "bytes": 7450176,
+          "sha256": "b8832a87a407b4ac7020833ca15e040393e871625389b82f206f235f62fa4c89"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 66,
+          "printedEnd": 103,
+          "pdfStart": 66,
+          "pdfEnd": 103,
+          "path": "booong/textbooks/changbi-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 68,
+              "printedEnd": 75,
+              "pdfStart": 68,
+              "pdfEnd": 75,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 2269620,
+              "sha256": "a8a103434809be09b1fddaed314fdad5229affa885192b4f691907b464a8dfc6"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 76,
+              "printedEnd": 83,
+              "pdfStart": 76,
+              "pdfEnd": 83,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 2652106,
+              "sha256": "ccf0796b588e6227dfd985b5358a5936e6aecf120597c37c1316b4ecda1db799"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 84,
+              "printedEnd": 91,
+              "pdfStart": 84,
+              "pdfEnd": 91,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 3001203,
+              "sha256": "fbbed927d482b0e0b8f6571a0f95c9ed79a46c6b9532b1a35b52ed501737e48e"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 92,
+              "printedEnd": 103,
+              "pdfStart": 92,
+              "pdfEnd": 103,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 5652574,
+              "sha256": "dbc7831a25c5e89a83273dfcede6b6538a9f446c3d9bde3da7ded9773be21fa5"
+            }
+          ],
+          "bytes": 11616553,
+          "sha256": "13457ccc5c4552af9d449a524ed7b3c1c8faf4ee6cee366704e635fa6c35e5e3"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 104,
+          "printedEnd": 131,
+          "pdfStart": 104,
+          "pdfEnd": 131,
+          "path": "booong/textbooks/changbi-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 106,
+              "printedEnd": 113,
+              "pdfStart": 106,
+              "pdfEnd": 113,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 2857840,
+              "sha256": "8419f6cbc631aaa77db662a8907cf6bcde466578661fc40909987bed28b19b06"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 114,
+              "printedEnd": 121,
+              "pdfStart": 114,
+              "pdfEnd": 121,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 3101882,
+              "sha256": "d6f3e76f244a2398919ee715095d78604b3bb869e74cfb44575a5dd41906b8a9"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 122,
+              "printedEnd": 131,
+              "pdfStart": 122,
+              "pdfEnd": 131,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 2374124,
+              "sha256": "94e84fdc863783f1abc51c285bb9c7c0e8d6f13aa02a17ef341beb57050a2fdb"
+            }
+          ],
+          "bytes": 7505517,
+          "sha256": "219d1a049b84dc881e62d51b511a8b002caa6a296c630c9cc98a24144f4dc700"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 132,
+          "printedEnd": 159,
+          "pdfStart": 132,
+          "pdfEnd": 159,
+          "path": "booong/textbooks/changbi-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 134,
+              "printedEnd": 141,
+              "pdfStart": 134,
+              "pdfEnd": 141,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 3863687,
+              "sha256": "6ae549ca7d3850dcda13492a496eb6b1b264acee6d0d46edbd1e6bc866439422"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 142,
+              "printedEnd": 149,
+              "pdfStart": 142,
+              "pdfEnd": 149,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 2679136,
+              "sha256": "7f3984d5bf1fdc16c34a84f346fc0e48d92f8d1e4038be9f4269ae5e397eb747"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 150,
+              "printedEnd": 159,
+              "pdfStart": 150,
+              "pdfEnd": 159,
+              "path": "booong/textbooks/changbi-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 3287921,
+              "sha256": "a358262b39ab11ad66f1f6ce0852107c561e3e41a231a3e54264a639603df5f4"
+            }
+          ],
+          "bytes": 9176388,
+          "sha256": "b89fab6d2f4f49f17befd1f2ba9f64bf3aaf765a59881579157719f5c54be2bd"
+        }
+      ]
+    },
+    {
+      "id": "changbi-integrated1-2022",
+      "publisher": "창비",
+      "title": "통합사회1 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[창비]_교사용_교과서.pdf",
+      "sourceSha256": "821f322f805c9003efe5fbaa09d400a5802fc1e6243e0ae64298eef5662bd917",
+      "sourceBytes": 58410845,
+      "sourcePages": 152,
+      "sourcePath": "booong/textbooks/changbi-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 6,
+          "printedEnd": 23,
+          "pdfStart": 6,
+          "pdfEnd": 23,
+          "path": "booong/textbooks/changbi-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 8,
+              "printedEnd": 13,
+              "pdfStart": 8,
+              "pdfEnd": 13,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 2612718,
+              "sha256": "fbe25cd449f69a833a373bf772e668a607fa8073ef4e9632329ebe7d0f62d828"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 14,
+              "printedEnd": 23,
+              "pdfStart": 14,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 3828018,
+              "sha256": "81361ede998a3fea074e4c5238f51ef2c9de7fb77eca382785c2b19f08777161"
+            }
+          ],
+          "bytes": 6350799,
+          "sha256": "04420b9e11346569c9be5ee3c6b1971f997b3b0428f93d571494ca5b9dd2e73b"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 24,
+          "printedEnd": 45,
+          "pdfStart": 24,
+          "pdfEnd": 45,
+          "path": "booong/textbooks/changbi-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 26,
+              "printedEnd": 33,
+              "pdfStart": 26,
+              "pdfEnd": 33,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 2595712,
+              "sha256": "443551ea405c21fbd0a811802f8c44c6ea7e68ce49b1a47df3e6083922b21c56"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 34,
+              "printedEnd": 45,
+              "pdfStart": 34,
+              "pdfEnd": 45,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 3304607,
+              "sha256": "44fd9af9f2beca9c3d05a4c86faeb1f89dacf2c58f39ff49090d1b2258e257d5"
+            }
+          ],
+          "bytes": 5984130,
+          "sha256": "bf085a909d412a9679e74eed8f48c5b0be7a21f29f21e35bc3416989690a61ea"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 46,
+          "printedEnd": 73,
+          "pdfStart": 46,
+          "pdfEnd": 73,
+          "path": "booong/textbooks/changbi-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 48,
+              "printedEnd": 55,
+              "pdfStart": 48,
+              "pdfEnd": 55,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 14108281,
+              "sha256": "64918d8434688d781bad55d754193e1bbbe33df7288bb3f81770a39504f81c26"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 56,
+              "printedEnd": 61,
+              "pdfStart": 56,
+              "pdfEnd": 61,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 3161386,
+              "sha256": "407de1ea7594e9a5a61db98b798bdf9dd5444272a233c3a3f456507b121af4df"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 62,
+              "printedEnd": 73,
+              "pdfStart": 62,
+              "pdfEnd": 73,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 3244081,
+              "sha256": "452e86133a7b8e717c0096ec656375f42a393a090cd2094abb4c772d544b74d8"
+            }
+          ],
+          "bytes": 20381895,
+          "sha256": "e7fcda89ea43b3cb8ae53901fe5858dc53f9ccab4b6ed5323fd9d0e1a3fa14d2"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 74,
+          "printedEnd": 111,
+          "pdfStart": 74,
+          "pdfEnd": 111,
+          "path": "booong/textbooks/changbi-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 76,
+              "printedEnd": 83,
+              "pdfStart": 76,
+              "pdfEnd": 83,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 6397180,
+              "sha256": "889fbde28bc317567e291a5b4d3dc69cdbde22db3e0dd4a629873e09cc264055"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 84,
+              "printedEnd": 91,
+              "pdfStart": 84,
+              "pdfEnd": 91,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 3316529,
+              "sha256": "6d8d1fbe61326b49d51eca5c5e6005445c3f1d91ce95937fa4cb972cadf2c7f6"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 92,
+              "printedEnd": 99,
+              "pdfStart": 92,
+              "pdfEnd": 99,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 2831104,
+              "sha256": "584629b61a8d26faafdbca34dd87300504997630c0014f3444baab685c3bf6b7"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 100,
+              "printedEnd": 111,
+              "pdfStart": 100,
+              "pdfEnd": 111,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 4159143,
+              "sha256": "e1bb457b658ee23c078e825755562d2924899f852349d4354051b610016b0ccf"
+            }
+          ],
+          "bytes": 15287567,
+          "sha256": "9127cb251099565f7b9b262b3b027f7174be28265fa905592b0a6b5b039f15e8"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 112,
+          "printedEnd": 143,
+          "pdfStart": 112,
+          "pdfEnd": 143,
+          "path": "booong/textbooks/changbi-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 114,
+              "printedEnd": 121,
+              "pdfStart": 114,
+              "pdfEnd": 121,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 2977949,
+              "sha256": "d6f63ee3162bc4b4ef24c40581a46cb4b09f2bcce6e31dfbef20bc0026e95f16"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 122,
+              "printedEnd": 129,
+              "pdfStart": 122,
+              "pdfEnd": 129,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 2974671,
+              "sha256": "9a939a6b37a35821d393d3fb12c40e501a93d0a82207940ce9d9c968ca9f8b5d"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 130,
+              "printedEnd": 143,
+              "pdfStart": 130,
+              "pdfEnd": 143,
+              "path": "booong/textbooks/changbi-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 5252555,
+              "sha256": "f831c09f17466a142bd46bd29a688e89366b489953f25d5668aa6301eb6daf0a"
+            }
+          ],
+          "bytes": 10602325,
+          "sha256": "f2f7d060a4d3196d73e8cacdfedfa27893ddeb7bb89164ae325ff67b78639468"
+        }
+      ]
+    },
+    {
+      "id": "liber-integrated2-2022",
+      "publisher": "리베르스쿨",
+      "title": "통합사회2 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[리베르스쿨]_교사용_교과서.pdf",
+      "sourceSha256": "c3a6c4ea958cbea5f4164907b3856a9472953967e46704fab88e081e638d80b4",
+      "sourceBytes": 95512439,
+      "sourcePages": 164,
+      "sourcePath": "booong/textbooks/liber-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 8,
+          "printedEnd": 37,
+          "pdfStart": 10,
+          "pdfEnd": 39,
+          "path": "booong/textbooks/liber-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 10,
+              "printedEnd": 18,
+              "pdfStart": 12,
+              "pdfEnd": 20,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 5286516,
+              "sha256": "5a5627aeafed6a98790e377e2307f5cfeff3639acb0a33b7fbdde57072b93bc0"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 19,
+              "printedEnd": 26,
+              "pdfStart": 21,
+              "pdfEnd": 28,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 4117705,
+              "sha256": "e00a8bd7bb3621f45c70d5152d1b49226db18fe71047f4e6f70f099c6cf68881"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 27,
+              "printedEnd": 37,
+              "pdfStart": 29,
+              "pdfEnd": 39,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 5066702,
+              "sha256": "95d7bf16e93fc4b3f34c989c6d61e92d06009f9d56047673e4ec9a054e899574"
+            }
+          ],
+          "bytes": 15087242,
+          "sha256": "fa947bded2b0a67cee5aa4f726733668655e0559c179df03f5d33ae38a1aab3c"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 38,
+          "printedEnd": 61,
+          "pdfStart": 40,
+          "pdfEnd": 63,
+          "path": "booong/textbooks/liber-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 40,
+              "printedEnd": 46,
+              "pdfStart": 42,
+              "pdfEnd": 48,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 3482457,
+              "sha256": "9a88a1b3a05e66a04f3aa5f92be7288d971bfb8ab16c7f9511640f884aae1024"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 47,
+              "printedEnd": 52,
+              "pdfStart": 49,
+              "pdfEnd": 54,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 4873472,
+              "sha256": "615080055235087eae5ad01970114b5c84266c3d5f8c6c57e7dd67cb42e70ad9"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 53,
+              "printedEnd": 61,
+              "pdfStart": 55,
+              "pdfEnd": 63,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 3406267,
+              "sha256": "598b702fcc902d903231efb7db8f83298b15247177ee7b333bba123813361c82"
+            }
+          ],
+          "bytes": 12586601,
+          "sha256": "9195ec6ce344e95f92189bc19c074378300d7323ae5f67585eb573e15689553c"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 62,
+          "printedEnd": 97,
+          "pdfStart": 64,
+          "pdfEnd": 99,
+          "path": "booong/textbooks/liber-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 64,
+              "printedEnd": 70,
+              "pdfStart": 66,
+              "pdfEnd": 72,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 3350688,
+              "sha256": "c86cd7c9e2681136207e45474db862f80259f65e5ceb7bd3c48912db32f71c32"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 71,
+              "printedEnd": 79,
+              "pdfStart": 73,
+              "pdfEnd": 81,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 3734846,
+              "sha256": "7ec084d9ded40504a0792ecf7285a917f5b0ebbbf06ca3fc9c4ee8a351639ec9"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 80,
+              "printedEnd": 87,
+              "pdfStart": 82,
+              "pdfEnd": 89,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 2500953,
+              "sha256": "a3e3523e731db8a1ddc6beec08c76d0c10b23c5b1deb07cdb6ad32e8f44a3065"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 88,
+              "printedEnd": 97,
+              "pdfStart": 90,
+              "pdfEnd": 99,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 4457732,
+              "sha256": "947837ccd47aa69d2d45950a3b155175acba18573dac7e21ebfa840c34c54d83"
+            }
+          ],
+          "bytes": 15921841,
+          "sha256": "cc4c59f1409e7d2f58f88b9735522bf47c37ee7c027bd5d9f88d9eb8358cf53c"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 98,
+          "printedEnd": 127,
+          "pdfStart": 100,
+          "pdfEnd": 129,
+          "path": "booong/textbooks/liber-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 100,
+              "printedEnd": 107,
+              "pdfStart": 102,
+              "pdfEnd": 109,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 5521558,
+              "sha256": "f54e6fd3c4071edcf6706d61f3020acd9ca7b27a8db9dfb6f308ef3517ef03df"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 108,
+              "printedEnd": 113,
+              "pdfStart": 110,
+              "pdfEnd": 115,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 3464232,
+              "sha256": "b49f957d100363cb4eecb195438c430892dc7cbcacd2c3ec3a402ed68da9eed5"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 114,
+              "printedEnd": 127,
+              "pdfStart": 116,
+              "pdfEnd": 129,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 9439903,
+              "sha256": "3b7d36885ab987fa43cecb1532e0d90f8c2302f0b156c5bdb75c5ac2c6a0be4c"
+            }
+          ],
+          "bytes": 23003292,
+          "sha256": "32082018915fcd34e48e595d86fdd39eb4f90990fcb4a9d2794fd97b96e5ff9c"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 128,
+          "printedEnd": 153,
+          "pdfStart": 130,
+          "pdfEnd": 155,
+          "path": "booong/textbooks/liber-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 130,
+              "printedEnd": 136,
+              "pdfStart": 132,
+              "pdfEnd": 138,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 8056097,
+              "sha256": "38afa7b1fef1490a529fe4fbd322baa9d9087222cdede575607884cedee72f8f"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 137,
+              "printedEnd": 143,
+              "pdfStart": 139,
+              "pdfEnd": 145,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 6500071,
+              "sha256": "5aee637d6da636f11e0430d60635b49b82dbf7f0bd90b50f5907ff7c9f40527a"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 144,
+              "printedEnd": 153,
+              "pdfStart": 146,
+              "pdfEnd": 155,
+              "path": "booong/textbooks/liber-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 7057673,
+              "sha256": "727959afcbf1c11d37399d4587c9006330f22f7e85c4896cf2aa469d8b6ff1d4"
+            }
+          ],
+          "bytes": 26826380,
+          "sha256": "b33dfed6dfa504bf944cf03287a4e3c78820dafdceb58f94642359456435f31c"
+        }
+      ]
+    },
+    {
+      "id": "donga-integrated1-2022",
+      "publisher": "동아출판",
+      "title": "통합사회1 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[동아출판]_교사용_교과서.pdf",
+      "sourceSha256": "2b94ab9d9ff5ae6b385f211b3bbb6e268c2466bff6b63922cdcd2e48317e25cb",
+      "sourceBytes": 97367795,
+      "sourcePages": 158,
+      "sourcePath": "booong/textbooks/donga-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 8,
+          "printedEnd": 27,
+          "pdfStart": 8,
+          "pdfEnd": 27,
+          "path": "booong/textbooks/donga-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 10,
+              "printedEnd": 15,
+              "pdfStart": 10,
+              "pdfEnd": 15,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 2985498,
+              "sha256": "b7ce5a7f7507227a7026ed752ce1ba42a4dee96c10d23748a94162696606c529"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 16,
+              "printedEnd": 27,
+              "pdfStart": 16,
+              "pdfEnd": 27,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 5868584,
+              "sha256": "dc389dfd3809b2b9e72e112d94ca97f14c4e86cf43c0127348c96b4bb809c334"
+            }
+          ],
+          "bytes": 8927028,
+          "sha256": "b8048056f4eff9b42f091126cdbcb901f1981eaef4ffd200f3b30b317672b79b"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 28,
+          "printedEnd": 49,
+          "pdfStart": 28,
+          "pdfEnd": 49,
+          "path": "booong/textbooks/donga-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 30,
+              "printedEnd": 37,
+              "pdfStart": 30,
+              "pdfEnd": 37,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 10375256,
+              "sha256": "a101a7ef393f585a2f7b066a65e71ff926b50e7249c0cbcfcc1a2456ec3c158d"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 38,
+              "printedEnd": 49,
+              "pdfStart": 38,
+              "pdfEnd": 49,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 13131211,
+              "sha256": "a98baa1af845c8ba7417b1dbbd173f9d8cf3990dd5882b080b97ca2607d31d35"
+            }
+          ],
+          "bytes": 24112370,
+          "sha256": "157f07127fb921d68f3ae1ff37591e4199ada38955dbfa6c0304b1d5737cab33"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 50,
+          "printedEnd": 83,
+          "pdfStart": 50,
+          "pdfEnd": 83,
+          "path": "booong/textbooks/donga-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 52,
+              "printedEnd": 63,
+              "pdfStart": 52,
+              "pdfEnd": 63,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 9993838,
+              "sha256": "7c9945d5cb4acee2c190815dd04257c7168fddb992359bb3f0809845524a8022"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 64,
+              "printedEnd": 69,
+              "pdfStart": 64,
+              "pdfEnd": 69,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 3976084,
+              "sha256": "a21328b939c89592b063026d29a9f1faf1653e2f5da77ef3ae063f878d6ad3e4"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 70,
+              "printedEnd": 83,
+              "pdfStart": 70,
+              "pdfEnd": 83,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 9325612,
+              "sha256": "195301a0a9eea7837abcdcb560ce3e14c7318eb227e0adce2ffe92c887abb3ca"
+            }
+          ],
+          "bytes": 26137267,
+          "sha256": "6ec1406632c064e9e9f5f37b5c768f91381c35c71c0222dbf1a20ce8c1c9f16c"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 84,
+          "printedEnd": 121,
+          "pdfStart": 84,
+          "pdfEnd": 121,
+          "path": "booong/textbooks/donga-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 86,
+              "printedEnd": 93,
+              "pdfStart": 86,
+              "pdfEnd": 93,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 7636019,
+              "sha256": "e6c9a1a51657e3cebad2b4f32ed8bc68a448c8076422bcc8aee0cf7e189e7aaa"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 94,
+              "printedEnd": 101,
+              "pdfStart": 94,
+              "pdfEnd": 101,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 7056899,
+              "sha256": "6dee22f37b21ad807d98da093cee173cb2af1f4c5f874818c361cfc782106ac0"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 102,
+              "printedEnd": 109,
+              "pdfStart": 102,
+              "pdfEnd": 109,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 4094124,
+              "sha256": "6bf41dc78ff9322b13e0a6229374ee0ff07a4279c4866bc45ef1e6171bea542e"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 110,
+              "printedEnd": 121,
+              "pdfStart": 110,
+              "pdfEnd": 121,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 4287443,
+              "sha256": "bc38bf40be2832b77fce1294a2fab4dfdf90a83e409cec47c0cb23497c70edc4"
+            }
+          ],
+          "bytes": 22058840,
+          "sha256": "e0fadf7c2b778b4bf1625439ca4312b4ae1f4cbf96fce19a19544d39cadb530c"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 122,
+          "printedEnd": 151,
+          "pdfStart": 122,
+          "pdfEnd": 151,
+          "path": "booong/textbooks/donga-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 124,
+              "printedEnd": 131,
+              "pdfStart": 124,
+              "pdfEnd": 131,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 5075552,
+              "sha256": "ac2dd97e1845803776af4a826a2b7873a122b7b839e64a642fd0eee030b28016"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 132,
+              "printedEnd": 139,
+              "pdfStart": 132,
+              "pdfEnd": 139,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 5525493,
+              "sha256": "ca5a8f3410bcb6ce2928333e7778ecf77a6aeaf993ae276178e9791a1f929542"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 140,
+              "printedEnd": 151,
+              "pdfStart": 140,
+              "pdfEnd": 151,
+              "path": "booong/textbooks/donga-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 5498167,
+              "sha256": "bbf4806887bd7403f3f0977a7b3729cefc5b33f3c4790a9469558d502dd1a06f"
+            }
+          ],
+          "bytes": 16774702,
+          "sha256": "0df92e66096cb73ea4a3b1472c3cd6595b5af2f6bff139100f261f685636ac4a"
+        }
+      ],
+      "spreadPages": [
+        53,
+        54
+      ],
+      "readingPages": 160
+    },
+    {
+      "id": "liber-integrated1-2022",
+      "publisher": "리베르스쿨",
+      "title": "통합사회1 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[리베르스쿨]_교사용_교과서.pdf",
+      "sourceSha256": "f5e47e14509c57565bc3987ef9f228b33c55492a312bf83edd957aad4cfe2e5b",
+      "sourceBytes": 131285478,
+      "sourcePages": 144,
+      "sourcePath": "booong/textbooks/liber-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 8,
+          "printedEnd": 23,
+          "pdfStart": 8,
+          "pdfEnd": 23,
+          "path": "booong/textbooks/liber-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 10,
+              "printedEnd": 15,
+              "pdfStart": 10,
+              "pdfEnd": 15,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 9787818,
+              "sha256": "4a3004a875a0abc049b1d0e8896989300bae2bf3441dbdbc403820cee5b07a2a"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 16,
+              "printedEnd": 23,
+              "pdfStart": 16,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 5279583,
+              "sha256": "ebbd27b7c35d7f4ca9e774dbc0f1072b3c8441aa40ecafc0a748503bf0010853"
+            }
+          ],
+          "bytes": 22432269,
+          "sha256": "408b72d910a7bcc0c7c675d3b69496eae9649635d7fbc9613b6c28289278fb66"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 24,
+          "printedEnd": 41,
+          "pdfStart": 24,
+          "pdfEnd": 41,
+          "path": "booong/textbooks/liber-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 26,
+              "printedEnd": 31,
+              "pdfStart": 26,
+              "pdfEnd": 31,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 5462781,
+              "sha256": "8d59e716db35280d82d70ab16b7ceabf1d349c41501aedb00aed4b5c8758a68f"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 32,
+              "printedEnd": 41,
+              "pdfStart": 32,
+              "pdfEnd": 41,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 5003681,
+              "sha256": "daa634c21fa3625c5916494a6b37c01759c351dcfe4721058240d46b2bc74e58"
+            }
+          ],
+          "bytes": 13758880,
+          "sha256": "ea302e826ff57802ef8b811a92355043df9fd6827223391757f36ebb61455fef"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 42,
+          "printedEnd": 73,
+          "pdfStart": 42,
+          "pdfEnd": 73,
+          "path": "booong/textbooks/liber-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 44,
+              "printedEnd": 54,
+              "pdfStart": 44,
+              "pdfEnd": 54,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 15428400,
+              "sha256": "1637f1aa3e7e58768d2f827c752364602f43a3a24ccf893d36ea483e476f1614"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 55,
+              "printedEnd": 61,
+              "pdfStart": 55,
+              "pdfEnd": 61,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 6626911,
+              "sha256": "38997e8da09850905f4fe792ef31f2a193867dd39dc0bc39c818fb7f3f707eaa"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 62,
+              "printedEnd": 73,
+              "pdfStart": 62,
+              "pdfEnd": 73,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 5912734,
+              "sha256": "68bee15b683b956a1476893f235d4404aff1e3305bebe257f86265cd2ea2e3ed"
+            }
+          ],
+          "bytes": 31811560,
+          "sha256": "d1997519b27a4ab0f7b45a3550fbfa3cc77a3f803c980d6857353bd71f81f896"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 74,
+          "printedEnd": 107,
+          "pdfStart": 74,
+          "pdfEnd": 107,
+          "path": "booong/textbooks/liber-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 76,
+              "printedEnd": 82,
+              "pdfStart": 76,
+              "pdfEnd": 82,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 9400527,
+              "sha256": "689eb45b023cfd5b5f5f0302c6a070798427cf31d6fe975e24d06e58dd8791db"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 83,
+              "printedEnd": 88,
+              "pdfStart": 83,
+              "pdfEnd": 88,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 5631786,
+              "sha256": "1db9c8bc872511fa0769a8c372a84dc660cfccc3eef4c86d357cee79e7e435b2"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 89,
+              "printedEnd": 95,
+              "pdfStart": 89,
+              "pdfEnd": 95,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 5662343,
+              "sha256": "bd5b3cc9b09ca356f1325a706e1eab6766b0f0e8c029b03d97d4bb19a1cbefbb"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 96,
+              "printedEnd": 107,
+              "pdfStart": 96,
+              "pdfEnd": 107,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 7462255,
+              "sha256": "a794c7f22313db57d755a469122cc234795b2387bac9b984a555c08970cad365"
+            }
+          ],
+          "bytes": 29964875,
+          "sha256": "a4f6f0fd272f2816156b6e9a6ffdaebba3319297931906875cea425a5f62b861"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 108,
+          "printedEnd": 139,
+          "pdfStart": 108,
+          "pdfEnd": 139,
+          "path": "booong/textbooks/liber-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 110,
+              "printedEnd": 118,
+              "pdfStart": 110,
+              "pdfEnd": 118,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 7873153,
+              "sha256": "afa3aef71f41b1c3c297174d55e677d75bfb4626ab45b39c3a552b6cb244bdfb"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 119,
+              "printedEnd": 128,
+              "pdfStart": 119,
+              "pdfEnd": 128,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 6744481,
+              "sha256": "5c1398897daaa5b6edb02dc326b14af07b97879abfd8170071f0f9ef6ecd9a92"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 129,
+              "printedEnd": 139,
+              "pdfStart": 129,
+              "pdfEnd": 139,
+              "path": "booong/textbooks/liber-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 4330395,
+              "sha256": "aa462e757fe072c3ba49b1ea5e8dbabac6afa4de679b710692b7ff3cd3417c7b"
+            }
+          ],
+          "bytes": 30521393,
+          "sha256": "62ebcc0a14e8f91afe81013b18bc9ac5f5719e31fd06579bb5de732ec85aa209"
+        }
+      ]
+    },
+    {
+      "id": "donga-integrated2-2022",
+      "publisher": "동아출판",
+      "title": "통합사회2 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[동아출판]_교사용_교과서.pdf",
+      "sourceSha256": "e9d17971266b2e8bc480dc3de2542e45a8141ee754bcaa02fe5466a09cc6b02a",
+      "sourceBytes": 107377709,
+      "sourcePages": 166,
+      "sourcePath": "booong/textbooks/donga-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 8,
+          "printedEnd": 37,
+          "pdfStart": 8,
+          "pdfEnd": 37,
+          "path": "booong/textbooks/donga-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 10,
+              "printedEnd": 17,
+              "pdfStart": 10,
+              "pdfEnd": 17,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 3414712,
+              "sha256": "38469b8fd71b4c18ed05585950d0e9ed26415439b9e0c4790e7abf0765b67d90"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 18,
+              "printedEnd": 25,
+              "pdfStart": 18,
+              "pdfEnd": 25,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 3461915,
+              "sha256": "eb88e179f9ab596e158b2d24329f8210f3a62fa471039a61aaedac19ca17b85f"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 26,
+              "printedEnd": 37,
+              "pdfStart": 26,
+              "pdfEnd": 37,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 19542543,
+              "sha256": "df6fcbcbea89fdc4518cddc5d31f1604790d30d937d925e012d89edb82e20416"
+            }
+          ],
+          "bytes": 25739663,
+          "sha256": "01b352365c928b085084bbbd8f66c68f78b36b8e9cd39e2dcdec4d4b1b23a4fc"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 38,
+          "printedEnd": 63,
+          "pdfStart": 38,
+          "pdfEnd": 63,
+          "path": "booong/textbooks/donga-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 40,
+              "printedEnd": 45,
+              "pdfStart": 40,
+              "pdfEnd": 45,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 2267681,
+              "sha256": "527c14d419919eca4fde8ffb08133b1319701ff4778944d177bb1d541563d2ab"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 46,
+              "printedEnd": 51,
+              "pdfStart": 46,
+              "pdfEnd": 51,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 2382458,
+              "sha256": "0fabe207ac9fcdd7eb86658ad02b3abb4faccb736336a9d95de79bf3e348a374"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 52,
+              "printedEnd": 63,
+              "pdfStart": 52,
+              "pdfEnd": 63,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 4014737,
+              "sha256": "0692130ebc34023e76673c5ed6940a4a5edb59d1ee74448bcebe5567efb983c5"
+            }
+          ],
+          "bytes": 8209712,
+          "sha256": "a6ecaf9b0d8330eb0084133ab3af45112fea9eb06c57c0d29e9f1790d924a4b9"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 64,
+          "printedEnd": 101,
+          "pdfStart": 64,
+          "pdfEnd": 101,
+          "path": "booong/textbooks/donga-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 66,
+              "printedEnd": 73,
+              "pdfStart": 66,
+              "pdfEnd": 73,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 3896275,
+              "sha256": "e1bef03e415b089e12e0c917ad555997dc753b5cce973cd8a95bcdb959808214"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 74,
+              "printedEnd": 81,
+              "pdfStart": 74,
+              "pdfEnd": 81,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 2913011,
+              "sha256": "f851ddd0ffdd0be0a165c72abdfa5e658b9b6d91d336a82b85fa83583caff39f"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 82,
+              "printedEnd": 89,
+              "pdfStart": 82,
+              "pdfEnd": 89,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 3352251,
+              "sha256": "f6997dfb7f08829000237d5a4e1b3d93e137c7258817117fb863a090dd06fead"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 90,
+              "printedEnd": 101,
+              "pdfStart": 90,
+              "pdfEnd": 101,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 4018617,
+              "sha256": "903af3fb3bd74a1923b3460b8f19d3f26c0cf7ee188efa8155f1fe6d6bc254e4"
+            }
+          ],
+          "bytes": 14080133,
+          "sha256": "cffe3ecee409dce2938fdacefcd4215dec9546338d7d4c2fb38281edf61d1c01"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 102,
+          "printedEnd": 127,
+          "pdfStart": 102,
+          "pdfEnd": 127,
+          "path": "booong/textbooks/donga-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 104,
+              "printedEnd": 111,
+              "pdfStart": 104,
+              "pdfEnd": 111,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 6952758,
+              "sha256": "84c6630ef60db7f92560acbcce686a67929f94f89fc171bdb8cef474dc2ee681"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 112,
+              "printedEnd": 117,
+              "pdfStart": 112,
+              "pdfEnd": 117,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 4601370,
+              "sha256": "c45073035fd17588b4f6a06150c6e82eb99bae3b319038d04f9a1c1173c4c288"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 118,
+              "printedEnd": 127,
+              "pdfStart": 118,
+              "pdfEnd": 127,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 3945597,
+              "sha256": "37b8f19b45988e7e88f2c7326e2540adb90ab0b2cc87f674d12ba1382ba6b70a"
+            }
+          ],
+          "bytes": 15176752,
+          "sha256": "a49f61650a22dfba4dc7cc1f9b03baefeae0c2658962854688f063644776114a"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 128,
+          "printedEnd": 157,
+          "pdfStart": 128,
+          "pdfEnd": 157,
+          "path": "booong/textbooks/donga-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 130,
+              "printedEnd": 137,
+              "pdfStart": 130,
+              "pdfEnd": 137,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 18464862,
+              "sha256": "21d0a59dddd16709a2a18f2f1a0e32e98776cbe9ff284a3d8781f2ee49b0ffd1"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 138,
+              "printedEnd": 145,
+              "pdfStart": 138,
+              "pdfEnd": 145,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 21958195,
+              "sha256": "19615d18c3f019fee1b1091013d9d5dcbbe9ed5e6719505b5c330541e89f5bfe"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 146,
+              "printedEnd": 157,
+              "pdfStart": 146,
+              "pdfEnd": 157,
+              "path": "booong/textbooks/donga-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 3709992,
+              "sha256": "9cc12da5459dd7d5d122363496acf56395dfd2f7bd3497da47b654071b024873"
+            }
+          ],
+          "bytes": 43422445,
+          "sha256": "1d729d78098a6765dbfee3e07619c346b46d3bf38955f62266941433ad50ab72"
+        }
+      ]
+    },
+    {
+      "id": "jihak-integrated2-2022",
+      "publisher": "지학사",
+      "title": "통합사회2 · 연구용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[지학사]_연구용_교과서.pdf",
+      "sourceSha256": "8ef8a8b4873b9052a701c7cbe1e1e2653c89965a669e3011bcc467c1b185baae",
+      "sourceBytes": 52465952,
+      "sourcePages": 169,
+      "sourcePath": "booong/textbooks/jihak-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 10,
+          "printedEnd": 37,
+          "pdfStart": 11,
+          "pdfEnd": 38,
+          "path": "booong/textbooks/jihak-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 12,
+              "printedEnd": 17,
+              "pdfStart": 13,
+              "pdfEnd": 18,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 1303390,
+              "sha256": "f1336a583707edb9058461d408c8b6c10c852c6cfa10746b79f7a1a4a4fc7897"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 18,
+              "printedEnd": 25,
+              "pdfStart": 19,
+              "pdfEnd": 26,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 1637275,
+              "sha256": "64a6e13d30ec8a8049a752f2ac404d7e5e8de0b0ce64e36efc8bc4bb558d0c18"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 26,
+              "printedEnd": 37,
+              "pdfStart": 27,
+              "pdfEnd": 38,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 5658117,
+              "sha256": "5c6bc7b5e597c219d69377f102096022be52fae7851c24b7ea11b48894f02558"
+            }
+          ],
+          "bytes": 7689636,
+          "sha256": "185665ee660fd61ade4be26e0dc3aca6dcb4a4b690fd9004730715fa92834613"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 38,
+          "printedEnd": 67,
+          "pdfStart": 39,
+          "pdfEnd": 68,
+          "path": "booong/textbooks/jihak-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 40,
+              "printedEnd": 47,
+              "pdfStart": 41,
+              "pdfEnd": 48,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 1849917,
+              "sha256": "90a122c701c92705a0a769f5420fd3777babb78bd17bf887d4f2b1cf8d15e7a6"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 48,
+              "printedEnd": 53,
+              "pdfStart": 49,
+              "pdfEnd": 54,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 1439141,
+              "sha256": "44810baebeb2b88548f9e307accade8262519fb17aaec25496cd1f2f98dc7c40"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 54,
+              "printedEnd": 67,
+              "pdfStart": 55,
+              "pdfEnd": 68,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 14870003,
+              "sha256": "876e68215a7059c6be050c7958fe2bc0f6835b72ba050a6c14e2b46582c56caa"
+            }
+          ],
+          "bytes": 17833660,
+          "sha256": "05b549a73ea008be10af7198dc735e36a445c205f46cc2220f23b47bf4126244"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 68,
+          "printedEnd": 105,
+          "pdfStart": 69,
+          "pdfEnd": 106,
+          "path": "booong/textbooks/jihak-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 70,
+              "printedEnd": 77,
+              "pdfStart": 71,
+              "pdfEnd": 78,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 2152454,
+              "sha256": "9f71974a6565aa9ae61c4a1334d323bfa5f20f9d3b98493e55602fee9b9eee90"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 78,
+              "printedEnd": 85,
+              "pdfStart": 79,
+              "pdfEnd": 86,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 1708231,
+              "sha256": "16cd92fa6abb749b294695dbee4841c783eda5a374c6f9ad69f17b9a81e7d699"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 86,
+              "printedEnd": 91,
+              "pdfStart": 87,
+              "pdfEnd": 92,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 1382222,
+              "sha256": "b38285d22126c499d849a809ec7239768b1bb38464e75836dd8920b062dc9233"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 92,
+              "printedEnd": 105,
+              "pdfStart": 93,
+              "pdfEnd": 106,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 4130402,
+              "sha256": "3518cfcbc25108d5eabddcf97c8fce0319dc1f31ea6a0266f6876fca9babfee2"
+            }
+          ],
+          "bytes": 7978129,
+          "sha256": "7d5bddab67a0065b545c9b72240993946102e4bc6c7462f04232f9d68bd9e84b"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 106,
+          "printedEnd": 131,
+          "pdfStart": 107,
+          "pdfEnd": 132,
+          "path": "booong/textbooks/jihak-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 108,
+              "printedEnd": 113,
+              "pdfStart": 109,
+              "pdfEnd": 114,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 2225115,
+              "sha256": "4b9598540741b9fd4236466c5f6fee9ff7bf992e81d85095413415c262c9adea"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 114,
+              "printedEnd": 119,
+              "pdfStart": 115,
+              "pdfEnd": 120,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 1544320,
+              "sha256": "089f8af84b0db5014826b417feba4d2ef9783c85b5c8e746bc2009db03aacd30"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 120,
+              "printedEnd": 131,
+              "pdfStart": 121,
+              "pdfEnd": 132,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 4726416,
+              "sha256": "94ba5c830a6ed15ecc0a86f9d887229fc65c2c9bac1a76585ab867b4c5e38c97"
+            }
+          ],
+          "bytes": 8368546,
+          "sha256": "a6f54d40c2f678c9c992240eb97edd42349fb4060dd45a90f49904853f64b148"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 132,
+          "printedEnd": 157,
+          "pdfStart": 133,
+          "pdfEnd": 158,
+          "path": "booong/textbooks/jihak-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 134,
+              "printedEnd": 139,
+              "pdfStart": 135,
+              "pdfEnd": 140,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 3924277,
+              "sha256": "d8c6e93628bb0447d05db6bf4ba78c3193a85b51188b7694a14671998a8c5482"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 140,
+              "printedEnd": 145,
+              "pdfStart": 141,
+              "pdfEnd": 146,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 3803470,
+              "sha256": "70d842690ddb69c3b43a63ded9b6818e795b3b1abc32e9165ecf9367c907de2c"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 146,
+              "printedEnd": 157,
+              "pdfStart": 147,
+              "pdfEnd": 158,
+              "path": "booong/textbooks/jihak-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 2688640,
+              "sha256": "680a90b58ebb37a65a03300e6012ed0a85bb22f612ae6e07d5d97ed89f7df7df"
+            }
+          ],
+          "bytes": 9876342,
+          "sha256": "12aeeb4a52c7187d161b1e407e566873a2388638c87fd8a3a46ddc1877079d93"
+        }
+      ]
+    },
+    {
+      "id": "chunjae-integrated1-2022",
+      "publisher": "천재교육",
+      "title": "통합사회1 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[천재]_교사용_교과서.pdf",
+      "sourceSha256": "bc1e971d0beb595a8d7d8ab5529c47c769573c4a67587880585184dae358757a",
+      "sourceBytes": 146375429,
+      "sourcePages": 140,
+      "sourcePath": "booong/textbooks/chunjae-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 6,
+          "printedEnd": 21,
+          "pdfStart": 1,
+          "pdfEnd": 16,
+          "path": "booong/textbooks/chunjae-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 8,
+              "printedEnd": 13,
+              "pdfStart": 3,
+              "pdfEnd": 8,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 6211577,
+              "sha256": "c0498d37e4ebd83ad5d5cabdfd0a2c852ba6031af84398d319a6ff5c89d7a0ad"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 14,
+              "printedEnd": 21,
+              "pdfStart": 9,
+              "pdfEnd": 16,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 8532680,
+              "sha256": "a9db62057e3b5a81bba7968f39cc31bcdac6cbdd40f1c7e3e486d388ba6e97d9"
+            }
+          ],
+          "bytes": 15856006,
+          "sha256": "5b7ea8ba7804c71b4eae2b47d2f038df888995d14bee2dc47928ee126f113fd5"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 22,
+          "printedEnd": 43,
+          "pdfStart": 17,
+          "pdfEnd": 38,
+          "path": "booong/textbooks/chunjae-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 24,
+              "printedEnd": 31,
+              "pdfStart": 19,
+              "pdfEnd": 26,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 7587530,
+              "sha256": "9e999e0b4fccdc14f4fae149145cd047ffe01772e40754e945406c910735959f"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 32,
+              "printedEnd": 43,
+              "pdfStart": 27,
+              "pdfEnd": 38,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 11012336,
+              "sha256": "3ab51a9a6b24b380a089b7cfa7e9933343e8ae3d7b53982277694fb0283d253e"
+            }
+          ],
+          "bytes": 19841646,
+          "sha256": "229ba2e04cc520d48dc64422c0dfd2c9283bed89dba51456466c654ec3672ea8"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 44,
+          "printedEnd": 75,
+          "pdfStart": 39,
+          "pdfEnd": 70,
+          "path": "booong/textbooks/chunjae-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 46,
+              "printedEnd": 55,
+              "pdfStart": 41,
+              "pdfEnd": 50,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 15360703,
+              "sha256": "bafe13cc117374cc8661eba269b7e5174828fb4a3103a45577d80e847af553a1"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 56,
+              "printedEnd": 63,
+              "pdfStart": 51,
+              "pdfEnd": 58,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 11167259,
+              "sha256": "7571d8c07ac29675a8f6f1cd88f4cb77459da9acb04a6663e21e5887b1735e6d"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 64,
+              "printedEnd": 75,
+              "pdfStart": 59,
+              "pdfEnd": 70,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 12759585,
+              "sha256": "59ab20e9bdeb9a0aacf551c4d3daa8ac217d10dd7638a5249202fac676dd4889"
+            }
+          ],
+          "bytes": 40555552,
+          "sha256": "040cf9f6d03561a96bf50ec02ec818c6503b0cd77663cedfe70cb1cfb31847d0"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 76,
+          "printedEnd": 115,
+          "pdfStart": 71,
+          "pdfEnd": 110,
+          "path": "booong/textbooks/chunjae-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 78,
+              "printedEnd": 87,
+              "pdfStart": 73,
+              "pdfEnd": 82,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 13493252,
+              "sha256": "da4dcb3a4de5091c427b9cc056b83d6ba27575f0deddac77b07bae52d9ca6d11"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 88,
+              "printedEnd": 97,
+              "pdfStart": 83,
+              "pdfEnd": 92,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 10536488,
+              "sha256": "a2f50c818847ab4b759aa9d568142b2d1afd2ef71e62def4ed0f0039a0ff61e7"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 98,
+              "printedEnd": 105,
+              "pdfStart": 93,
+              "pdfEnd": 100,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 7710163,
+              "sha256": "0f16876f5437dfd2d9ca2036243ba59f60fe05179abcf5dea521f1c94e72582c"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 106,
+              "printedEnd": 115,
+              "pdfStart": 101,
+              "pdfEnd": 110,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 9524871,
+              "sha256": "95dae5b00b819affe757991b423f031cc6a6b3c11a70f8d6da6de9d96184869f"
+            }
+          ],
+          "bytes": 42470426,
+          "sha256": "4954f7cf202e90bd15c9dd6def157eb616d63a46a62b715d343bff3ae0da3569"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 116,
+          "printedEnd": 145,
+          "pdfStart": 111,
+          "pdfEnd": 140,
+          "path": "booong/textbooks/chunjae-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 118,
+              "printedEnd": 125,
+              "pdfStart": 113,
+              "pdfEnd": 120,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 8579114,
+              "sha256": "d6bd36cf8756936dc66e3036a825bc041c0dfecc5bb22a1eaa3dfb0607e6b252"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 126,
+              "printedEnd": 133,
+              "pdfStart": 121,
+              "pdfEnd": 128,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 8838180,
+              "sha256": "9c181bcb37441aad81646e4a1158a3e551b6b41d324294f11c235bf66e460fea"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 134,
+              "printedEnd": 145,
+              "pdfStart": 129,
+              "pdfEnd": 140,
+              "path": "booong/textbooks/chunjae-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 10717925,
+              "sha256": "75e3ad3820984b75c989ee7e5924dbb4572f5f10ce38b51ba7d5ddc558eb11e8"
+            }
+          ],
+          "bytes": 29661529,
+          "sha256": "02f83a3375c27df81ede60b939c4203f82f4c980003f27928016030598cc9936"
+        }
+      ]
+    },
+    {
+      "id": "jihak-integrated1-2022",
+      "publisher": "지학사",
+      "title": "통합사회1 · 연구용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[지학사]_연구용_교과서.pdf",
+      "sourceSha256": "59cde24d991969490ee44d63cd1e2647abfbe6dc195329a86801e1c153755e7d",
+      "sourceBytes": 70091217,
+      "sourcePages": 169,
+      "sourcePath": "booong/textbooks/jihak-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 10,
+          "printedEnd": 29,
+          "pdfStart": 11,
+          "pdfEnd": 30,
+          "path": "booong/textbooks/jihak-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 12,
+              "printedEnd": 17,
+              "pdfStart": 13,
+              "pdfEnd": 18,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 1953492,
+              "sha256": "1ed1efecd744905dd6b6bce99c6f3bd39cecd046e016e41afeb0cc301254bc2f"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 18,
+              "printedEnd": 29,
+              "pdfStart": 19,
+              "pdfEnd": 30,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 5561188,
+              "sha256": "435addcc89313fd8fa5378b9185972070606bbf9cf07fc69bcfde5e68019130e"
+            }
+          ],
+          "bytes": 7260871,
+          "sha256": "15354baaf3fe69ff10519bb558790912ff4d7642c8caba72a44ded7e0a3d3986"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 30,
+          "printedEnd": 53,
+          "pdfStart": 31,
+          "pdfEnd": 54,
+          "path": "booong/textbooks/jihak-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 32,
+              "printedEnd": 39,
+              "pdfStart": 33,
+              "pdfEnd": 40,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 2142878,
+              "sha256": "7d41f4ca579daeec2c58ce485b8470848f5b8ae3bd3de9f815529b07784da9fe"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 40,
+              "printedEnd": 53,
+              "pdfStart": 41,
+              "pdfEnd": 54,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 11459192,
+              "sha256": "49630c19f26e262eac9e97e3f77692f5a4e7b121e9d2709f8c22ef325fa39b9f"
+            }
+          ],
+          "bytes": 13138870,
+          "sha256": "032167bd6bc25806df3fb82c6872d07501fa6cbbb2802dcdb7d2db842cf37667"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 54,
+          "printedEnd": 87,
+          "pdfStart": 55,
+          "pdfEnd": 88,
+          "path": "booong/textbooks/jihak-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 56,
+              "printedEnd": 65,
+              "pdfStart": 57,
+              "pdfEnd": 66,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 25375851,
+              "sha256": "abbb0c1fb1e170e6e46d6d287f9bf9d8e0e95d804df4e34ef83007edec781ee1"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 66,
+              "printedEnd": 73,
+              "pdfStart": 67,
+              "pdfEnd": 74,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 1999355,
+              "sha256": "0cc3e4c37440b3860d9465654e03e55d12c2d8eec4cbf6be573aa620db03096e"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 74,
+              "printedEnd": 87,
+              "pdfStart": 75,
+              "pdfEnd": 88,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 6786906,
+              "sha256": "124ed3075790169ef53c23d4cf2cd63c78c45f748cb6f96bf4ad6d9bd48a8c16"
+            }
+          ],
+          "bytes": 33556771,
+          "sha256": "5cb520a8952d3bbb2b7c483bcac422d99e2ab409bf72e895b69c3b211b7b6df8"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 88,
+          "printedEnd": 127,
+          "pdfStart": 89,
+          "pdfEnd": 128,
+          "path": "booong/textbooks/jihak-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 90,
+              "printedEnd": 97,
+              "pdfStart": 91,
+              "pdfEnd": 98,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 4264039,
+              "sha256": "213af324056373460e5577b1c9186d08f141db04347550cdc6cf430e476c46ad"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 98,
+              "printedEnd": 105,
+              "pdfStart": 99,
+              "pdfEnd": 106,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 2757155,
+              "sha256": "a65ac39044d8a0e40d796ccd1c7fe04d70adba131730fc2610c17407cac57e49"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 106,
+              "printedEnd": 113,
+              "pdfStart": 107,
+              "pdfEnd": 114,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 2674343,
+              "sha256": "66da4b09bde2d1f646209060774ba333de3d72917433e2f85b9667f5232b1002"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 114,
+              "printedEnd": 127,
+              "pdfStart": 115,
+              "pdfEnd": 128,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 6264789,
+              "sha256": "c523fef87638f9b95158f1862601fe79a9c37cd6c98046f65eeaf7aa6c5dd7c9"
+            }
+          ],
+          "bytes": 14512962,
+          "sha256": "75327bdd111d938e94d112a0a485d9a0ad04918903e2895ccd7205648b82553e"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 128,
+          "printedEnd": 157,
+          "pdfStart": 129,
+          "pdfEnd": 158,
+          "path": "booong/textbooks/jihak-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 130,
+              "printedEnd": 137,
+              "pdfStart": 131,
+              "pdfEnd": 138,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 2804856,
+              "sha256": "d6a23518cdc4010ab6b325320084819ac2b834cd41dc6993719926d68019cdce"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 138,
+              "printedEnd": 145,
+              "pdfStart": 139,
+              "pdfEnd": 146,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 2811124,
+              "sha256": "8bb446a0737e06a5883977e5edbaf0829de46dcd4d710f83e2dcb308239e7d25"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 146,
+              "printedEnd": 157,
+              "pdfStart": 147,
+              "pdfEnd": 158,
+              "path": "booong/textbooks/jihak-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 4736337,
+              "sha256": "0ffe52f16055ea73341fc0da6733041c45c4556fbd06c72681c74d1b4ba99d57"
+            }
+          ],
+          "bytes": 9694388,
+          "sha256": "adc8aa0315dcb0bcf16245c20fe886c38011b14965d57a84faf4ddcc8080bbcf"
+        }
+      ]
+    },
+    {
+      "id": "visang-integrated2-2022",
+      "publisher": "비상교육",
+      "title": "통합사회2 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[비상교육]_교사용_교과서.pdf",
+      "sourceSha256": "e448ba93b81bbbb2c96c2280c9ac80845f289be4140874ca8047de2273e028ba",
+      "sourceBytes": 107614801,
+      "sourcePages": 166,
+      "sourcePath": "booong/textbooks/visang-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 6,
+          "printedEnd": 33,
+          "pdfStart": 6,
+          "pdfEnd": 33,
+          "path": "booong/textbooks/visang-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 8,
+              "printedEnd": 15,
+              "pdfStart": 8,
+              "pdfEnd": 15,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 3132272,
+              "sha256": "8bb1caabb85bd60ac079b157d2fa9df6a054e35522830aadb2d30a83cdede4bb"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 16,
+              "printedEnd": 23,
+              "pdfStart": 16,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 6625214,
+              "sha256": "aa16d07bfb4f20de3d55e79a06b74170ee501dfd6c58437c647969b0298f49f9"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 24,
+              "printedEnd": 33,
+              "pdfStart": 24,
+              "pdfEnd": 33,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 5203172,
+              "sha256": "0d72905a90c1c91b222e486e04127ac307520d75b1bdf8af3dd3cd1e4e8a2b80"
+            }
+          ],
+          "bytes": 18571137,
+          "sha256": "38714f3dabd04c56be155541eb43f12acf94bc5b8267830077a6f3cf1ce0114f"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 34,
+          "printedEnd": 57,
+          "pdfStart": 34,
+          "pdfEnd": 57,
+          "path": "booong/textbooks/visang-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 36,
+              "printedEnd": 41,
+              "pdfStart": 36,
+              "pdfEnd": 41,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 3864128,
+              "sha256": "c286a78ff6e35f5ce9f9d8c486c2d272b6fc0372bfa8402a7eae400b132d1696"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 42,
+              "printedEnd": 47,
+              "pdfStart": 42,
+              "pdfEnd": 47,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 2240652,
+              "sha256": "60ebc18c5ebe4359298ab72440274e5efc498a6f158ef778ffada5ab3120bf73"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 48,
+              "printedEnd": 57,
+              "pdfStart": 48,
+              "pdfEnd": 57,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 7267511,
+              "sha256": "bfb4b127fd6b603330a79f1a536f121b28d5c05da008215f6a47c6c6658ceebd"
+            }
+          ],
+          "bytes": 12799881,
+          "sha256": "baca7b3ca97e6dff6c4867193c64766f0ca8413941cdd7093db7d30bd6ae7ddc"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 58,
+          "printedEnd": 93,
+          "pdfStart": 58,
+          "pdfEnd": 93,
+          "path": "booong/textbooks/visang-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 60,
+              "printedEnd": 67,
+              "pdfStart": 60,
+              "pdfEnd": 67,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 5510099,
+              "sha256": "9c470b048ee7f0a901e627dba7807ff567d7acdc5f3a2913c4b7bf02f82e565c"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 68,
+              "printedEnd": 75,
+              "pdfStart": 68,
+              "pdfEnd": 75,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 5136041,
+              "sha256": "88465804f55e0560878ab5b38524b26e51ee4292bb55914b9361fe7faf11ee23"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 76,
+              "printedEnd": 83,
+              "pdfStart": 76,
+              "pdfEnd": 83,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 3202466,
+              "sha256": "9bd0a7f9cbae1621a94973dc0cd993dc487fdbf4fa14c04da98c0fe7a226d1d4"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 84,
+              "printedEnd": 93,
+              "pdfStart": 84,
+              "pdfEnd": 93,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 5964696,
+              "sha256": "f5c36a9b467f63b51e6929d44d7639fc2f9488ef48bc076d4d71c6e6c05359d0"
+            }
+          ],
+          "bytes": 22330556,
+          "sha256": "336d7b420190a9ce34dab6e976c8f44bb8531c235398c706bbb59b563ae78f42"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 94,
+          "printedEnd": 121,
+          "pdfStart": 94,
+          "pdfEnd": 121,
+          "path": "booong/textbooks/visang-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 96,
+              "printedEnd": 103,
+              "pdfStart": 96,
+              "pdfEnd": 103,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 7268620,
+              "sha256": "5c3e3be38e19f82bb7ac401d678d889b83c6c3785f3bacfcc05e36a7b867065f"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 104,
+              "printedEnd": 111,
+              "pdfStart": 104,
+              "pdfEnd": 111,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 7386034,
+              "sha256": "eb0c188a20b1ce2c2bdd36a52b158cb942db22875d33011f573721f543f06b5b"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 112,
+              "printedEnd": 121,
+              "pdfStart": 112,
+              "pdfEnd": 121,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 8284896,
+              "sha256": "ee9e20ece9d543a14257cc26496d6aa965ab0a768c7fdae4beee1ec4b6ea0e11"
+            }
+          ],
+          "bytes": 24649550,
+          "sha256": "5f5820024be42dd827a0d05bbdb6d7ca7aa77734460a2573d37b770ceea89d55"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 122,
+          "printedEnd": 150,
+          "pdfStart": 122,
+          "pdfEnd": 150,
+          "path": "booong/textbooks/visang-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 124,
+              "printedEnd": 133,
+              "pdfStart": 124,
+              "pdfEnd": 133,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 6404867,
+              "sha256": "ad360fac4b50df414c475a81610e9cd2b638cbe89841aea1b078a27a461b41c5"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 134,
+              "printedEnd": 141,
+              "pdfStart": 134,
+              "pdfEnd": 141,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 6690570,
+              "sha256": "cf5477683e96936e48671db0d73e99e9b493113c3fdc8acbd3335821a6cfd8ba"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 142,
+              "printedEnd": 150,
+              "pdfStart": 142,
+              "pdfEnd": 150,
+              "path": "booong/textbooks/visang-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 4181535,
+              "sha256": "6ba6d2ba58d49492f42839b3e0411efe28cebe0346aec62a1cb1d6cb10b375da"
+            }
+          ],
+          "bytes": 20294848,
+          "sha256": "4220adda477b2d72fafa931fd8ce2dcec1590e1f2cc79f764903024c7f119bc9"
+        }
+      ]
+    },
+    {
+      "id": "chunjae-integrated2-2022",
+      "publisher": "천재교육",
+      "title": "통합사회2 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[천재]_교사용_교과서.pdf",
+      "sourceSha256": "81fedcc55ca2e3ea19ab8b7d47262f791eff912ed6502cdc3a5d8a705aac9ca3",
+      "sourceBytes": 139874386,
+      "sourcePages": 146,
+      "sourcePath": "booong/textbooks/chunjae-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 6,
+          "printedEnd": 33,
+          "pdfStart": 1,
+          "pdfEnd": 28,
+          "path": "booong/textbooks/chunjae-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 8,
+              "printedEnd": 15,
+              "pdfStart": 3,
+              "pdfEnd": 10,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 8572781,
+              "sha256": "4d2371b0a819a18c4daaa3dce08bed0954eb7a4de65bb974c1a600ecbead88c9"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 16,
+              "printedEnd": 23,
+              "pdfStart": 11,
+              "pdfEnd": 18,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 6374345,
+              "sha256": "9fad33002c906e86ac8be3bbc1020bfec8c04494e8bf3d52fabfc07890841879"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 24,
+              "printedEnd": 33,
+              "pdfStart": 19,
+              "pdfEnd": 28,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 9083664,
+              "sha256": "a0d4bb43b3d355577554a259dc38544b9c706b427721e8bf18857cd12c02e785"
+            }
+          ],
+          "bytes": 25634679,
+          "sha256": "95f539bf69e4fc7b772a84174fff85a780008c37ea9d442f71cdd527de58d67f"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 34,
+          "printedEnd": 61,
+          "pdfStart": 29,
+          "pdfEnd": 56,
+          "path": "booong/textbooks/chunjae-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 36,
+              "printedEnd": 43,
+              "pdfStart": 31,
+              "pdfEnd": 38,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 7707398,
+              "sha256": "a0c8f62b7ec41422e8b4c9a147d080e284da9c61b2c24f1f1067f3693822e3fb"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 44,
+              "printedEnd": 49,
+              "pdfStart": 39,
+              "pdfEnd": 44,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 5564925,
+              "sha256": "2b454465ae3a43d4622a0f73184b9eecbae382ed9e4542e74f1c727c5b74cec8"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 50,
+              "printedEnd": 61,
+              "pdfStart": 45,
+              "pdfEnd": 56,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 12127809,
+              "sha256": "6e869acb50bb7df4255d55f84ef53fa4bf719d89e74198fd95af87616639edd5"
+            }
+          ],
+          "bytes": 26657440,
+          "sha256": "2ee16284768041f011b2a8c3fd450c957fb93fac2657956c8a473881b5758b27"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 62,
+          "printedEnd": 97,
+          "pdfStart": 57,
+          "pdfEnd": 92,
+          "path": "booong/textbooks/chunjae-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 64,
+              "printedEnd": 71,
+              "pdfStart": 59,
+              "pdfEnd": 66,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 8224848,
+              "sha256": "b0fffadedacc10968d5ff0c2d35c01a887a6ba96acbc942f8860936d3f863baf"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 72,
+              "printedEnd": 79,
+              "pdfStart": 67,
+              "pdfEnd": 74,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 7828764,
+              "sha256": "8cd3dca74c307dd6a162c70af351a4be94f93c479ddf10d9790c404c42cd98d3"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 80,
+              "printedEnd": 87,
+              "pdfStart": 75,
+              "pdfEnd": 82,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 6193168,
+              "sha256": "809f2c3dba9673389cdfdcb7d68d7860a1eee3507a64e1e10cfa700619d6e386"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 88,
+              "printedEnd": 97,
+              "pdfStart": 83,
+              "pdfEnd": 92,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 8945372,
+              "sha256": "be5196f4da6d08a40eee939f7383395dc90cacfcb8db67610ed7a0c4d6376bf8"
+            }
+          ],
+          "bytes": 32871658,
+          "sha256": "ddb438127595e7df17eb72528c579e10e8a1e78eaaed28822c39d2dfdf4ff462"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 98,
+          "printedEnd": 123,
+          "pdfStart": 93,
+          "pdfEnd": 118,
+          "path": "booong/textbooks/chunjae-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 100,
+              "printedEnd": 107,
+              "pdfStart": 95,
+              "pdfEnd": 102,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 9295590,
+              "sha256": "a48f2aed1bdafe4760bcec772ee5b4be6d20533b4f2671d182bc511e162e9d9c"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 108,
+              "printedEnd": 115,
+              "pdfStart": 103,
+              "pdfEnd": 110,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 8489086,
+              "sha256": "59721fb68c766b8c5b1d1c0f307cc57bec29910aa4bf44ffee877396f899808a"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 116,
+              "printedEnd": 123,
+              "pdfStart": 111,
+              "pdfEnd": 118,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 8739566,
+              "sha256": "ff51c98cc813d49b583bbfb40389206a919b269e6c283ac35b63df8b523916ce"
+            }
+          ],
+          "bytes": 27983167,
+          "sha256": "eca445dd6b9d1481386a0983d036404a9b9c918c344a326207154b1a99635232"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 124,
+          "printedEnd": 151,
+          "pdfStart": 119,
+          "pdfEnd": 146,
+          "path": "booong/textbooks/chunjae-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 126,
+              "printedEnd": 133,
+              "pdfStart": 121,
+              "pdfEnd": 128,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 8763224,
+              "sha256": "df0dfc7ee63b8755f633c17a6b53163de3d90da5904a76d4e73f9debda3fe76a"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 134,
+              "printedEnd": 141,
+              "pdfStart": 129,
+              "pdfEnd": 136,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 9738231,
+              "sha256": "a4e3d41d95529e4cda093909ae22622c29030a751bb14e058c360dd7546febe3"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 142,
+              "printedEnd": 151,
+              "pdfStart": 137,
+              "pdfEnd": 146,
+              "path": "booong/textbooks/chunjae-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 9197279,
+              "sha256": "a3d87cdfb8f2fd4bc0ce233841c0b0392bf4ad2781a8d8fdb6a434fa6c2696c7"
+            }
+          ],
+          "bytes": 28880637,
+          "sha256": "e97a505c63c912f63d1fdb5a3e614a0de7c70b125f81f1fd61abec24bdac30c4"
+        }
+      ]
+    },
+    {
+      "id": "miraen-integrated2-2022",
+      "publisher": "미래엔",
+      "title": "통합사회2 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회2_[미래엔]_교사용_교과서.pdf",
+      "sourceSha256": "ba8ed5665b32b846c355a7a9408de4144a84e7e296c29e61a2b6df70ff279b5c",
+      "sourceBytes": 670411398,
+      "sourcePages": 168,
+      "sourcePath": "booong/textbooks/miraen-integrated2-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회2::I. 인권 보장과 헌법",
+          "title": "I. 인권 보장과 헌법",
+          "printedStart": 8,
+          "printedEnd": 37,
+          "pdfStart": 8,
+          "pdfEnd": 37,
+          "path": "booong/textbooks/miraen-integrated2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권의 의미와 발전 과정",
+              "printedStart": 10,
+              "printedEnd": 19,
+              "pdfStart": 10,
+              "pdfEnd": 19,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-01-chapter-01.pdf",
+              "bytes": 188427625,
+              "sha256": "2313fedb6f6ed54ee9d3ce7c56da146bee394eb71929f0776daef3be7567983a"
+            },
+            {
+              "title": "2. 인권 보장을 위한 헌법의 역할과 시민 참여",
+              "printedStart": 20,
+              "printedEnd": 27,
+              "pdfStart": 20,
+              "pdfEnd": 27,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-01-chapter-02.pdf",
+              "bytes": 12274527,
+              "sha256": "31bbde4b4582898c7d963d4dc620f127c7824541df9f6c3aef6dd6a4b81bd8df"
+            },
+            {
+              "title": "3. 인권 문제 해결을 위한 노력",
+              "printedStart": 28,
+              "printedEnd": 37,
+              "pdfStart": 28,
+              "pdfEnd": 37,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-01-chapter-03.pdf",
+              "bytes": 12730349,
+              "sha256": "73bbc8e44b48d8bbc632ed9251f23bb5c8c9cb6727e4ed1231c04a46ccb21cd2"
+            }
+          ],
+          "bytes": 212999873,
+          "sha256": "a34bbacfa28229acf58e2cfc53e9f7c6a403bff87d4f167a097e6978715c4371"
+        },
+        {
+          "key": "통합사회2::II. 사회 정의와 불평등",
+          "title": "II. 사회 정의와 불평등",
+          "printedStart": 38,
+          "printedEnd": 65,
+          "pdfStart": 38,
+          "pdfEnd": 65,
+          "path": "booong/textbooks/miraen-integrated2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 정의의 의미와 실질적 기준",
+              "printedStart": 40,
+              "printedEnd": 47,
+              "pdfStart": 40,
+              "pdfEnd": 47,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-02-chapter-01.pdf",
+              "bytes": 6097488,
+              "sha256": "54a308ea2048abc467fb669bf5382f4c5b211b4406dd9002c92be37c3b38ad22"
+            },
+            {
+              "title": "2. 다양한 정의관의 비교 및 적용",
+              "printedStart": 48,
+              "printedEnd": 53,
+              "pdfStart": 48,
+              "pdfEnd": 53,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-02-chapter-02.pdf",
+              "bytes": 5132588,
+              "sha256": "f05a4919a8711d54f8d5a9146a837fb977a771d5d2d3f11640dbf0420be0c438"
+            },
+            {
+              "title": "3. 불평등 해결과 정의의 실현",
+              "printedStart": 54,
+              "printedEnd": 65,
+              "pdfStart": 54,
+              "pdfEnd": 65,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-02-chapter-03.pdf",
+              "bytes": 20326431,
+              "sha256": "1b75fdc2a8de456fd448254b8fc10978415de78d881d8d954ef501cb410fccb1"
+            }
+          ],
+          "bytes": 31328049,
+          "sha256": "78e8eb00a3a1d12a858e5a845c40f4f5cfdffe0ea2d68ea7067cf18cf99119cb"
+        },
+        {
+          "key": "통합사회2::III. 시장경제와 지속가능발전",
+          "title": "III. 시장경제와 지속가능발전",
+          "printedStart": 66,
+          "printedEnd": 99,
+          "pdfStart": 66,
+          "pdfEnd": 99,
+          "path": "booong/textbooks/miraen-integrated2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자본주의의 전개 과정과 경제 체제",
+              "printedStart": 68,
+              "printedEnd": 73,
+              "pdfStart": 68,
+              "pdfEnd": 73,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-03-chapter-01.pdf",
+              "bytes": 5664909,
+              "sha256": "e9094d41f046e07183316a0418a5cb306c4ac6024d38f8f9a6663295af78a28f"
+            },
+            {
+              "title": "2. 합리적 선택과 경제 주체의 역할",
+              "printedStart": 74,
+              "printedEnd": 83,
+              "pdfStart": 74,
+              "pdfEnd": 83,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-03-chapter-02.pdf",
+              "bytes": 126533990,
+              "sha256": "6e4d4c81e062a41630fe1e75e56c0c2b04a2c3f053bd9ef03202d2f85768c714"
+            },
+            {
+              "title": "3. 자산 관리와 금융 생활",
+              "printedStart": 84,
+              "printedEnd": 89,
+              "pdfStart": 84,
+              "pdfEnd": 89,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-03-chapter-03.pdf",
+              "bytes": 6655924,
+              "sha256": "e9b5b499e94704239d0ab5fc909f5b7a0fc6c82ba10cebf65f1072f2a45e1c9d"
+            },
+            {
+              "title": "4. 국제 무역과 지속가능발전",
+              "printedStart": 90,
+              "printedEnd": 99,
+              "pdfStart": 90,
+              "pdfEnd": 99,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-03-chapter-04.pdf",
+              "bytes": 10535707,
+              "sha256": "9035fd85b044433322183d54858c290d47f1663c502b7adb0b14a2ec407dc6cc"
+            }
+          ],
+          "bytes": 148249144,
+          "sha256": "1f1aed69e14a12ac06fb415dc7c8fd14b4a9c97ba7d557bf267913641f5f484a"
+        },
+        {
+          "key": "통합사회2::IV. 세계화와 평화",
+          "title": "IV. 세계화와 평화",
+          "printedStart": 100,
+          "printedEnd": 125,
+          "pdfStart": 100,
+          "pdfEnd": 125,
+          "path": "booong/textbooks/miraen-integrated2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계화의 양상과 문제",
+              "printedStart": 102,
+              "printedEnd": 109,
+              "pdfStart": 102,
+              "pdfEnd": 109,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-04-chapter-01.pdf",
+              "bytes": 194599458,
+              "sha256": "2cc4e978997a11761062c528cda95af3e90588d8f5ab77a0eb37af80dc1a0e4f"
+            },
+            {
+              "title": "2. 평화를 위한 국제 사회의 노력",
+              "printedStart": 110,
+              "printedEnd": 115,
+              "pdfStart": 110,
+              "pdfEnd": 115,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-04-chapter-02.pdf",
+              "bytes": 8482424,
+              "sha256": "199d8acbde02a911d1a05f78e117fd353e556598b29b00630291932356cfeae6"
+            },
+            {
+              "title": "3. 남북 분단 및 동아시아 역사 갈등과 세계 평화",
+              "printedStart": 116,
+              "printedEnd": 125,
+              "pdfStart": 116,
+              "pdfEnd": 125,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-04-chapter-03.pdf",
+              "bytes": 8975632,
+              "sha256": "30f35bdf6f0f334118521c8cbafac17835824c1a5bd45578913f82af49c83420"
+            }
+          ],
+          "bytes": 211850098,
+          "sha256": "3ce56fc8c1214283011d3032e1e9a9c8408f2356d5ed1b3e8765e0fa54be1ff1"
+        },
+        {
+          "key": "통합사회2::V. 미래와 지속가능한 삶",
+          "title": "V. 미래와 지속가능한 삶",
+          "printedStart": 126,
+          "printedEnd": 155,
+          "pdfStart": 126,
+          "pdfEnd": 155,
+          "path": "booong/textbooks/miraen-integrated2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 인구와 인구 문제",
+              "printedStart": 128,
+              "printedEnd": 135,
+              "pdfStart": 128,
+              "pdfEnd": 135,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-05-chapter-01.pdf",
+              "bytes": 37104953,
+              "sha256": "27219c84cb2750c479db5405638b665c1c7f38a0bfef29f39fb7bdbe38433977"
+            },
+            {
+              "title": "2. 세계의 에너지 자원과 지속가능 발전",
+              "printedStart": 136,
+              "printedEnd": 145,
+              "pdfStart": 136,
+              "pdfEnd": 145,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-05-chapter-02.pdf",
+              "bytes": 8022600,
+              "sha256": "0332fd456d61b7248a2cbb3d7528fff13e0e497b1f16295e91d70a756344e8bc"
+            },
+            {
+              "title": "3. 미래 사회와 세계 시민으로서의 삶",
+              "printedStart": 146,
+              "printedEnd": 155,
+              "pdfStart": 146,
+              "pdfEnd": 155,
+              "path": "booong/textbooks/miraen-integrated2-2022/unit-05-chapter-03.pdf",
+              "bytes": 8908759,
+              "sha256": "fbdb1f4ee40aac1c1691817a9bcb3b792907491f45f12ba4969b053d3fb80cba"
+            }
+          ],
+          "bytes": 53414170,
+          "sha256": "a5964b9bb2cb970e774927ace7770bf2181fe4ad5f26e481158befff2d8df3f9"
+        }
+      ]
+    },
+    {
+      "id": "visang-integrated1-2022",
+      "publisher": "비상교육",
+      "title": "통합사회1 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[비상교육]_교사용_교과서.pdf",
+      "sourceSha256": "085a46ad1edacd0177fb7ca45e5971651f803f32d25e766ec98911fe6ad31ac7",
+      "sourceBytes": 158462401,
+      "sourcePages": 162,
+      "sourcePath": "booong/textbooks/visang-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 6,
+          "printedEnd": 25,
+          "pdfStart": 6,
+          "pdfEnd": 25,
+          "path": "booong/textbooks/visang-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 8,
+              "printedEnd": 17,
+              "pdfStart": 8,
+              "pdfEnd": 17,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 7184988,
+              "sha256": "f25fd56043dcf6aa78634313e83e186518d2cf064668e0c29fc64a8616bbeb03"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 18,
+              "printedEnd": 25,
+              "pdfStart": 18,
+              "pdfEnd": 25,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 5085112,
+              "sha256": "955cf92ba5d9c535d853d51acb5762836c3307e38db6ac40725c1827cfde3e37"
+            }
+          ],
+          "bytes": 14330485,
+          "sha256": "9d1c9e226e81fe13c15065cf733d60e684dc79572d23460ae00b2313ed0d1091"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 26,
+          "printedEnd": 47,
+          "pdfStart": 26,
+          "pdfEnd": 47,
+          "path": "booong/textbooks/visang-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 28,
+              "printedEnd": 35,
+              "pdfStart": 28,
+              "pdfEnd": 35,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 3980278,
+              "sha256": "311e4526120cfb47723582053c3204e7d8e23f239178ab062e93122e698fac1f"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 36,
+              "printedEnd": 47,
+              "pdfStart": 36,
+              "pdfEnd": 47,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 8036842,
+              "sha256": "58c75b189782a8cdb0547be2bd418f61b2b7623a723a2a149dc028d5fa91652b"
+            }
+          ],
+          "bytes": 13121759,
+          "sha256": "0dbbebb7b2fffa1bb6c8746a439bd89044e4011f064e4c2b38d40fb302b398db"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 48,
+          "printedEnd": 79,
+          "pdfStart": 48,
+          "pdfEnd": 79,
+          "path": "booong/textbooks/visang-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 50,
+              "printedEnd": 61,
+              "pdfStart": 50,
+              "pdfEnd": 61,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 26275328,
+              "sha256": "03f16093dc1a4c6b6ed21302b3fb00555cede8573f500ab92d762434f00073f3"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 62,
+              "printedEnd": 69,
+              "pdfStart": 62,
+              "pdfEnd": 69,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 5450482,
+              "sha256": "e4d5e970ec7c49117000e03d8d3327ff04ae5f826fac5fdd4ba0afa5cfc0f005"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 70,
+              "printedEnd": 79,
+              "pdfStart": 70,
+              "pdfEnd": 79,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 13654252,
+              "sha256": "5f260eb41a398f4123b1338668e53692687c462e4501613324943be90e56eba6"
+            }
+          ],
+          "bytes": 47542168,
+          "sha256": "3aa3a76523860ba442191fb9d5f781dd53b19d0c241a71dfb4baef96cf238814"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 80,
+          "printedEnd": 115,
+          "pdfStart": 80,
+          "pdfEnd": 115,
+          "path": "booong/textbooks/visang-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 82,
+              "printedEnd": 91,
+              "pdfStart": 82,
+              "pdfEnd": 91,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 19983388,
+              "sha256": "a58073e11063957c311caadd4cb043cc1cd5e1c1c5f9b7931d01310d510e136d"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 92,
+              "printedEnd": 99,
+              "pdfStart": 92,
+              "pdfEnd": 99,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 13058004,
+              "sha256": "707d4f5815dd9e3fc49de5bd1243a84d4022a4c44c7c09df95c29106fb2ab12c"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 100,
+              "printedEnd": 105,
+              "pdfStart": 100,
+              "pdfEnd": 105,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 3367622,
+              "sha256": "762a13d10d4d5f8570b656a9d7b950bc86acf38746f16e4d2522d878786c9bf4"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 106,
+              "printedEnd": 115,
+              "pdfStart": 106,
+              "pdfEnd": 115,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 6337906,
+              "sha256": "432641b4591789eb87a2c2ad316319e032ab96107a2dab79e25b7e6b96d92445"
+            }
+          ],
+          "bytes": 42346996,
+          "sha256": "fd4744a6130e4398a611d54ec3900d3d7ef22b58d7f0fef4366d57632e435649"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 116,
+          "printedEnd": 146,
+          "pdfStart": 116,
+          "pdfEnd": 146,
+          "path": "booong/textbooks/visang-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 118,
+              "printedEnd": 127,
+              "pdfStart": 118,
+              "pdfEnd": 127,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 10315428,
+              "sha256": "cbf413a8e67f55038a7c37cf3e4bb2af10b6be73255ab21e7c47b2e87656aa95"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 128,
+              "printedEnd": 137,
+              "pdfStart": 128,
+              "pdfEnd": 137,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 9107051,
+              "sha256": "7d8e7a8f9741ce5288e4113deb9ff5b9ba794fd021e0819d249e06ecfcf77122"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 138,
+              "printedEnd": 146,
+              "pdfStart": 138,
+              "pdfEnd": 146,
+              "path": "booong/textbooks/visang-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 7772325,
+              "sha256": "db47b23c34c006689e5fe03fd49bca4a1f8e3d85cc8c1cf3f5f593591e603f04"
+            }
+          ],
+          "bytes": 26830395,
+          "sha256": "dbaf6b55c9e74ba637b23be44fd5b6fec4a0805396dd87397aa448708df825e0"
+        }
+      ]
+    },
+    {
+      "id": "miraen-integrated1-2022",
+      "publisher": "미래엔",
+      "title": "통합사회1 · 교사용 교과서",
+      "school": "고등학교",
+      "subject": "통합사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "통합사회1_[미래엔]_교사용_교과서.pdf",
+      "sourceSha256": "0e2e77ee04f49949a64407b177727d0e3e86dc7593574d0ab75aeb358e74958d",
+      "sourceBytes": 262472379,
+      "sourcePages": 144,
+      "sourcePath": "booong/textbooks/miraen-integrated1-2022/source.pdf",
+      "units": [
+        {
+          "key": "통합사회1::I. 통합적 관점",
+          "title": "I. 통합적 관점",
+          "printedStart": 8,
+          "printedEnd": 21,
+          "pdfStart": 8,
+          "pdfEnd": 21,
+          "path": "booong/textbooks/miraen-integrated1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 인간, 사회, 환경을 바라보는 다양한 관점",
+              "printedStart": 10,
+              "printedEnd": 13,
+              "pdfStart": 10,
+              "pdfEnd": 13,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-01-chapter-01.pdf",
+              "bytes": 5522180,
+              "sha256": "d1344cf07c758eb123723151695e4c21fd6ae9576fcb87ee98c036ffb41dd16e"
+            },
+            {
+              "title": "2. 인간, 사회, 환경을 바라보는 통합적 관점",
+              "printedStart": 14,
+              "printedEnd": 21,
+              "pdfStart": 14,
+              "pdfEnd": 21,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-01-chapter-02.pdf",
+              "bytes": 19932231,
+              "sha256": "ebd30285019dc1ec8d8c8ed26b7e6d0a17bad4d5b9d4e266a4f86ca1df5621cd"
+            }
+          ],
+          "bytes": 26899835,
+          "sha256": "9c91b024b0ef556df4da00aa8c1a5bfd45d912ab8bd3445da6f6f49383d3843b"
+        },
+        {
+          "key": "통합사회1::II. 인간, 사회, 환경과 행복",
+          "title": "II. 인간, 사회, 환경과 행복",
+          "printedStart": 22,
+          "printedEnd": 39,
+          "pdfStart": 22,
+          "pdfEnd": 39,
+          "path": "booong/textbooks/miraen-integrated1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 행복의 의미와 기준",
+              "printedStart": 24,
+              "printedEnd": 29,
+              "pdfStart": 24,
+              "pdfEnd": 29,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-02-chapter-01.pdf",
+              "bytes": 6841394,
+              "sha256": "bf74bf4f8b8f5a6b1d6a480f3c1c31fa5891da422d52f01ea4f860515c65e5c1"
+            },
+            {
+              "title": "2. 행복한 삶을 실현하기 위한 조건",
+              "printedStart": 30,
+              "printedEnd": 39,
+              "pdfStart": 30,
+              "pdfEnd": 39,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-02-chapter-02.pdf",
+              "bytes": 13229940,
+              "sha256": "ce39d6480e395fd2925546de42ba26c1ce05230108e5a6a276dac8f2fd7eafe9"
+            }
+          ],
+          "bytes": 20705174,
+          "sha256": "bfd9ddcb397a5add2d864f6ad9dbc38052c508eea86f482f44d6af0fd604b35c"
+        },
+        {
+          "key": "통합사회1::III. 자연환경과 인간",
+          "title": "III. 자연환경과 인간",
+          "printedStart": 40,
+          "printedEnd": 69,
+          "pdfStart": 40,
+          "pdfEnd": 69,
+          "path": "booong/textbooks/miraen-integrated1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 자연환경과 인간 생활",
+              "printedStart": 42,
+              "printedEnd": 53,
+              "pdfStart": 42,
+              "pdfEnd": 53,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-03-chapter-01.pdf",
+              "bytes": 26474918,
+              "sha256": "03eb1ad8e02abf2325a09c9c1648dfc9de064813c4aaf1b43ca69c171c240a3d"
+            },
+            {
+              "title": "2. 인간과 자연의 관계",
+              "printedStart": 54,
+              "printedEnd": 59,
+              "pdfStart": 54,
+              "pdfEnd": 59,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-03-chapter-02.pdf",
+              "bytes": 9365343,
+              "sha256": "38da3d0182170b9d534380b51db6e86d13edbdd015a91d2cb78f733dc9b4b455"
+            },
+            {
+              "title": "3. 환경 문제 해결을 위한 다양한 노력",
+              "printedStart": 60,
+              "printedEnd": 69,
+              "pdfStart": 60,
+              "pdfEnd": 69,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-03-chapter-03.pdf",
+              "bytes": 8458381,
+              "sha256": "e96112d3674b9777872dbfa0e4bc12cd005a21b6ff81888b83d619c352fa7fa6"
+            }
+          ],
+          "bytes": 43800194,
+          "sha256": "f880c554f4baf0b71ca609059ee0ccef9614d757d249ed6394c403b780c9f74c"
+        },
+        {
+          "key": "통합사회1::IV. 문화와 다양성",
+          "title": "IV. 문화와 다양성",
+          "printedStart": 70,
+          "printedEnd": 103,
+          "pdfStart": 70,
+          "pdfEnd": 103,
+          "path": "booong/textbooks/miraen-integrated1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계의 다양한 문화권",
+              "printedStart": 72,
+              "printedEnd": 79,
+              "pdfStart": 72,
+              "pdfEnd": 79,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-04-chapter-01.pdf",
+              "bytes": 79158702,
+              "sha256": "e8bb98a2ace944711b024952c95b4bad3aa3a8f11f4b4f8863ff5a8d4967363a"
+            },
+            {
+              "title": "2. 문화 변동과 전통문화의 창조적 계승",
+              "printedStart": 80,
+              "printedEnd": 87,
+              "pdfStart": 80,
+              "pdfEnd": 87,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-04-chapter-02.pdf",
+              "bytes": 27056670,
+              "sha256": "c841670deb1bb60cbd011b30c243489e96fb9f69525553bc844d59abc7c03e00"
+            },
+            {
+              "title": "3. 문화 상대주의와 보편 윤리",
+              "printedStart": 88,
+              "printedEnd": 93,
+              "pdfStart": 88,
+              "pdfEnd": 93,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-04-chapter-03.pdf",
+              "bytes": 9698323,
+              "sha256": "3b7b79b0bc4f4c2ce94a1c0269d8cdbaae05677b339b9fffbc17f37eeb2d885a"
+            },
+            {
+              "title": "4. 다문화 사회와 문화적 다양성 존중",
+              "printedStart": 94,
+              "printedEnd": 103,
+              "pdfStart": 94,
+              "pdfEnd": 103,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-04-chapter-04.pdf",
+              "bytes": 15429280,
+              "sha256": "ced3b4b5b06974bc3fe3f1d76237e77050385ada5ee49d2d54855e3fef5aa661"
+            }
+          ],
+          "bytes": 130269693,
+          "sha256": "2d68d585c640dcec5922dc301a9218f321e61382b17417b6aaa7fd3c09b69340"
+        },
+        {
+          "key": "통합사회1::V. 생활공간과 사회",
+          "title": "V. 생활공간과 사회",
+          "printedStart": 104,
+          "printedEnd": 133,
+          "pdfStart": 104,
+          "pdfEnd": 133,
+          "path": "booong/textbooks/miraen-integrated1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 산업화와 도시화",
+              "printedStart": 106,
+              "printedEnd": 115,
+              "pdfStart": 106,
+              "pdfEnd": 115,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-05-chapter-01.pdf",
+              "bytes": 12187565,
+              "sha256": "0aab2bfd3085997b6ecf255586a70445bae104e6b15a51cc07fc14c47d557ab9"
+            },
+            {
+              "title": "2. 교통·통신과 과학기술의 발달",
+              "printedStart": 116,
+              "printedEnd": 123,
+              "pdfStart": 116,
+              "pdfEnd": 123,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-05-chapter-02.pdf",
+              "bytes": 7103078,
+              "sha256": "afc9d572ab43d4af02bc8db2a53a9da86cfd75287d99f22b4b14916a1dfc540c"
+            },
+            {
+              "title": "3. 우리 지역의 공간 변화",
+              "printedStart": 124,
+              "printedEnd": 133,
+              "pdfStart": 124,
+              "pdfEnd": 133,
+              "path": "booong/textbooks/miraen-integrated1-2022/unit-05-chapter-03.pdf",
+              "bytes": 5915901,
+              "sha256": "d8bff950dd6666807a0e12fc57b8086e962ee5886548dbf0884aeab0a7c442d3"
+            }
+          ],
+          "bytes": 24665708,
+          "sha256": "957e649d074c054f424340c82cc1741a4da4983cad724ab40bc02bba385c2407"
+        }
+      ]
+    }
+  ]
+}

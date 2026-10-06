@@ -12,7 +12,7 @@ export function renderViewCounter() {
 }
 
 export function renderResourceCount(viewKey, clickId) {
-  return `<span class="bundle-card__count" data-resource-count data-view-key="${viewKey}" data-click-id="${clickId}">${EMPTY_MARK}</span>`;
+  return `<span class="bundle-card__count" data-resource-count data-view-key="${viewKey}" data-click-id="${clickId}">조회수 0</span>`;
 }
 
 export async function hydrateViewCounts(root) {
@@ -35,7 +35,6 @@ async function hydrateResources(root) {
   if (!slots.length) return;
 
   const [pages, clicks] = await Promise.all([loadPageVisitStats(), loadGroupClickStats()]);
-  if (!pages.length && !clicks.length) return;
 
   const viewsByKey = new Map(pages.map(page => [page.key, page.views]));
   const clicksById = new Map(clicks.map(click => [click.groupId, click.views]));

@@ -144,15 +144,11 @@ function renderFullscreenBlock(overlay, originalBlockEl, currentIdx) {
   clone.style.transformOrigin = "center center";
 
   rewireToggles(clone);
-  clone.querySelectorAll(".comment-section").forEach(cs => {
-    const toggle = cs.querySelector(".comment-section__toggle");
-    if (toggle) toggle.addEventListener("click", () => cs.classList.toggle("is-open"));
-  });
   clone.querySelectorAll(".quiz-accordion__item").forEach(item => {
     const summary = item.querySelector(".quiz-accordion__summary");
     if (summary) summary.addEventListener("click", () => item.classList.toggle("is-open"));
   });
-  clone.querySelectorAll(".answer__toggle, .expandable__summary, .comment-section__toggle, .quiz-accordion__summary").forEach(control => {
+  clone.querySelectorAll(".answer__toggle, .expandable__summary, .quiz-accordion__summary").forEach(control => {
     control.addEventListener("click", () => requestAnimationFrame(() => updateFullscreenLayout(stage, clone)));
   });
 
@@ -221,7 +217,7 @@ export function expandNextFullscreenToggle() {
   if (!stage || !clone) return false;
 
   const controls = [...clone.querySelectorAll(
-    ".answer__toggle, .expandable__summary, .comment-section__toggle, .quiz-accordion__summary"
+    ".answer__toggle, .expandable__summary, .quiz-accordion__summary"
   )];
   if (!controls.length) return false;
 
@@ -258,7 +254,6 @@ function normalizeToggleCursor(overlay, controlCount) {
 function getToggleWrap(control) {
   if (control.classList.contains("answer__toggle")) return control.closest(".answer");
   if (control.classList.contains("expandable__summary")) return control.closest(".expandable");
-  if (control.classList.contains("comment-section__toggle")) return control.closest(".comment-section");
   if (control.classList.contains("quiz-accordion__summary")) return control.closest(".quiz-accordion__item");
   return null;
 }

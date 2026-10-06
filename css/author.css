@@ -1112,8 +1112,7 @@ summary.block-card__head:hover::before {
   font-size: 1.6rem;
 }
 
-.preview-stage .focus-btn,
-.preview-stage .comment-section {
+.preview-stage .focus-btn {
   display: none;
 }
 

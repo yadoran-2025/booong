@@ -6,7 +6,7 @@ import { escapeHtml } from "../utils.js";
 import { createBlankLesson, createSection } from "./factory.js";
 import { toast } from "./dom.js";
 export function refreshOutputs() {
-  const json = JSON.stringify(cleanLesson({ includeComments: true }), null, 2);
+  const json = JSON.stringify(cleanLesson(), null, 2);
   document.getElementById("json-output").value = json;
   renderPreview();
 }
@@ -54,7 +54,7 @@ export function renderPreview() {
   });
 }
 
-export function cleanLesson({ includeComments }) {
+export function cleanLesson() {
   const lesson = {
     id: state.lesson.id,
     title: state.lesson.title,
@@ -65,16 +65,16 @@ export function cleanLesson({ includeComments }) {
     sections: state.lesson.sections.map(section => ({
       id: section.id,
       title: section.title,
-      blocks: section.blocks.map(block => cleanBlock(block, includeComments)).filter(Boolean),
+      blocks: section.blocks.map(cleanBlock).filter(Boolean),
     })),
   };
   return pruneEmpty(lesson);
 }
 
-export function cleanBlock(block, includeComments) {
-  if (["접이식", "요약"].includes(block.type)) return null;
+export function cleanBlock(block) {
+  if (["접이식", "요약", "댓글"].includes(block.type)) return null;
   const copy = structuredClone(block);
-  if (!includeComments) stripComments(copy);
+  stripComments(copy);
   normalizeMaterialArrays(copy);
   if (copy.type === "미디어") {
     if (copy.item || copy.items || copy.materials) {
@@ -134,11 +134,15 @@ export function cleanMaterialArray(items) {
 
 export function stripComments(value) {
   if (!value || typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    for (let i = value.length - 1; i >= 0; i -= 1) {
+      if (["comment", "댓글"].includes(value[i]?.type)) value.splice(i, 1);
+      else stripComments(value[i]);
+    }
+    return;
+  }
   delete value.comments;
-  Object.values(value).forEach(child => {
-    if (Array.isArray(child)) child.forEach(stripComments);
-    else stripComments(child);
-  });
+  Object.values(value).forEach(stripComments);
 }
 
 export function pruneEmpty(value) {

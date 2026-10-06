@@ -1,0 +1,42 @@
+# BOOONG textbook storage
+
+Scope: BOOONG web app `1:266288546185:web:727060b22ce9643d0c2158`, Firebase project `yadoran-2025`, existing Seoul bucket `yadoran-2025.firebasestorage.app`, objects under `booong/textbooks/` only. No shared Storage rules, RTDB rules, Hosting targets, or Firebase Functions were changed.
+
+The first book is Visang's 2015 curriculum middle-school Social Studies ② teacher edition: 240 source PDF pages, 12 major units, 37 middle units. `data/textbooks.json` contains reviewed page ranges, hashes, and private object paths. Printed page numbers are PDF page numbers plus two. Major-unit cuts include introductions and wrap-up pages; the final middle-unit cut includes the unit's wrap-up.
+
+The Drive folder `1LA51lHH1bUPbCN7G22qIYI5Q4IRbp9TK` adds 14 high-school books for the 2022 curriculum: Integrated Social Studies 1 and 2 from Changbi, Liber School, Dong-A, Jihaksa, Chunjae, Visang, and Mirae N. Twelve files are teacher editions; the two Jihaksa research editions contain teacher guidance. Student editions are excluded. Each subject has seven publisher choices, with at most two books open at once. These books contribute 70 major-unit cuts and 210 middle-unit cuts. Publisher subdivisions are grouped into the existing curriculum's 14 and 16 middle units.
+
+Ranges were checked against source contents, bookmarks, and opening pages. Source-to-printed offsets differ: Liber Social Studies 2 includes two covers; Jihaksa includes one cover; Chunjae starts at printed page 6. Dong-A Social Studies 1 has two double-width source pages (53 and 54) covering four printed pages; `spreadPages` explicitly lists these for splitting into individual cropped pages, and `readingPages` records the resulting 160-page sequence. Originals retain their original bytes and hash. Other landscape appendices are outside the selected units and are not split.
+
+PDFs stay outside Git and the static website. The original and the 49 cuts are uploaded without Firebase download tokens, with `Cache-Control: private, no-store`. Existing Storage rules permit reads only under the unrelated `characters/` prefix; all textbook paths are denied by default. Bucket IAM has no public principals.
+
+`api/textbooks.js` reuses the admin API’s Firebase Google identity verification and checks the member sheet’s `admin` email allowlist on the server before issuing a five-minute V4 signed URL. Only reviewed book/unit/chapter combinations can be requested. Signed links are bearer links and can be shared until they expire. There is no permanent public PDF address. This is access control, not DRM.
+
+PDF access requires selecting a middle unit (소단원). Opening the page or selecting a major unit only shows chapter choices; no PDF is fetched. The API rejects requests without `chapter` with HTTP 400 (`chapter_required`), for both redirects and JSON URLs. Existing major-unit page links still open the choices, while chapter links open that chapter directly.
+
+The viewer uses PDF.js range transport with 256 KiB chunks, `disableStream: true`, and `disableAutoFetch: true`. Only ranges needed for the displayed pages or explicit research export are fetched; PDF structure or shared resources can still require most of a short chapter. Downloaded chunks are kept only in the current tab, keyed by the reviewed SHA-256, with least-recently-used eviction at 16 MiB on small screens or 50 MiB otherwise. Cache hits do not retain rendered documents, force full downloads, or write to browser disk. Each reopened chapter passes the server admin check again; account changes or access denial clear cached ranges. Expired signed links renew automatically before uncached reads. Closing a viewer aborts its pending network requests and releases canvases. Firebase Storage object policies, IAM, CORS, shared rules, Hosting, and Functions are unchanged.
+
+
+Reader account: `booong-textbook-reader@yadoran-2025.iam.gserviceaccount.com`. Its only added role is `storage.objectViewer`, conditioned on the `booong/textbooks/` object prefix. It cannot upload, delete, list unrelated objects, or read other apps' PDFs.
+
+The bucket previously had no CORS configuration. Read-only CORS was added for `https://booong.vercel.app`, `http://127.0.0.1:8765`, and `http://localhost:8765` so PDF.js can fetch signed PDFs directly. CORS does not grant file access; Storage rules and IAM still apply. The viewer uses pinned Mozilla PDF.js 6.3.289 from jsDelivr, including its Korean CMaps and font data, with independent vertical scrolling and zoom controls.
+
+Server environment variable `FIREBASE_TEXTBOOK_READER` contains base64-encoded service-account JSON. Keep it secret and configure it only on the BOOONG deployment. Local development uses the ignored `.env.local` file; never commit credentials or put them in browser JavaScript.
+
+To preview locally: `node --env-file=.env.local scripts/serve.mjs`. Explicit `BOOONG_TEXTBOOK_PREVIEW=1` enables authentication bypass only on localhost port 8765 when `NODE_ENV` is not production. A URL parameter alone cannot bypass production access checks.
+
+To regenerate the first book's cuts: `python3 scripts/split-textbook.py visang-social2-2015 SOURCE.pdf OUTPUT_DIRECTORY`. The script verifies the reviewed source hash and refuses an output directory inside this checkout. It requires `pypdf`, already present in the local Python runtime.
+
+The temporary local attachment feature has been removed. Permanent registration of subsequent books uses reviewed metadata and private Storage upload. Analysis notes are still kept only in the current browser tab.
+
+Each registered viewer has a copy-link button. The stable page URL contains the book ID and one-based major/middle-unit numbers; it does not contain the temporary signed PDF URL. The page restores that selection after login. Recipients must also sign in with Google and pass the same server-side admin allowlist check. DoRms sessions do not authorize this admin tool. Local preview links remain on localhost; sharing with others requires deploying this app to its production origin.
+
+The adjacent capture button saves the selected chapter as one PNG, following that viewer's current one- or two-page layout. Pages render at 1200 pixels wide and encode one spread at a time through the browser's native deflate stream, avoiding a full-chapter canvas and mobile canvas limits. Capture explicitly reads any still-needed chapter ranges, reuses cached ranges, and keeps the image in the browser; no image is uploaded and no AI API is called. Changing the selected chapter cancels capture before download. Check: `node scripts/test-textbook-export.mjs`.
+
+Checks: `node scripts/test-textbook-analysis.mjs`, `node scripts/test-textbook-pdf.mjs`, `node scripts/test-admin.mjs`, `node scripts/test-dorms-auth.mjs`, `npm run check`, `npm run smoke`.
+
+PDF spread splitting check: `python3 scripts/split-textbook.py --check`.
+
+The completed library has 15 books and 344 private PDF objects (6,671,746,308 bytes), including originals. Upload verification checked every object's size, PDF content type, private cache policy, and absence of permanent download tokens. A signed range read succeeded for each of the 14 added books, and unsigned source requests were denied. Website code and the 15-book catalog were deployed to the existing BOOONG Vercel project (`prj_P9RTgl9Az53r5VZ8i0diwW7YcJCH`) at `https://booong.vercel.app` on 2026-10-01. The production-only `FIREBASE_TEXTBOOK_READER` environment variable is sensitive. Firebase rules, Hosting, and Functions were not deployed.
+
+AI research export uses the existing authenticated PDF.js document in the browser. Users select the current page, current spread, or a printed-page range in one or two open books, up to ten pages total. Pages render individually to PNG with a 2400-pixel longest edge; the ZIP also includes UTF-8 `연구자료.txt` with publisher, book, curriculum, unit/chapter, printed pages, extracted text, and the user’s question. Text extraction failure retains the page image. No OCR or AI API is called, no original or signed PDF URL is exported, and no research bundle is stored on the server. The output is manually attached to the user’s chosen AI conversation. Check: `node scripts/test-textbook-export.mjs`.

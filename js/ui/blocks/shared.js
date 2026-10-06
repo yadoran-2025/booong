@@ -3,10 +3,6 @@ export function hasFlowAnswer(flow) {
   return Array.isArray(flow) && flow.some(item => item?.type === "answer");
 }
 
-export function hasFlowComment(flow) {
-  return Array.isArray(flow) && flow.some(item => item?.type === "comment");
-}
-
 export function buildTextElement(tag, className, html, alreadyFormatted = true) {
   const el = document.createElement(tag);
   el.className = className;

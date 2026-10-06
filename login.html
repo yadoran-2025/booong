@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>DoRms로 로그인 | BOOONG</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css">
+  <style>
+    body { min-height: 100dvh; display: grid; place-items: center; margin: 0; padding: var(--space-4); background: var(--bg); color: var(--text); font-family: var(--font-sans); }
+    main { width: min(100%, 460px); border: 1px solid var(--border); border-radius: var(--radius); background: var(--color-surface); padding: var(--space-6); }
+    h1 { margin: 0 0 var(--space-2); }
+    main > p { margin: 0 0 var(--space-6); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>BOOONG 수업 준비실</h1>
+    <p>도름스 계정으로 로그인해 수업 카드에 댓글을 남기세요.</p>
+    <div style="max-width:420px">
+      <form id="dorms-login" method="post" action="/api/auth/dorms/start?next=%2F">
+        <button type="submit" style="display:inline-flex;width:100%;align-items:center;justify-content:center;gap:12px;border-radius:12px;border:1px solid #fda4af;background:linear-gradient(90deg,#ffe4e6 0%,#ffffff 50%,#f0f9ff 100%);padding:12px 16px;font-size:14px;font-weight:600;color:#1c1917;box-shadow:0 10px 28px -16px rgba(190,24,93,0.75);cursor:pointer;font-family:inherit">
+          <span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;border-radius:9999px;background:#0284c7;color:#ffffff;box-shadow:0 0 0 1px #7dd3fc">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:block"><path d="M 5.51 20.27 L 4.54 18.99 L 3.78 17.58 L 3.25 16.09 L 2.95 14.55 L 2.90 13.00 L 3.09 11.47 L 3.50 10.01 L 4.13 8.63 L 4.95 7.39 L 5.95 6.29 L 7.09 5.37 L 8.35 4.64 L 9.69 4.12 L 11.09 3.82 L 12.49 3.73 L 13.88 3.87 L 15.22 4.21 L 16.48 4.74 L 17.63 5.46 L 18.64 6.33 L 19.50 7.34 L 20.19 8.46 L 20.69 9.66 L 20.99 10.90 L 21.10 12.17 L 21.01 13.42 L 20.74 14.63 L 20.29 15.77 L 19.67 16.81 L 18.91 17.74 L 17.05 19.16 L 15.99 19.63 L 14.89 19.93 L 13.77 20.05 L 12.66 20.00 L 11.58 19.78 L 10.57 19.40 L 9.63 18.88 L 8.80 18.23 L 8.09 17.47 L 7.52 16.62 L 7.09 15.70 L 6.81 14.74 L 6.68 13.77 L 6.70 12.80 L 6.87 11.86 L 7.18 10.97 L 7.62 10.15 L 8.17 9.42 L 8.82 8.79 L 9.54 8.29 L 10.32 7.90 L 11.14 7.64 L 11.97 7.52 L 12.80 7.53 L 13.60 7.66 L 14.36 7.91 L 15.06 8.27 L 15.68 8.73 L 16.22 9.27 L 16.65 9.87 L 16.98 10.52 L 17.21 11.20 L 17.32 11.89 L 17.32 12.58 L 17.21 13.24 L 17.01 13.87 L 16.72 14.44 L 16.35 14.96 L 15.91 15.39 L 15.43 15.75 L 14.90 16.01 L 14.36 16.19 L 13.80 16.28 L 13.26 16.28 L 12.73 16.19 L 12.24 16.03 L 11.79 15.80 L 11.40 15.51 L 11.07 15.17 L 10.80 14.79 L 10.60 14.39 L 10.48 13.97 L 10.42 13.56 L 10.43 13.15 L 10.51 12.77 L 10.64 12.41 L 10.82 12.09 L 11.04 11.82 L 11.29 11.60 L 11.57 11.43 L 11.85 11.31 L 12.14 11.24 L 12.42 11.23 L 12.69 11.26" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          DoRms로 로그인
+        </button>
+      </form>
+      <p style="margin:8px 0 0;text-align:center;font-size:12px;line-height:1.6;color:#57534e;word-break:keep-all">
+        도름스 계정으로 들어와요.
+        <a href="https://dorms.school" target="_blank" rel="noopener noreferrer" style="color:#1c1917;font-weight:600;text-decoration:underline">DoRms 바로 가기</a>
+        · <a href="https://dorms.school/connect" target="_blank" rel="noopener noreferrer" style="color:#1c1917;font-weight:600;text-decoration:underline">내 사이트에도 DoRms 로그인 달기</a>
+      </p>
+    </div>
+  </main>
+  <script>
+    const next = new URLSearchParams(location.search).get("next");
+    if (next) document.getElementById("dorms-login").action = `/api/auth/dorms/start?next=${encodeURIComponent(next)}`;
+  </script>
+</body>
+</html>

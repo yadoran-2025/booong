@@ -1,0 +1,8 @@
+{
+  "database": [
+    {
+      "instance": "yadoran-2025-watcha",
+      "rules": "watcha.database.rules.json"
+    }
+  ]
+}

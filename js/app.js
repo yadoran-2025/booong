@@ -1,7 +1,8 @@
-import { app, clearListeners } from "./state.js";
+import { app } from "./state.js";
 import { loadExternalAssets } from "./api.js";
 import { isJsonLessonUrl } from "./dashboard-data.js";
 import { loadDashboardConfig, showDashboard } from "./ui/dashboard.js";
+import { showCommentNotice } from "./ui/home-comment-notice.js";
 import { renderGuideGallery } from "./ui/guide-gallery.js";
 import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
 import { attachFocusAffordance, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen, setBlockFullscreenSectionNavigator, expandNextFullscreenToggle, scrollBlockFullscreen } from "./ui/components.js";
@@ -19,6 +20,7 @@ async function init() {
   if (!lessonId) {
     trackCurrentPage();
     await showDashboard();
+    if (!params.get("view")) showCommentNotice();
     return;
   }
 
@@ -145,7 +147,6 @@ function startLesson() {
 
 function goTo(idx) {
   if (idx < 0 || idx >= app.lesson.sections.length) return;
-  clearListeners();
   app.currentIdx = idx;
   const sec = app.lesson.sections[idx];
 

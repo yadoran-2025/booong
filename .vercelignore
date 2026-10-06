@@ -1,0 +1,6 @@
+supabase/
+.env*
+.vercel/
+.git/
+.playwright-cli/
+node_modules/

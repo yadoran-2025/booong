@@ -38,6 +38,12 @@
               ".write": true,
               ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
             }
+          },
+          "groupClicks": {
+            "$group": {
+              ".write": true,
+              ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+            }
           }
         }
       },
@@ -62,6 +68,24 @@
         "$group": {
           "$visitor": {
             ".write": "newData.exists()"
+          }
+        }
+      },
+
+      "favorites": {
+        "$resource": {
+          ".write": "newData.exists()",
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() >= (data.exists() ? data.val() - 1 : 0) && newData.val() <= (data.exists() ? data.val() + 1 : 1)"
+          },
+          "updatedAt": { ".validate": "newData.isNumber()" }
+        }
+      },
+
+      "favoriteVisitors": {
+        "$resource": {
+          "$visitor": {
+            ".write": "(!data.exists() && newData.exists()) || (data.exists() && !newData.exists())"
           }
         }
       }

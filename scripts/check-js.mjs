@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const roots = ["js", "scripts"];
+const roots = ["api", "js", "lib", "scripts"];
 const files = [];
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -23,6 +23,7 @@ function asScript(source) {
     .replace(/^\s*export\s+\*\s+from\s+["'][^"']+["'];?\s*$/gm, "")
     .replace(/^\s*export\s+\{[^}]+\}\s+from\s+["'][^"']+["'];?\s*$/gm, "")
     .replace(/^\s*export\s+\{[^}]+\};?\s*$/gm, "")
+    .replace(/\bexport\s+default\s+(?=(?:async\s+)?function)/g, "")
     .replace(/\bexport\s+(?=(?:async\s+)?function|class|const|let|var)/g, "")
     .replace(/\bimport\.meta\b/g, "({ url: '' })");
 }

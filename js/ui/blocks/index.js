@@ -1,7 +1,7 @@
 import { attachFocusAffordance } from "../components.js";
 import { buildImage } from "./media.js";
 import { renderParagraph, renderHeading, renderSubsection, renderQuote, renderTextBox, renderGroup, renderToggle, renderDivider, renderBlockSeparator } from "./text.js";
-import { renderCase, renderQuestion, renderConcept, renderCommentBlock } from "./callouts.js";
+import { renderCase, renderQuestion, renderConcept } from "./callouts.js";
 import { renderFigure, renderMedia } from "./media.js";
 import { renderQuizAccordion } from "./quiz.js";
 
@@ -14,7 +14,6 @@ export function renderBlock(block, blockIdx) {
     소제목: renderHeading,
     절: renderSubsection,
     구분선: renderDivider,
-    댓글: renderCommentBlock,
     인용: renderQuote,
     텍스트박스: renderTextBox,
     그룹: renderGroup,

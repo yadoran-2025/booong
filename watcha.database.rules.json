@@ -1,0 +1,10 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "watcha": {
+      ".read": "auth != null && auth.uid === 'watcha-cache-server' && auth.token.watchaCache === true",
+      ".write": "auth != null && auth.uid === 'watcha-cache-server' && auth.token.watchaCache === true"
+    }
+  }
+}

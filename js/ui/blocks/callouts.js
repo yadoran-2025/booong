@@ -1,15 +1,14 @@
-import { app } from "../../state.js";
 import { formatInline } from "../../utils.js";
 import { renderBlock } from "./index.js";
 import { renderQuote, renderTextBox } from "./text.js";
 import { appendMaterials, buildMaterial, resolveMaterial } from "./materials.js";
 import { buildImagePair } from "./media.js";
 import { buildAnswer } from "./quiz.js";
-import { appendAsides, asArray, buildTextElement, hasFlowAnswer, hasFlowComment, normalizeLayout, renderAsideHtml } from "./shared.js";
+import { appendAsides, asArray, buildTextElement, hasFlowAnswer, normalizeLayout, renderAsideHtml } from "./shared.js";
 
 const CASE_INLINE_OPTIONS = { accentStyle: "color: var(--text); --accent: var(--text)" };
 
-export function renderCallout(block, defaultStyle, blockIdx) {
+export function renderCallout(block, defaultStyle) {
   const style = block.style ?? defaultStyle;
 
   if (style === "news") {
@@ -27,18 +26,11 @@ export function renderCallout(block, defaultStyle, blockIdx) {
 
   if (style === "concept") {
     if (title) div.appendChild(buildTextElement("div", "concept__title", title, false));
-    if (block.flow?.length) appendFlow(div, block.flow, "concept__body", {
-      blockIdx,
-      variant: "concept",
-      label: "학생 답변 보기",
-    });
+    if (block.flow?.length) appendFlow(div, block.flow, "concept__body");
     else if (body) div.appendChild(buildTextElement("div", "concept__body", formatInline(body)));
   } else {
     if (title) div.appendChild(buildTextElement("div", "callout__label", title, false));
-    if (block.flow?.length) appendFlow(div, block.flow, "case__text", {
-      blockIdx,
-      variant: "case",
-    });
+    if (block.flow?.length) appendFlow(div, block.flow, "case__text", { variant: "case" });
     else if (body) div.appendChild(buildTextElement("div", "case__text", formatCaseInline(body)));
     if (footer) div.appendChild(buildTextElement("div", "case__sub", formatCaseInline(footer)));
   }
@@ -51,31 +43,16 @@ export function renderCallout(block, defaultStyle, blockIdx) {
   return div;
 }
 
-export function renderCase(block, blockIdx) {
-  const div = renderCallout(block, "case", blockIdx);
-
-  if (!block.comments || hasFlowComment(block.flow)) return div;
-
-  const wrapper = document.createElement("div");
-  wrapper.className = "case-with-comments";
-  div.classList.remove("block");
-  wrapper.appendChild(div);
-  appendCommentSection(wrapper, commentKey(blockIdx, "p0"), "case");
-  return wrapper;
+export function renderCase(block) {
+  return renderCallout(block, "case");
 }
 
-export function renderQuestion(block, blockIdx) {
-  const lessonId = app.lesson.id || app.lesson.title || "lesson";
-  const sectionId = app.lesson.sections[app.currentIdx]?.id || `sec${app.currentIdx}`;
-  const bIdx = blockIdx ?? 0;
-
+export function renderQuestion(block) {
   const div = document.createElement("div");
   div.className = "block callout question";
   div.innerHTML = `<div class="callout__label">생각해볼 문제</div>`;
 
-  const commentSections = [];
-
-  block.prompts.forEach((pr, promptIdx) => {
+  block.prompts.forEach(pr => {
     if (pr.flow?.length) {
       const firstTextIdx = pr.flow.findIndex(item => item.type === "text");
       pr.flow.forEach((item, flowIdx) => {
@@ -105,12 +82,7 @@ export function renderQuestion(block, blockIdx) {
           div.appendChild(buildObjectGroup(item.items, item.layout || "row"));
           return;
         }
-        if (item.type === "comment") {
-          appendCommentObject(div, commentKey(bIdx, `p${promptIdx}__f${flowIdx}`), "question", block.prompts.length > 1
-            ? `Q${promptIdx + 1} 학생 답변 보기`
-            : "학생 답변 보기");
-          return;
-        }
+        if (item.type === "comment") return;
         const p = document.createElement("div");
         p.className = "question__prompt";
         const prefix = flowIdx === firstTextIdx ? "Q. " : "";
@@ -131,64 +103,18 @@ export function renderQuestion(block, blockIdx) {
     // answer는 항상 { text } 또는 { bullets } 객체
     if (pr.answer && !hasFlowAnswer(pr.flow)) div.appendChild(buildAnswer(pr.answer, "답 보기"));
 
-    if (block.comments && !hasFlowComment(pr.flow)) {
-      commentSections.push({
-        key: `${lessonId}__${sectionId}__b${bIdx}__p${promptIdx}`,
-        label: block.prompts.length > 1
-          ? `Q${promptIdx + 1} 학생 답변 보기`
-          : "학생 답변 보기",
-      });
-    }
   });
 
   if (block.imagePair) div.appendChild(buildImagePair(block.imagePair));
-
-  if (!block.comments) return div;
-
-  const outer = document.createElement("div");
-  outer.className = "question-with-comments";
-  div.classList.remove("block");
-  outer.appendChild(div);
-  commentSections.forEach(({ key, label }) => {
-    appendCommentSection(outer, key, "question", label);
-  });
-  return outer;
+  return div;
 }
 
-export function appendCommentSection(parent, key, variant, label = null) {
-  import("./comments.js")
-    .then(({ buildCommentSection }) => {
-      const section = buildCommentSection(key, variant);
-      if (label) section.querySelector(".comment-section__toggle").textContent = label;
-      parent.appendChild(section);
-    })
-    .catch(err => {
-      console.warn("댓글 모듈을 불러오지 못했습니다:", err);
-    });
-}
-
-export function renderConcept(block, blockIdx) {
-  const div = renderCallout(block, "concept", blockIdx);
-
-  if (!block.comments || hasFlowComment(block.flow)) return div;
-
-  const wrapper = document.createElement("div");
-  wrapper.className = "concept-with-comments";
-  div.classList.remove("block");
-  wrapper.appendChild(div);
-  appendCommentSection(wrapper, commentKey(blockIdx, "p0"), "concept", "학생 답변 보기");
-  return wrapper;
-}
-
-export function renderCommentBlock(_block, blockIdx) {
-  const wrap = document.createElement("div");
-  wrap.className = "block comment-object";
-  appendCommentSection(wrap, commentKey(blockIdx, "standalone"), "question", "학생 답변 보기");
-  return wrap;
+export function renderConcept(block) {
+  return renderCallout(block, "concept");
 }
 
 export function appendFlow(parent, flow, textClass, context = {}) {
-  flow.forEach((item, flowIdx) => {
+  flow.forEach(item => {
     if (item.type === "materials") {
       appendMaterials(parent, item.items, item.layout);
       return;
@@ -215,10 +141,7 @@ export function appendFlow(parent, flow, textClass, context = {}) {
       parent.appendChild(buildObjectGroup(item.items, item.layout || "row"));
       return;
     }
-    if (item.type === "comment") {
-      appendCommentObject(parent, commentKey(context.blockIdx, `f${flowIdx}`), context.variant || "question", context.label);
-      return;
-    }
+    if (item.type === "comment") return;
     const text = document.createElement("div");
     text.className = textClass;
     text.innerHTML = context.variant === "case"
@@ -231,19 +154,6 @@ export function appendFlow(parent, flow, textClass, context = {}) {
 
 function formatCaseInline(text) {
   return formatInline(text, CASE_INLINE_OPTIONS);
-}
-
-export function appendCommentObject(parent, key, variant = "question", label = "학생 답변 보기") {
-  const wrap = document.createElement("div");
-  wrap.className = "comment-object";
-  parent.appendChild(wrap);
-  appendCommentSection(wrap, key, variant, label);
-}
-
-export function commentKey(blockIdx = 0, suffix = "comment") {
-  const lessonId = app.lesson.id || app.lesson.title || "lesson";
-  const sectionId = app.lesson.sections[app.currentIdx]?.id || `sec${app.currentIdx}`;
-  return `${lessonId}__${sectionId}__b${blockIdx ?? 0}__${suffix}`;
 }
 
 export function renderFlowQuote(item) {

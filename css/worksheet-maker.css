@@ -487,8 +487,7 @@
   gap: 0.55rem;
 }
 
-.worksheet-page__block--rendered > .block,
-.worksheet-page__block--rendered > .case-with-comments {
+.worksheet-page__block--rendered > .block {
   margin: 0;
 }
 
@@ -496,9 +495,7 @@
   max-width: 100%;
 }
 
-.worksheet-page__block--rendered .focus-btn,
-.worksheet-page__block--rendered .comment-box,
-.worksheet-page__block--rendered .comment-list {
+.worksheet-page__block--rendered .focus-btn {
   display: none;
 }
 

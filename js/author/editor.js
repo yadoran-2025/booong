@@ -115,7 +115,6 @@ export function renderFieldsForBlock(block, basePath) {
       ${arrayEditor("질문", `${basePath}.prompts`, "prompt")}
     `;
   }
-  if (block.type === "댓글") return "";
   if (block.type === "이미지곁글") {
     return `
       <div class="form-grid">

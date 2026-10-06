@@ -1,7 +1,7 @@
 export { ASSET_UPLOAD_ENDPOINT, EXTERNAL_ASSETS_CACHE_KEY } from "../asset-config.js";
 export const BLOCK_TYPE_GROUPS = [
   ["기본", ["소제목", "단락"]],
-  ["활동", ["사례", "발문", "개념", "댓글"]],
+  ["활동", ["사례", "발문", "개념"]],
   ["자료·문제", ["미디어", "기출문제"]],
 ];
 export const BLOCK_TYPES = BLOCK_TYPE_GROUPS.flatMap(([, types]) => types);
@@ -38,7 +38,6 @@ export const MARKUP_GUIDE_TEXT = `## 장 제목
 
 [발문
 질문 내용
-<댓>
 ]
 
 [개념

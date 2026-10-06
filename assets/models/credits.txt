@@ -1,0 +1,12 @@
+BOOONG Scooter: original procedural model in js/ui/scooter-model.js.
+Rounded body, saddle, lamp, mirrors and rolling wheels built with Three.js geometry.
+
+Earlier prototype asset (kept for reference):
+Scooter by Poly by Google
+Source: https://poly.pizza/m/eHdEFPwUfCt
+License: Creative Commons Attribution 3.0 (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
+Changes: body color changed to BOOONG blue at render time; normalized scale, separated tire/hub geometry for wheel rotation, and scroll-driven placement.
+
+Three.js: Copyright 2010–2026 Three.js Authors, MIT license.
+See ../vendor/three/LICENSE. Rebuild vendored files with npm install and npm run vendor:intro.

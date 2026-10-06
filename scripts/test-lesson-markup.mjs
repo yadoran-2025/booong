@@ -61,9 +61,10 @@ assert.equal(caseBlock.blocks[0].body, "사례 본문\n\n두 번째 문단\n\n�
 assertJsonEqual(caseBlock.blocks[0].materials, ["case-img", "https://example.com/block-link"]);
 assertJsonEqual(
   caseBlock.blocks[0].flow.map(item => item.type),
-  ["text", "divider", "text", "materials", "textBox", "materials", "text", "answer", "comment"],
+  ["text", "divider", "text", "materials", "textBox", "materials", "text", "answer"],
 );
 assertJsonEqual(caseBlock.blocks[0].answer, ["정답 1", "정답 2"]);
+assert.equal(parseLessonMarkup("<댓>").blocks.length, 0);
 
 const questionBlock = parseLessonMarkup(`
 [발문

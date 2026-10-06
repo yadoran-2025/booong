@@ -5,6 +5,21 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 const root = resolve(process.cwd());
 const port = Number.parseInt(process.env.PORT || "8765", 10);
 const host = process.env.HOST || "127.0.0.1";
+// Explicitly enable the user-requested Watcha preview only in the loopback development server.
+if (process.env.NODE_ENV !== "production" && ["127.0.0.1", "localhost", "::1"].includes(host)) {
+  process.env.NODE_ENV ||= "development";
+  process.env.BOOONG_WATCHA_PREVIEW = "1";
+}
+const authRoutes = new Map([
+  ["/api/auth/dorms/start", "../api/auth/dorms/start.js"],
+  ["/api/auth/dorms/callback", "../api/auth/dorms/callback.js"],
+  ["/api/auth/dorms/session", "../api/auth/dorms/session.js"],
+  ["/api/auth/dorms/logout", "../api/auth/dorms/logout.js"],
+  ["/api/comments", "../api/comments.js"],
+  ["/api/admin", "../api/admin.js"],
+  ["/api/textbooks", "../api/textbooks.js"],
+  ["/api/watcha-library", "../api/watcha-library.js"],
+]);
 
 const types = {
   ".html": "text/html;charset=utf-8",
@@ -21,6 +36,7 @@ const types = {
 
 function resolveRequest(url = "/") {
   const pathname = decodeURIComponent(url.split("?")[0] || "/");
+  if (pathname.split("/").some(part => part.startsWith("."))) return null;
   const relative = normalize(pathname.replace(/^\/+/, ""));
   const target = resolve(join(root, relative || "index.html"));
   if (target !== root && !target.startsWith(root + sep)) return null;
@@ -36,6 +52,12 @@ async function fileForRequest(url) {
 }
 
 const server = createServer(async (req, res) => {
+  const authRoute = authRoutes.get(new URL(req.url, "http://localhost").pathname);
+  if (authRoute) {
+    try { await (await import(authRoute)).default(req, res); }
+    catch { res.writeHead(503); res.end("Authentication unavailable"); }
+    return;
+  }
   const file = await fileForRequest(req.url);
   if (!file) {
     res.writeHead(403);

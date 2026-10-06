@@ -13,6 +13,11 @@ const pages = [
   "select.html",
   "about.html",
   "analytics.html",
+  "admin.html",
+  "textbook-analysis.html",
+  "watcha-library.html",
+  "login.html",
+  "dorms-denied.html",
 ];
 const legacyRefs = [
   "js/" + "author.js",

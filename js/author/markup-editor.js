@@ -42,7 +42,6 @@ export function renderMarkupEditor(sectionIdx) {
               <span class="markup-help__row"><code>##</code><span>장</span></span>
               <span class="markup-help__group">작은블록</span>
               <span class="markup-help__row"><code>&lt;답&gt;...&lt;/답&gt;</code><span>답 보기</span></span>
-              <span class="markup-help__row"><code>&lt;댓&gt;</code><span>댓글 칸</span></span>
               <span class="markup-help__group">객체</span>
               <span class="markup-help__row"><code>[[자료키]]</code><span>외부자료 호출</span></span>
               <span class="markup-help__row"><code>[[https://...]]</code><span>링크 자료 호출</span></span>
@@ -69,7 +68,7 @@ export function renderMarkupEditor(sectionIdx) {
       <label class="field field--full">
         <span class="field__label">현재 섹션 블록</span>
         <textarea id="markup-source" class="markup-source" spellcheck="false" wrap="soft">${escapeHtml(source)}</textarea>
-        <span class="field__hint">[사례, [개념, [발문, [문제는 ]로 닫고, 자료는 [[키]], 텍스트 박스는 {{내용}}, 댓글 칸은 &lt;댓&gt;, 병렬 연결은 ~, 구분선은 --- 로 씁니다.</span>
+        <span class="field__hint">[사례, [개념, [발문, [문제는 ]로 닫고, 자료는 [[키]], 텍스트 박스는 {{내용}}, 병렬 연결은 ~, 구분선은 --- 로 씁니다.</span>
       </label>
       <div id="markup-messages">
         ${renderSyntaxMessages(messages)}

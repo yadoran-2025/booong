@@ -153,6 +153,10 @@ export function summarizeAnalyticsInsights(analytics = {}, catalog = [], now = D
   const resourceVisits = resourceList.reduce((total, item) => total + item.visitorCount, 0);
   const explorationCounts = [...visitorResources.values()].map(items => items.length);
   const singleResource = explorationCounts.filter(count => count === 1).length;
+  const explorationDistribution = [1, 2, 3, 4].map(count => ({
+    label: count === 4 ? "4개 이상" : `${count}개`,
+    visitors: explorationCounts.filter(value => count === 4 ? value >= count : value === count).length,
+  })).filter(item => item.visitors);
   const pairs = [];
   for (let left = 0; left < resourceList.length; left += 1) {
     for (let right = left + 1; right < resourceList.length; right += 1) {
@@ -232,6 +236,13 @@ export function summarizeAnalyticsInsights(analytics = {}, catalog = [], now = D
     .sort((a, b) => b.visitors - a.visitors || a.title.localeCompare(b.title, "ko"));
 
   const sortedLeadTimes = leadTimes.sort((a, b) => a - b);
+  const leadTimeDistribution = [
+    { label: "1분 이내", min: 0, max: 60_000 },
+    { label: "1–10분", min: 60_000, max: 600_000 },
+    { label: "10–60분", min: 600_000, max: 3_600_000 },
+    { label: "1시간 이후", min: 3_600_000, max: Infinity },
+  ].map(bucket => ({ label: bucket.label, visitors: leadTimes.filter(value => value >= bucket.min && value < bucket.max).length }))
+    .filter(item => item.visitors);
   return {
     reach: resourceList.map(({ title, visitorCount }) => ({ title, visitors: visitorCount })),
     concentrationRate: resourceVisits ? resourceList.slice(0, 3).reduce((total, item) => total + item.visitorCount, 0) / resourceVisits : 0,
@@ -240,6 +251,7 @@ export function summarizeAnalyticsInsights(analytics = {}, catalog = [], now = D
       single: singleResource,
       multiple: explorationCounts.length - singleResource,
       average: explorationCounts.length ? resourceVisits / explorationCounts.length : 0,
+      distribution: explorationDistribution,
     },
     pairs: pairs.sort((a, b) => b.count - a.count || a.first.localeCompare(b.first, "ko")),
     firstResources: [...firstResources].map(([title, visitors]) => ({ title, visitors })).sort((a, b) => b.visitors - a.visitors || a.title.localeCompare(b.title, "ko")),
@@ -247,6 +259,7 @@ export function summarizeAnalyticsInsights(analytics = {}, catalog = [], now = D
       visitors: leadTimes.length,
       medianMs: sortedLeadTimes.length ? sortedLeadTimes[Math.floor(sortedLeadTimes.length / 2)] : 0,
       sameDayRate: leadTimes.length ? sameDayClicks / leadTimes.length : 0,
+      distribution: leadTimeDistribution,
     },
     repeat: { visitors: repeatedVisitors.size, crossDayVisitors: crossDayVisitors.size, resources: repeatResources },
     recent: { currentDates: recentDates, previousDates, resources: recentInterest },
@@ -257,6 +270,282 @@ export function summarizeAnalyticsInsights(analytics = {}, catalog = [], now = D
     pages: pageStats,
     makers: makerStats,
   };
+}
+
+export function summarizeDecisionAnalytics(analytics = {}, catalog = [], now = Date.now(), filters = { maker: "", type: "" }) {
+  const groups = analytics.groupClicks || {};
+  const groupVisitors = analytics.groupClickVisitors || {};
+  const dailyRecords = analytics.daily || {};
+  const resources = new Map();
+  const resourcesById = new Map();
+  const resourcesByTitle = new Map();
+
+  const addCatalogResource = (item, index) => {
+    const id = String(item?.id || item?.groupId || item?.resourceId || "").trim();
+    const title = String(item?.title || id).trim();
+    if (!title) return;
+    const resource = {
+      key: `catalog:${id || index}`,
+      title,
+      type: normalizeResourceType(item?.kind || item?.type),
+      makers: normalizeLabels(item?.makers || item?.maker),
+      subjects: normalizeLabels(item?.subjects || item?.subject),
+      unitKeys: normalizeLabels(item?.unitKeys || item?.unitKey),
+      visitors: new Map(),
+    };
+    resources.set(resource.key, resource);
+    [id, item?.groupId, item?.resourceId].filter(Boolean).forEach(value => resourcesById.set(String(value), resource));
+    [title, ...normalizeLabels(item?.aliases), ...normalizeLabels(item?.legacyTitles)].forEach(value => {
+      if (!resourcesByTitle.has(String(value))) resourcesByTitle.set(String(value), resource);
+    });
+  };
+  catalog.forEach(addCatalogResource);
+
+  const observedIds = new Set([
+    ...Object.keys(groups),
+    ...Object.keys(groupVisitors),
+    ...Object.values(dailyRecords).flatMap(record => Object.keys(record?.groupClicks || {})),
+  ]);
+  observedIds.forEach(groupId => {
+    const group = groups[groupId] || {};
+    const title = String(group.title || groupId).trim();
+    let resource = resourcesById.get(groupId)
+      || resourcesById.get(String(group.groupId || ""))
+      || resourcesByTitle.get(title);
+    if (!resource) {
+      resource = {
+        key: `observed:${title}`,
+        title,
+        type: normalizeResourceType(group.type || group.kind),
+        makers: normalizeLabels(group.makers || group.maker),
+        subjects: normalizeLabels(group.subjects || group.subject),
+        unitKeys: normalizeLabels(group.unitKeys || group.unitKey),
+        visitors: new Map(),
+      };
+      resources.set(resource.key, resource);
+      resourcesByTitle.set(title, resource);
+    } else {
+      resource.makers = mergeLabels(resource.makers, normalizeLabels(group.makers || group.maker));
+      resource.subjects = mergeLabels(resource.subjects, normalizeLabels(group.subjects || group.subject));
+      resource.unitKeys = mergeLabels(resource.unitKeys, normalizeLabels(group.unitKeys || group.unitKey));
+    }
+    resourcesById.set(groupId, resource);
+    if (!resourcesByTitle.has(title)) resourcesByTitle.set(title, resource);
+  });
+
+  Object.entries(groupVisitors).forEach(([groupId, visitors]) => {
+    const resource = resourcesById.get(groupId);
+    if (!resource) return;
+    Object.entries(visitors || {}).forEach(([visitorId, visit]) => {
+      const current = resource.visitors.get(visitorId) || { first: Infinity, last: -Infinity };
+      const first = positiveFinite(visit?.firstClickedAt);
+      const last = positiveFinite(visit?.lastClickedAt);
+      if (first !== null) current.first = Math.min(current.first, first);
+      if (last !== null) current.last = Math.max(current.last, last);
+      resource.visitors.set(visitorId, current);
+    });
+  });
+
+  const today = dayKey(now);
+  const currentDates = dateRange(addDays(today, -7), 7);
+  const previousDates = dateRange(addDays(today, -14), 7);
+  const periodDates = [...previousDates, ...currentDates];
+  const firstGroupClicksDate = Object.keys(dailyRecords).sort()
+    .find(date => dailyRecords[date]?.groupClicks && typeof dailyRecords[date].groupClicks === "object");
+  const availability = new Map(periodDates.map(date => [date,
+    Boolean(firstGroupClicksDate && date >= firstGroupClicksDate && Object.hasOwn(dailyRecords, date)),
+  ]));
+  const missingDates = periodDates.filter(date => !availability.get(date));
+  const currentComplete = currentDates.every(date => availability.get(date));
+  const previousComplete = previousDates.every(date => availability.get(date));
+  const complete = currentComplete && previousComplete;
+
+  const resourceDailyViews = new Map([...resources.values()].map(resource => [resource.key, new Map(periodDates.map(date => [date, 0]))]));
+  periodDates.forEach(date => {
+    if (!availability.get(date)) return;
+    Object.entries(dailyRecords[date]?.groupClicks || {}).forEach(([groupId, value]) => {
+      const resource = resourcesById.get(groupId);
+      if (!resource) return;
+      const views = Number(value);
+      if (Number.isFinite(views) && views > 0) {
+        resourceDailyViews.get(resource.key).set(date, resourceDailyViews.get(resource.key).get(date) + views);
+      }
+    });
+  });
+
+  const allResources = [...resources.values()];
+  const options = {
+    makers: [...new Set(allResources.flatMap(resource => resource.makers))].sort(compareKorean),
+    types: [...new Set(allResources.map(resource => resource.type))].sort(compareKorean),
+  };
+  const makerFilter = String(filters?.maker || "").trim();
+  const typeFilter = String(filters?.type || "").trim();
+  const normalizedTypeFilter = typeFilter ? normalizeResourceType(typeFilter) : "";
+  const filteredResources = allResources.filter(resource =>
+    (!makerFilter || resource.makers.includes(makerFilter))
+    && (!typeFilter || resource.type === normalizedTypeFilter));
+
+  const periodTotal = (resource, dates) => dates.reduce((sum, date) => sum + resourceDailyViews.get(resource.key).get(date), 0);
+  const cumulativeVisitors = new Set(filteredResources.flatMap(resource => [...resource.visitors.keys()]));
+  const currentTotal = currentDates.reduce((sum, date) => sum + filteredResources.reduce((dailySum, resource) => dailySum + resourceDailyViews.get(resource.key).get(date), 0), 0);
+  const previousTotal = previousDates.reduce((sum, date) => sum + filteredResources.reduce((dailySum, resource) => dailySum + resourceDailyViews.get(resource.key).get(date), 0), 0);
+
+  const resultResources = filteredResources.map(resource => {
+    const visitors = resource.visitors.size;
+    const crossDayVisitors = [...resource.visitors.values()].filter(visit =>
+      Number.isFinite(visit.first) && Number.isFinite(visit.last) && visit.last >= visit.first && dayKey(visit.first) !== dayKey(visit.last)).length;
+    const rawCurrent = periodTotal(resource, currentDates);
+    const rawPrevious = periodTotal(resource, previousDates);
+    return {
+      key: resource.key,
+      title: resource.title,
+      type: resource.type,
+      makers: resource.makers,
+      subjects: resource.subjects,
+      unitKeys: resource.unitKeys,
+      visitors,
+      crossDayVisitors,
+      repeatRate: visitors ? crossDayVisitors / visitors : null,
+      current: currentComplete ? rawCurrent : null,
+      previous: previousComplete ? rawPrevious : null,
+      change: complete ? rawCurrent - rawPrevious : null,
+      currentShare: currentComplete && currentTotal ? rawCurrent / currentTotal : null,
+      previousShare: previousComplete && previousTotal ? rawPrevious / previousTotal : null,
+      shareChange: complete && currentTotal && previousTotal ? rawCurrent / currentTotal - rawPrevious / previousTotal : null,
+      daily: periodDates.map(date => ({ date, views: availability.get(date) ? resourceDailyViews.get(resource.key).get(date) : null, available: availability.get(date) })),
+      pairs: [],
+      _visitors: resource.visitors,
+    };
+  });
+
+  // ponytail: pair scan is quadratic in resources; use a visitor-to-resource index if the catalog grows large.
+  resultResources.forEach(resource => {
+    resource.pairs = resultResources.filter(other => other !== resource).map(other => {
+      const count = [...resource._visitors.keys()].filter(visitorId => other._visitors.has(visitorId)).length;
+      return { title: other.title, count, rate: resource.visitors ? count / resource.visitors : 0 };
+    }).filter(pair => pair.count > 0)
+      .sort((left, right) => right.count - left.count || right.rate - left.rate || compareKorean(left.title, right.title));
+  });
+  resultResources.forEach(resource => delete resource._visitors);
+  resultResources.sort((left, right) => right.visitors - left.visitors || compareKorean(left.title, right.title));
+
+  const visitorResourceCounts = new Map();
+  filteredResources.forEach(resource => resource.visitors.forEach((_, visitorId) => {
+    visitorResourceCounts.set(visitorId, (visitorResourceCounts.get(visitorId) || 0) + 1);
+  }));
+  const explorationCounts = [...visitorResourceCounts.values()];
+  const single = explorationCounts.filter(count => count === 1).length;
+  const distribution = [1, 2, 3, 4].map(count => ({
+    label: count === 4 ? "4개 이상" : `${count}개`,
+    visitors: explorationCounts.filter(value => count === 4 ? value >= 4 : value === count).length,
+  })).filter(item => item.visitors > 0);
+
+  const summarizeDimension = key => {
+    const labels = new Map();
+    filteredResources.forEach(resource => resource[key].forEach(label => {
+      const current = labels.get(label) || { label, resourceCount: 0, current: 0, previous: 0 };
+      current.resourceCount += 1;
+      current.current += periodTotal(resource, currentDates);
+      current.previous += periodTotal(resource, previousDates);
+      labels.set(label, current);
+    }));
+    return [...labels.values()].map(item => ({
+      label: item.label,
+      resourceCount: item.resourceCount,
+      current: currentComplete ? item.current : null,
+      previous: previousComplete ? item.previous : null,
+      change: complete ? item.current - item.previous : null,
+    })).sort((left, right) => (right.current ?? -1) - (left.current ?? -1) || right.resourceCount - left.resourceCount || compareKorean(left.label, right.label));
+  };
+
+  const highlights = [];
+  const growing = complete ? resultResources.filter(resource => resource.change > 0)
+    .sort((left, right) => right.change - left.change || compareKorean(left.title, right.title))[0] : null;
+  if (growing) highlights.push({
+    title: `${growing.title} 열람 증가`,
+    body: `최근 완료 7일 열람이 직전 7일보다 ${growing.change}회 늘었습니다. 두 기간의 14일 기록이 모두 있는 경우에만 표시합니다.`,
+  });
+  const repeating = resultResources.filter(resource => resource.visitors >= 10 && resource.crossDayVisitors >= 3)
+    .sort((left, right) => right.repeatRate - left.repeatRate || right.crossDayVisitors - left.crossDayVisitors || compareKorean(left.title, right.title))[0];
+  if (repeating) highlights.push({
+    title: `${repeating.title}의 반복 이용`,
+    body: `누적 ${repeating.visitors}개 브라우저 중 ${repeating.crossDayVisitors}개가 다른 날짜에도 열었습니다. 누적 10개·다른 날짜 재열람 3개 브라우저 이상일 때만 이 신호를 표시합니다.`,
+  });
+  const multiple = explorationCounts.length - single;
+  if (explorationCounts.length) highlights.push({
+    title: "여러 자료 탐색",
+    body: `자료를 연 ${explorationCounts.length}개 브라우저 중 ${multiple}개가 두 개 이상의 자료를 열었습니다. 클릭 순서나 학습 효과는 알 수 없습니다.`,
+  });
+
+  return {
+    resources: resultResources,
+    period: {
+      currentDates,
+      previousDates,
+      currentLabel: periodLabel(currentDates),
+      previousLabel: periodLabel(previousDates),
+      complete,
+      currentComplete,
+      missingDates,
+    },
+    totals: {
+      visitors: cumulativeVisitors.size,
+      resourceCount: filteredResources.length,
+      current: currentComplete ? currentTotal : null,
+      previous: previousComplete ? previousTotal : null,
+      change: complete ? currentTotal - previousTotal : null,
+    },
+    exploration: {
+      visitors: explorationCounts.length,
+      single,
+      multiple,
+      average: explorationCounts.length ? explorationCounts.reduce((sum, count) => sum + count, 0) / explorationCounts.length : 0,
+      distribution,
+    },
+    subjects: summarizeDimension("subjects"),
+    units: summarizeDimension("unitKeys"),
+    daily: periodDates.map(date => ({
+      date,
+      views: availability.get(date) ? filteredResources.reduce((sum, resource) => sum + resourceDailyViews.get(resource.key).get(date), 0) : null,
+      available: availability.get(date),
+    })),
+    highlights: highlights.slice(0, 3),
+    options,
+  };
+}
+
+function normalizeResourceType(value) {
+  return String(value || "").trim().toLowerCase() === "game" || String(value || "").trim() === "게임" ? "game" : "lesson";
+}
+
+function normalizeLabels(value) {
+  return [...new Set((Array.isArray(value) ? value : value ? [value] : []).map(item => String(item).trim()).filter(Boolean))];
+}
+
+function mergeLabels(left, right) {
+  return [...new Set([...left, ...right])];
+}
+
+function positiveFinite(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 && number <= 8.64e15 ? number : null;
+}
+
+function addDays(date, days) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+function dateRange(start, length) {
+  return Array.from({ length }, (_, index) => addDays(start, index));
+}
+
+function periodLabel(dates) {
+  return dates.length ? `${dates[0]} – ${dates.at(-1)}` : "";
+}
+
+function compareKorean(left, right) {
+  return String(left).localeCompare(String(right), "ko");
 }
 
 function groupCatalogVisitors(resources, catalogByTitle, getGroups) {

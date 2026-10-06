@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BOOONG Scooter</title><link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css"><style>
+body { margin:0; background:var(--color-surface); color:var(--color-text-primary); font-family:var(--font-sans); overflow:hidden; }
+header { position:absolute; z-index:1; top:var(--space-8); left:var(--space-8); }
+h1 { margin:0; font-size:var(--text-2xl); } p { color:var(--color-text-secondary); font-size:var(--text-sm); }
+canvas { width:100vw; height:100dvh; display:block; touch-action:none; cursor:grab; }
+a { color:var(--color-primary); } footer { position:absolute; bottom:var(--space-6); left:var(--space-8); }
+</style></head><body><header><h1>BOOONG SCOOTER</h1><p>드래그하거나 ← → 키로 둘러보기</p></header><footer><a href="../../index.html">첫 화면에서 보기 ↗</a></footer><script type="module">
+import * as THREE from '../vendor/three/three.module.js';
+import {createScooterModel} from '../../js/ui/scooter-model.js';
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;
+document.body.append(renderer.domElement);
+renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','스쿠터 모델: 왼쪽 또는 오른쪽 화살표로 회전');
+const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.1,20);
+camera.position.set(1.3,1.02,1.7);camera.lookAt(0,.32,0);
+scene.add(new THREE.HemisphereLight(0xffffff,0xa29d90,3));
+const sun=new THREE.DirectionalLight(0xfff4de,3);sun.position.set(-2,4,3);sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-2;sun.shadow.camera.right=2;sun.shadow.camera.top=2;sun.shadow.camera.bottom=-2;sun.shadow.normalBias=.005;scene.add(sun);
+const fill=new THREE.DirectionalLight(0xdceaff,1.1);fill.position.set(2,1,-2);scene.add(fill);
+const {model}=createScooterModel();scene.add(model);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.ShadowMaterial({opacity:.13}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+function render(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.position.set(1.3,1.02,1.7).multiplyScalar(Math.max(1,.95/camera.aspect));camera.lookAt(0,.32,0);camera.updateProjectionMatrix();renderer.render(scene,camera);}render();addEventListener('resize',render);
+let lastX;renderer.domElement.addEventListener('pointerdown',event=>{lastX=event.clientX;renderer.domElement.setPointerCapture(event.pointerId);});
+renderer.domElement.addEventListener('pointermove',event=>{if(lastX===undefined)return;model.rotation.y+=(event.clientX-lastX)*.01;lastX=event.clientX;renderer.render(scene,camera);});
+renderer.domElement.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();model.rotation.y+=event.key==='ArrowLeft'?-.15:.15;renderer.render(scene,camera);});
+renderer.domElement.addEventListener('pointerup',()=>{lastX=undefined;});renderer.domElement.addEventListener('pointercancel',()=>{lastX=undefined;});
+</script></body></html>

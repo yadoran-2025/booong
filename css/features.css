@@ -1,6 +1,6 @@
 /* ====================================================================
    수업용 프리젠터 스타일시트 - 특수 기능
-   - 블록 확대(Focus), 게이트 화면, QR 패널, 댓글 시스템, 라이트박스
+   - 블록 확대(Focus), 게이트 화면, QR 패널, 라이트박스
    ==================================================================== */
 
 /* ---------- 블록 전체화면 기능 ---------- */
@@ -1224,170 +1224,6 @@ body.is-focus-locked {
 }
 
 /* ====================================================================
-   댓글 시스템
-   ==================================================================== */
-.comment-section {
-  margin-top: 1.5rem;
-}
-
-.comment-section__toggle {
-  width: 100%;
-  padding: 0.8rem 1.25rem;
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  color: var(--text-muted);
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s;
-  outline: none !important;
-}
-
-.comment-section__toggle:focus {
-  box-shadow: 0 0 0 3px rgba(27, 107, 255, 0.15);
-}
-
-.comment-section__toggle:hover {
-  background: #fff;
-  border-color: var(--brand);
-  color: var(--brand);
-}
-
-.comment-section__body {
-  display: none;
-  padding: 1rem 0;
-}
-
-.comment-section.is-open .comment-section__body {
-  display: block;
-}
-
-.comment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-bottom: 1.5rem;
-}
-
-.comment-item {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.15rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  border-left: 4px solid var(--brand);
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.comment-item__header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.4rem;
-}
-
-.comment-item__name {
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: var(--text);
-}
-
-.comment-item__time {
-  font-size: 0.72rem;
-  color: var(--text-faint);
-}
-
-.comment-item__text {
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: var(--text);
-  white-space: pre-wrap;
-}
-
-.comment-form {
-  background: var(--bg-soft);
-  padding: 1.25rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-}
-
-.comment-form__name,
-.comment-form__text {
-  width: 100%;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 0.85rem;
-  font-family: inherit;
-  font-size: 0.92rem;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s;
-  outline: none !important;
-}
-
-.comment-form__name:focus,
-.comment-form__text:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(27, 107, 255, 0.15);
-}
-
-.comment-form__text {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.comment-form__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.comment-form__submit {
-  background: var(--brand);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 0.6rem 1.5rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.comment-form__submit:hover {
-  background: var(--brand-deep);
-  transform: translateY(-1px);
-}
-
-.comment-form__submit:disabled {
-  background: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.comment-item__delete {
-  background: none;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  padding: 0.2rem;
-  margin-left: 0.5rem;
-  font-size: 0.75rem;
-}
-
-.comment-item__delete:hover {
-  color: var(--accent);
-}
-
-/* ====================================================================
    이미지 라이트박스 (전체화면 보기)
    ==================================================================== */
 .image-lightbox {
@@ -1563,9 +1399,7 @@ body.is-focus-locked {
   letter-spacing: 0.08em;
 }
 
-.gate__input,
-.comment-form__name,
-.comment-form__text {
+.gate__input {
   border: 1.5px solid var(--border-strong);
   border-radius: var(--radius);
   background: #fff;
@@ -1574,16 +1408,13 @@ body.is-focus-locked {
   transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
-.gate__input:focus,
-.comment-form__name:focus,
-.comment-form__text:focus {
+.gate__input:focus {
   border-color: var(--brand);
   box-shadow: var(--shadow-focus-ring);
   outline: none;
 }
 
 .gate__btn,
-.comment-form__submit,
 .qr-panel__btn {
   border-radius: var(--radius);
   background: var(--brand);
@@ -1594,13 +1425,11 @@ body.is-focus-locked {
 }
 
 .gate__btn:hover:not(:disabled),
-.comment-form__submit:hover:not(:disabled),
 .qr-panel__btn:hover {
   background: var(--brand-deep);
 }
 
 .gate__btn:active:not(:disabled),
-.comment-form__submit:active:not(:disabled),
 .qr-panel__btn:active {
   transform: translateY(1px);
 }
@@ -1662,8 +1491,7 @@ body.is-focus-locked {
   transition: transform var(--duration-base) var(--ease-out-smooth);
 }
 
-.qr-panel__code-label,
-.comment-section__toggle {
+.qr-panel__code-label {
   font-family: var(--font-sans);
 }
 
@@ -1675,60 +1503,6 @@ body.is-focus-locked {
 .qr-panel__qr {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-}
-
-.comment-section__toggle {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-soft);
-  color: var(--text-muted);
-  font-weight: 800;
-}
-
-.comment-section__toggle:hover,
-.comment-section__toggle:focus {
-  border-color: var(--brand);
-  background: #fff;
-  color: var(--brand);
-  box-shadow: var(--shadow-focus-ring);
-}
-
-.comment-item {
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--brand);
-  border-radius: var(--radius);
-  background: #fff;
-  box-shadow: var(--shadow-sm);
-}
-
-.comment-item__name {
-  color: var(--text);
-  font-weight: 800;
-}
-
-.comment-item__time,
-.comment-item__delete {
-  color: var(--text-faint);
-}
-
-.comment-item__text {
-  color: var(--text);
-  font-family: var(--font-serif);
-  line-height: var(--leading-normal);
-}
-
-.comment-form {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-soft);
-}
-
-.comment-form__counter,
-.comment-empty,
-.comment-loading {
-  color: var(--text-muted);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
 }
 
 .image-lightbox {

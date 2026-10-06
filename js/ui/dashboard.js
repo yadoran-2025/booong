@@ -1,18 +1,21 @@
 import { loadDashboardConfig as loadSharedDashboardConfig } from "../dashboard-data.js";
 import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from "../favorites.js";
-import { SCHOOL_OPTIONS, createSubjectOptions, getAdjacentTeacherProfile, getSubjectLabel, loadTeacherProfile, normalizeTeacherProfile, saveTeacherProfile } from "../teacher-profile.js";
+import { SCHOOL_OPTIONS, createSubjectOptions, getSubjectLabel, loadTeacherProfile, normalizeTeacherProfile, saveTeacherProfile } from "../teacher-profile.js";
 import { escapeHtml } from "../utils.js";
-import { getLessonPageKey, trackGroupClick } from "../visitor-analytics.js";
+import { getLessonPageKey, loadFavoriteStats, setFavoriteState, trackGroupClick } from "../visitor-analytics.js";
 import { hydrateViewCounts, renderResourceCount, renderViewCounter } from "./view-counter.js";
-
-const QUICK_TOOLS = [
-  { id: "worksheet-maker", label: "활동지 만들기", note: "수업 흐름을 한 장으로", href: "worksheet-maker.html", mark: "01" },
-  { id: "asset-search", label: "수업자료 찾기", note: "이미지·영상·읽기 자료", href: "asset-search.html", mark: "02" },
-  { id: "print-mode", label: "기출문제 고르기", note: "문항을 골라 바로 인쇄", href: "select.html", mark: "03" },
-  { id: "lesson-author", label: "새 수업 만들기", note: "BNG LANG으로 직접 제작", href: "author.html", mark: "04" },
-];
+import { bindCardDiscussions, renderCardDiscussion } from "./card-discussions.js";
+import { bindResourceDescriptions } from "./resource-descriptions.js";
+import { bindHomeIntro, renderHomeIntro } from "./dashboard-intro.js";
 
 let didWarnCatalogDiagnostics = false;
+const resourcePlaceholderUrls = ["social-studies", "civics", "economics", "history"]
+  .map(name => `/assets/lesson-thumbnails/${name}-default-v1.jpg`);
+for (let index = resourcePlaceholderUrls.length - 1; index > 0; index -= 1) {
+  const swap = Math.floor(Math.random() * (index + 1));
+  [resourcePlaceholderUrls[index], resourcePlaceholderUrls[swap]] = [resourcePlaceholderUrls[swap], resourcePlaceholderUrls[index]];
+}
+const resourcePlaceholderAssignments = new Map();
 
 export async function showDashboard() {
   document.body.innerHTML = "";
@@ -44,9 +47,14 @@ export async function loadDashboardConfig(options = {}) {
 }
 
 function startCurationHome(root, config, profile, subjectOptions) {
-  const state = { profile, subjectOptions, unit: "", kind: "all", query: "" };
-  renderCurationHome(root, config, state);
-  refreshDashboardConfig(root, config, state);
+  const state = { profile, subjectOptions, unit: "", middleUnit: "", kind: "all", query: "", sort: "unit" };
+  root.innerHTML = renderHomeIntro();
+  const libraryRoot = document.createElement("div");
+  libraryRoot.id = "lesson-library";
+  root.appendChild(libraryRoot);
+  renderCurationHome(libraryRoot, config, state);
+  bindHomeIntro(root);
+  refreshDashboardConfig(libraryRoot, config, state);
 }
 
 async function refreshDashboardConfig(root, currentConfig, state) {
@@ -79,22 +87,21 @@ function renderCurationHome(root, config, state, focusTarget = "") {
     && unit.subject === state.profile.subject
     && subjectItems.some(resource => resource.unitKeys.includes(unit.key))
   );
-  if (!units.some(unit => unit.key === state.unit)) state.unit = units[0]?.key || "";
+  if (state.unit && !units.some(unit => unit.key === state.unit)) {
+    state.unit = "";
+    state.middleUnit = "";
+  }
   const selectedUnit = units.find(unit => unit.key === state.unit) || null;
-  const unitItems = selectedUnit
-    ? catalog.resources
-      .filter(resource => resource.unitKeys.includes(selectedUnit.key))
-      .sort((a, b) => Number(b.isNew) - Number(a.isNew))
-    : [];
+  if (!selectedUnit || !getMiddleUnitCounts(selectedUnit, subjectItems).some(({ title }) => title === state.middleUnit)) state.middleUnit = "";
 
   warnCatalogDiagnostics(catalog);
 
   root.innerHTML = `
     <div class="curation-shell">
-      ${renderTopbar()}
+      ${renderTopbar(config.catalog.resources, false, state)}
+      ${renderSubjectRoller(state.profile, state.subjectOptions)}
       <main>
-        ${renderHero(state.profile, subjectItems.length, state.query, subjectLabel)}
-        ${renderUnitNavigator(units, selectedUnit, state.profile, unitItems, catalog.resources, state, subjectLabel)}
+        ${renderUnitNavigator(units, selectedUnit, subjectItems, state, subjectLabel)}
       </main>
       ${renderFooter()}
     </div>
@@ -102,9 +109,15 @@ function renderCurationHome(root, config, state, focusTarget = "") {
 
   bindCurationEvents(root, config, state);
   applyLibraryFilter(root, state);
-  const activeUnit = root.querySelector("[data-unit][aria-pressed=\"true\"]");
-  if (activeUnit) activeUnit.parentElement.scrollLeft = activeUnit.offsetLeft - (activeUnit.parentElement.clientWidth - activeUnit.offsetWidth) / 2;
   restoreCurationFocus(root, focusTarget);
+  const subject = root.querySelector('.subject-roller [aria-pressed="true"]');
+  const subjectField = root.querySelector(".subject-roller__field");
+  if (subject && subjectField) {
+    const tabBounds = subject.getBoundingClientRect();
+    const fieldBounds = subjectField.getBoundingClientRect();
+    if (tabBounds.left < fieldBounds.left) subjectField.scrollLeft += tabBounds.left - fieldBounds.left;
+    else if (tabBounds.right > fieldBounds.right) subjectField.scrollLeft += tabBounds.right - fieldBounds.right;
+  }
 }
 
 function renderNewLessonsView(root, config) {
@@ -112,7 +125,7 @@ function renderNewLessonsView(root, config) {
 
   root.innerHTML = `
     <div class="curation-shell">
-      ${renderTopbar()}
+      ${renderTopbar(config.catalog.resources)}
       <main>
         <section class="curation-new-lessons" aria-labelledby="new-lessons-title">
           <header class="curation-section-head">
@@ -124,7 +137,7 @@ function renderNewLessonsView(root, config) {
           </header>
           ${items.length ? `
             <div class="bundle-list">
-              ${items.map(renderResourceCard).join("")}
+              ${items.map(item => renderResourceCard(item)).join("")}
             </div>
           ` : `
             <div class="curation-library__empty">
@@ -142,13 +155,17 @@ function renderNewLessonsView(root, config) {
   bindCurationEvents(root, config, {});
 }
 
+function getFavoriteResources(resources) {
+  const resourceById = new Map(resources.map(resource => [resource.id, resource]));
+  return loadFavoriteIds().map(id => resourceById.get(id)).filter(Boolean);
+}
+
 function renderFavoritesView(root, config) {
-  const resourceById = new Map(config.catalog.resources.map(resource => [resource.id, resource]));
-  const items = loadFavoriteIds().map(id => resourceById.get(id)).filter(Boolean);
+  const items = getFavoriteResources(config.catalog.resources);
 
   root.innerHTML = `
     <div class="curation-shell">
-      ${renderTopbar(true)}
+      ${renderTopbar(config.catalog.resources, true)}
       <main>
         <section class="curation-new-lessons curation-favorites" aria-labelledby="favorite-lessons-title">
           <header class="curation-section-head">
@@ -159,7 +176,7 @@ function renderFavoritesView(root, config) {
             <a href="index.html">홈으로</a>
           </header>
           <div class="bundle-list" data-favorites-list ${items.length ? "" : "hidden"}>
-            ${items.map(renderResourceCard).join("")}
+            ${items.map(item => renderResourceCard(item)).join("")}
           </div>
           <div class="curation-library__empty" data-favorites-empty ${items.length ? "hidden" : ""}>
             <strong>내 수업함이 비어 있습니다.</strong>
@@ -175,188 +192,125 @@ function renderFavoritesView(root, config) {
   bindCurationEvents(root, config, {});
 }
 
-function renderTopbar(favoritesCurrent = false) {
-  const favoriteCount = loadFavoriteIds().length;
+function renderTopbar(resources, favoritesCurrent = false, state = null) {
+  const favoriteCount = getFavoriteResources(resources).length;
   return `
     <header class="curation-topbar">
       <a class="curation-brand" href="index.html" aria-label="BOOONG 홈">
         <span class="curation-brand__mark" aria-hidden="true">${renderScooterPictogram()}</span>
         <span><b>BOOONG</b><small>수업 준비실</small></span>
       </a>
+      ${state ? `<div class="curation-search-wrap">
+        <label class="curation-search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" value="${escapeAttr(state.query)}" placeholder="주제, 단원, 수업 이름으로 찾기" aria-label="수업 검색" data-library-search>
+        </label>
+        <section class="curation-search-results" data-search-results aria-live="polite" hidden></section>
+      </div>` : "<span></span>"}
       <nav class="curation-topbar__actions" aria-label="빠른 이동">
+        ${renderViewCounter()}
         <a class="curation-topbar__favorites ${favoritesCurrent ? "is-current" : ""}" href="index.html?view=favorites" aria-label="내 수업함, 저장한 수업 ${favoriteCount}개" ${favoritesCurrent ? `aria-current="page"` : ""}>
           <span>내 수업함</span><b data-favorite-count>${favoriteCount}</b>
         </a>
       </nav>
-      ${renderViewCounter()}
     </header>
   `;
 }
 
-function renderHero(profile, count, query, subjectLabel) {
-  return `
-    <section class="curation-hero" aria-labelledby="curation-hero-title">
-      <div class="curation-hero__copy">
-        <span class="curation-kicker">${escapeHtml(profile.school)} · ${escapeHtml(subjectLabel)} 수업 준비실</span>
-        <h1 id="curation-hero-title">오늘 수업,<br><em>이런 건 어떠세요?</em></h1>
-        <p>${count
-          ? `선생님의 과목에 맞는 수업 ${count}개를 먼저 꺼내두었습니다.`
-          : "아직 꼭 맞는 꾸러미는 없지만, 바로 쓸 수 있는 제작 도구와 전체 자료를 열어두었습니다."}</p>
-        <label class="curation-search">
-          <span aria-hidden="true">⌕</span>
-          <input type="search" value="${escapeAttr(query)}" placeholder="주제, 단원, 수업 이름으로 찾기" data-library-search>
-          <kbd>검색</kbd>
-        </label>
-      </div>
-      <a class="curation-subject-slip" href="index.html?view=new">
-        <span>새로 들어온 수업</span>
-        <strong>NEW</strong>
-        <small>ALL SUBJECTS</small>
-        <i>BOOONG<br>CURATION</i>
-      </a>
-    </section>
-  `;
-}
-
-function renderUnitNavigator(units, selectedUnit, profile, items, resources, state, subjectLabel) {
-  return `
-    <section class="unit-axis" aria-labelledby="unit-axis-title">
-      <header class="unit-axis__head">
-        <div>
-          <span>CURRICULUM MAP</span>
-          <h2 id="unit-axis-title">${escapeHtml(subjectLabel)} 대단원</h2>
-        </div>
-        ${renderSubjectRoller(profile, state.subjectOptions)}
-      </header>
-      ${units.length ? `
-        <div class="unit-workspace">
-          <aside class="unit-picker" aria-label="대단원 목록">
-            <header><span>대단원 ${units.length}개</span></header>
-            <div class="unit-axis__track" role="group" aria-label="대단원 선택">
-              ${units.map(unit => renderUnitTab(unit, selectedUnit, resources)).join("")}
-            </div>
-          </aside>
-          <div class="unit-detail" id="unit-detail" aria-live="polite">
-            ${renderResourcePanel(items, selectedUnit, state)}
-          </div>
-        </div>
-      ` : `
-        <div class="unit-axis__empty" aria-live="polite">
-          <strong>대단원 지도를 불러오고 있습니다.</strong>
-          <span>과목에 맞는 교육과정과 수업을 연결하는 중입니다.</span>
-        </div>
-      `}
-    </section>
-  `;
-}
-
 function renderSubjectRoller(profile, subjectOptions) {
-  const currentSubjectLabel = getSubjectLabel(subjectOptions, profile.school, profile.subject);
   return `
-    <div class="subject-roller" data-subject-roller role="group" aria-label="과목 돌려서 변경">
-      <div class="subject-roller__meta">
-        <span>과목 바꾸기</span>
-        <strong>${escapeHtml(`${profile.school} · ${currentSubjectLabel}`)}</strong>
+    <nav class="subject-roller" aria-label="과목 변경">
+      <div class="subject-roller__field" role="group" aria-label="과목 선택">
+        ${SCHOOL_OPTIONS.filter(({ value }) => subjectOptions[value]?.length).map(({ value: school, label: schoolLabel }) => `<div class="subject-roller__group" role="group" aria-label="${escapeAttr(schoolLabel)} 과목">${subjectOptions[school].map(({ value, label }) => `<button type="button" data-subject-school="${escapeAttr(school)}" data-subject-value="${escapeAttr(value)}" aria-pressed="${school === profile.school && value === profile.subject}">${escapeHtml(label)}</button>`).join("")}</div>`).join("")}
       </div>
-      <div class="subject-roller__groups" role="radiogroup" aria-label="과목 선택" aria-live="polite">
-        ${SCHOOL_OPTIONS.map(({ value: school, label }) => `
-          <div class="subject-roller__group">
-            <span>${escapeHtml(label)}</span>
-            <div class="subject-roller__field" role="group" aria-label="${escapeAttr(label)} 과목">
-              ${(subjectOptions[school] || []).map(({ value: subject, label: subjectLabel }) => {
-                const selected = school === profile.school && subject === profile.subject;
-                return `<button type="button" class="${selected ? "is-current" : ""}" data-subject-school="${escapeAttr(school)}" data-subject-value="${escapeAttr(subject)}" role="radio" aria-checked="${selected}" tabindex="${selected ? "0" : "-1"}">${escapeHtml(subjectLabel)}</button>`;
-              }).join("")}
+    </nav>
+  `;
+}
+
+function renderUnitNavigator(units, selectedUnit, resources, state, subjectLabel) {
+  const visibleUnits = selectedUnit ? [selectedUnit] : units;
+  return `
+    <section class="unit-workspace" aria-label="교육과정별 수업 탐색">
+      <aside class="unit-picker" aria-label="단원 목차">
+        <h2>단원 목차</h2>
+        <button class="unit-tab" type="button" data-unit="" aria-pressed="${!selectedUnit}"><strong>전체 단원</strong><small>자료 ${resources.length}개</small></button>
+        <div class="unit-axis__track" role="group" aria-label="단원 선택">
+          ${units.map(unit => renderUnitTab(unit, selectedUnit, resources, state)).join("")}
+        </div>
+      </aside>
+      <div class="unit-detail" id="unit-detail">
+        <header class="curation-library-head">
+          <div><h1>${escapeHtml(subjectLabel)} 수업 모아보기</h1><p>과목과 단원에 맞는 수업을 한눈에 살펴보세요.</p></div>
+          <div class="curation-library-controls">
+            <div class="curation-kind-filter" role="group" aria-label="자료 종류">
+              ${renderKindButton("all", "전체", state)}${renderKindButton("lesson", "수업", state)}${renderKindButton("game", "게임", state)}
             </div>
+            <select class="field__input" data-library-sort aria-label="수업 정렬">
+              <option value="unit"${state.sort === "unit" ? " selected" : ""}>단원순</option>
+              <option value="title"${state.sort === "title" ? " selected" : ""}>가나다순</option>
+            </select>
           </div>
-        `).join("")}
+        </header>
+        ${selectedUnit ? `<select class="field__input curation-middle-select" data-middle-select aria-label="중단원 선택">
+          <option value="">전체 중단원</option>
+          ${getMiddleUnitCounts(selectedUnit, resources).map(({ title, count }) => `<option value="${escapeAttr(title)}"${state.middleUnit === title ? " selected" : ""}>${escapeHtml(title)} (${count}개)</option>`).join("")}
+        </select>` : ""}
+        <p class="curation-library-status" data-library-count aria-live="polite"></p>
+        ${visibleUnits.map(unit => renderResourcePanel(resources.filter(item => item.unitKeys.includes(unit.key)), unit, state)).join("")}
+        <div class="curation-library__empty" data-library-empty hidden>
+          <strong>조건에 맞는 수업이 없습니다.</strong><span>다른 단원을 선택하거나 검색어와 자료 종류를 바꿔보세요.</span>
+        </div>
       </div>
-      <div class="subject-roller__nav">
-        <button type="button" data-subject-step="-1" aria-label="이전 과목">←</button>
-        <button type="button" data-subject-step="1" aria-label="다음 과목">→</button>
+    </section>
+  `;
+}
+
+function renderUnitTab(unit, selectedUnit, resources, state) {
+  const selected = selectedUnit?.key === unit.key;
+  const resourceCount = resources.filter(resource => resource.unitKeys.includes(unit.key)).length;
+  return `
+    <div class="unit-picker__chapter">
+      <button class="unit-tab" type="button" data-unit="${escapeAttr(unit.key)}" aria-pressed="${selected && !state.middleUnit}">
+        <strong>${escapeHtml(unit.title)}</strong><small>${resourceCount}</small>
+      </button>
+      <div class="unit-picker__middle" role="group" aria-label="${escapeAttr(`${unit.title} 중단원`)}">
+        ${getMiddleUnitCounts(unit, resources).map(({ title, count }) => `<button type="button" data-middle-unit="${escapeAttr(title)}" data-unit-key="${escapeAttr(unit.key)}" aria-pressed="${selected && state.middleUnit === title}"><span>${escapeHtml(title)}</span><small>${count}개</small></button>`).join("")}
       </div>
     </div>
   `;
 }
 
-function renderUnitTab(unit, selectedUnit, resources) {
-  const selected = selectedUnit?.key === unit.key;
-  const resourceCount = resources.filter(resource => resource.unitKeys.includes(unit.key)).length;
-  return `
-    <button class="unit-tab" type="button" data-unit="${escapeAttr(unit.key)}" aria-pressed="${selected}">
-      <strong>${escapeHtml(unit.title)}</strong>
-      <small>${resourceCount}개 자료</small>
-    </button>
-  `;
+function getMiddleUnitCounts(unit, resources) {
+  const items = resources.filter(resource => resource.unitKeys.includes(unit.key));
+  return [...new Set(unit.middleUnits)].map(title => ({
+    title,
+    count: items.filter(resource => (resource.middleUnitsByKey?.[unit.key] || resource.middleUnits || []).includes(title)).length,
+  })).filter(({ count }) => count > 0);
 }
 
-function renderResourcePanel(items, selectedUnit, state) {
-  const sortedItems = [...items].sort(compareResourceByMiddleUnit);
+function renderResourcePanel(items, unit, state) {
+  const sortedItems = [...items].sort(state.sort === "title"
+    ? (a, b) => a.title.localeCompare(b.title, "ko")
+    : (a, b) => compareResourceByMiddleUnit(a, b, unit.key));
+  const [, number = "", title = unit.title] = unit.title.match(/^([IVXLCDM]+\.)\s*(.+)$/) || [];
   return `
-    <section class="curation-recommendations" aria-labelledby="resource-panel-title">
+    <section class="curation-unit-section" data-library-section aria-labelledby="unit-title-${escapeAttr(encodeURIComponent(unit.key))}">
       <header class="curation-section-head">
-        <div>
-          <span data-library-count>${sortedItems.length}개 자료</span>
-          <h2 id="resource-panel-title">${escapeHtml(selectedUnit.title)}</h2>
-        </div>
-        <div class="unit-detail__summary">
-          <strong>중단원</strong>
-          ${selectedUnit.middleUnits.length
-            ? `<ul>${selectedUnit.middleUnits.map(unit => `<li>${escapeHtml(unit)}</li>`).join("")}</ul>`
-            : `<p>등록된 중단원이 없습니다.</p>`}
-        </div>
+        <h2 id="unit-title-${escapeAttr(encodeURIComponent(unit.key))}">${number ? `<span>${escapeHtml(number)}</span>` : ""}${escapeHtml(title)}</h2>
+        <span data-section-count>${sortedItems.length}개 자료</span>
       </header>
-      <div class="curation-kind-filter" role="group" aria-label="자료 종류">
-        ${renderKindButton("all", "전체", state)}
-        ${renderKindButton("lesson", "수업", state)}
-        ${renderKindButton("game", "게임", state)}
-      </div>
-      ${sortedItems.length ? `
-        <div class="bundle-list" data-library-grid>
-          ${sortedItems.map(item => renderResourceCard(item, selectedUnit.key)).join("")}
-        </div>
-        <div class="curation-library__empty" data-library-empty hidden>
-          <strong>찾는 자료가 없습니다.</strong><span>검색어를 바꾸거나 전체 자료를 선택해보세요.</span>
-        </div>
-      ` : `
-        <div class="curation-empty">
-          <span>자료 0개</span>
-          <h3>${escapeHtml(selectedUnit.title)}</h3>
-          <p>이 대단원은 교육과정에 등록되어 있지만 연결된 자료가 아직 없습니다.</p>
-        </div>
-      `}
+      <div class="bundle-list" data-library-grid>${sortedItems.map(item => renderResourceCard(item, unit.key)).join("")}</div>
     </section>
   `;
 }
 
-function compareResourceByMiddleUnit(a, b) {
-  const aNumber = Number.parseInt(a.middleUnits?.[0]?.match(/^\s*(\d+)/)?.[1] || "", 10);
-  const bNumber = Number.parseInt(b.middleUnits?.[0]?.match(/^\s*(\d+)/)?.[1] || "", 10);
+function compareResourceByMiddleUnit(a, b, unitKey) {
+  const aNumber = Number.parseInt((a.middleUnitsByKey?.[unitKey] || a.middleUnits)?.[0]?.match(/^\s*(\d+)/)?.[1] || "", 10);
+  const bNumber = Number.parseInt((b.middleUnitsByKey?.[unitKey] || b.middleUnits)?.[0]?.match(/^\s*(\d+)/)?.[1] || "", 10);
   if (Number.isNaN(aNumber) && Number.isNaN(bNumber)) return 0;
   if (Number.isNaN(aNumber)) return 1;
   if (Number.isNaN(bNumber)) return -1;
   return aNumber - bNumber;
-}
-
-function renderQuickTools(config) {
-  const toolsById = new Map((config.tools || []).map(tool => [tool.id, tool]));
-  return `
-    <aside class="curation-tools" aria-labelledby="quick-tools-title">
-      <header><span>바로 준비하기</span><h2 id="quick-tools-title">수업 도구</h2></header>
-      <div class="curation-tools__list">
-        ${QUICK_TOOLS.map(item => {
-          const tool = toolsById.get(item.id);
-          return `
-            <a href="${escapeAttr(tool?.link || item.href)}">
-              <span>${item.mark}</span>
-              <strong>${escapeHtml(item.label)}</strong>
-              <small>${escapeHtml(item.note)}</small>
-              <i aria-hidden="true">→</i>
-            </a>`;
-        }).join("")}
-      </div>
-    </aside>
-  `;
 }
 
 function renderKindButton(value, label, state) {
@@ -368,33 +322,68 @@ function renderResourceCard(item, selectedUnitKey = "") {
   const middleUnits = item.middleUnitsByKey?.[selectedUnitKey] || item.middleUnits || [];
   const isFavorite = loadFavoriteIds().includes(item.id);
   return `
-    <article class="bundle-card" data-library-item data-kind="${escapeAttr(item.kind)}" data-search="${escapeAttr(item.searchText)}">
+    <article class="bundle-card has-cover" data-resource-id="${escapeAttr(item.id)}" data-library-item data-kind="${escapeAttr(item.kind)}" data-middle-units="${escapeAttr(JSON.stringify(middleUnits))}" data-search="${escapeAttr(item.searchText)}">
+      ${renderResourceCover(item)}
       <div class="bundle-card__content">
         <div class="bundle-card__badges">
           ${middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
-          <span>${item.kind === "game" ? "게임" : "수업"}</span>
-          ${item.discipline ? `<span>${escapeHtml(item.discipline)}</span>` : ""}
-          ${renderResourceCount(escapeAttr(getResourceViewKey(item)), escapeAttr(item.id))}
         </div>
-        <div class="bundle-card__title-row">
-          <h3>${escapeHtml(item.title)}</h3>
+        <div class="bundle-card__utilities">
           <button class="bundle-favorite" type="button" data-favorite-id="${escapeAttr(item.id)}" aria-pressed="${isFavorite}" aria-label="${escapeAttr(`${item.title} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`)}" title="${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}">
             <span class="bundle-favorite__icon" aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
           </button>
         </div>
-        <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
-        ${item.makers.length ? `
-          <div class="bundle-card__makers" aria-label="제작자">
-          <span class="bundle-card__makers-label">MADE BY</span>
-          ${item.makers.map(maker => `<a class="bundle-card__maker" href="about.html#${escapeAttr(encodeURIComponent(maker))}">${escapeHtml(maker)}</a>`).join("")}
+        <h3>${escapeHtml(item.title)}</h3>
+        <div class="bundle-card__description" data-resource-description>
+          <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
+          <button type="button" aria-expanded="false" hidden>더 보기</button>
         </div>
-        ` : ""}
         <div class="bundle-actions">
-          ${item.actions.map(action => renderActionLink(action, item)).join("") || `<span class="bundle-action is-disabled">자료 준비 중</span>`}
+          ${["blog", "teacher", "worksheet"].map(key => {
+            const action = item.actions.find(action => action.key === key);
+            return action ? renderActionLink(action, item) : `<span class="bundle-action is-disabled" aria-disabled="true" title="아직 등록되지 않은 링크입니다">${key === "blog" ? "수업 소개" : key === "teacher" ? "자료 링크" : "활동지"}<small>미등록</small></span>`;
+          }).join("")}
         </div>
       </div>
+      <footer class="bundle-card__meta">
+          ${item.makers.length ? `<div class="bundle-card__makers" aria-label="만든이"><span>만든이</span><div class="bundle-card__maker-names">${item.makers.map(maker => `<a class="chip chip--gray bundle-card__maker" href="about.html#${escapeAttr(encodeURIComponent(maker))}">${escapeHtml(maker)}</a>`).join("")}</div></div>` : ""}
+          <div class="bundle-card__engagement">
+            <div class="bundle-card__stats">
+              ${renderResourceCount(escapeAttr(getResourceViewKey(item)), escapeAttr(item.id))}
+              <span data-favorite-count-for="${escapeAttr(item.id)}">저장수 0</span>
+            </div>
+            <div class="bundle-card__discussion">${renderCardDiscussion(item.id, item.title)}</div>
+          </div>
+      </footer>
     </article>
   `;
+}
+
+function renderResourceCover(item) {
+  const placeholderUrl = getResourcePlaceholderUrl(item.id);
+  const image = `<img src="${escapeAttr(item.thumbnailUrl || placeholderUrl)}" alt="${item.thumbnailUrl ? escapeAttr(item.thumbnailAlt || `${item.title} 대표 이미지`) : ""}" data-fallback-src="${escapeAttr(placeholderUrl)}" width="800" height="500" loading="lazy" decoding="async">`;
+  const action = item.actions.find(action => action.key === "blog");
+  return `<figure class="bundle-card__cover${item.thumbnailUrl ? "" : " is-placeholder"}">${action ? `<a href="${escapeAttr(action.href)}" ${action.external ? 'target="_blank" rel="noopener"' : ""} aria-label="${escapeAttr(`${item.title} 수업 소개`)}" ${renderTrackingData(item, action)}>${image}</a>` : image}</figure>`;
+}
+
+function getResourcePlaceholderUrl(resourceId) {
+  if (!resourcePlaceholderAssignments.has(resourceId)) {
+    resourcePlaceholderAssignments.set(resourceId, resourcePlaceholderUrls[resourcePlaceholderAssignments.size % resourcePlaceholderUrls.length]);
+  }
+  return resourcePlaceholderAssignments.get(resourceId);
+}
+
+function bindResourceImages(root) {
+  root.querySelectorAll(".bundle-card__cover img").forEach(image => {
+    const showPlaceholder = () => {
+      if (image.getAttribute("src") === image.dataset.fallbackSrc) return;
+      image.closest(".bundle-card__cover").classList.add("is-placeholder");
+      image.alt = "";
+      image.src = image.dataset.fallbackSrc;
+    };
+    if (image.complete && !image.naturalWidth) showPlaceholder();
+    else image.addEventListener("error", showPlaceholder, { once: true });
+  });
 }
 
 function getResourceViewKey(item) {
@@ -413,9 +402,9 @@ function formatUnitList(units) {
 }
 
 function renderActionLink(action, item) {
-  const title = action.key === "worksheet" ? "활동지 열기" : action.key === "blog" ? "수업 소개" : "자료 열기";
-  return `<a class="bundle-action" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}>
-    <strong>${title}</strong><span aria-hidden="true">→</span>
+  const title = action.key === "worksheet" ? "활동지" : action.key === "blog" ? "수업 소개" : "자료 링크";
+  return `<a class="bundle-action${action.key === "teacher" ? " is-teacher" : ""}" href="${escapeAttr(action.href)}" ${action.external ? `target="_blank" rel="noopener"` : ""} ${renderTrackingData(item, action)}>
+    <strong>${title}</strong><span aria-hidden="true">${action.external ? "↗" : "→"}</span>
   </a>`;
 }
 
@@ -426,64 +415,56 @@ function renderTrackingData(item, action) {
 function renderFooter() {
   return `
     <footer class="curation-footer">
-      <span>사회교육공동체 BOOONG</span>
-      <p>우리는 함께일 때 강하다</p>
-      <a href="about.html">BOOONG 소개 →</a>
+      <div class="curation-footer__identity">
+        <strong>BOOONG <span>사회교육공동체</span></strong>
+        <p>우리는 함께일 때 강하다</p>
+      </div>
+      <nav class="curation-footer__links" aria-label="사이트 안내"><a href="about.html">BOOONG 소개 →</a><a class="curation-footer__operator" href="admin.html">운영자</a></nav>
     </footer>
   `;
 }
 
 function bindCurationEvents(root, config, state) {
+  bindResourceImages(root);
+  bindResourceDescriptions(root);
   hydrateViewCounts(root);
+  bindCardDiscussions(root);
+  hydrateFavoriteCounts(root, config.catalog.resources);
 
   root.querySelectorAll("[data-favorite-id]").forEach(button => {
-    button.addEventListener("click", () => toggleFavorite(root, button));
+    button.addEventListener("click", () => toggleFavorite(root, button, config.catalog.resources));
   });
 
-  root.querySelectorAll("[data-subject-step]").forEach(button => {
-    button.addEventListener("click", () => rollSubject(root, config, state, Number(button.dataset.subjectStep), true));
-  });
   root.querySelectorAll("[data-subject-value]").forEach(button => {
-    button.addEventListener("click", () => selectSubject(root, config, state, button.dataset.subjectSchool, button.dataset.subjectValue, 0, true));
+    button.addEventListener("click", () => selectSubject(root, config, state, button.dataset.subjectSchool, button.dataset.subjectValue, true));
   });
-
-  const roller = root.querySelector("[data-subject-roller]");
-  roller?.addEventListener("wheel", event => {
-    event.preventDefault();
-    const distance = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    rollSubject(root, config, state, distance > 0 ? 1 : -1);
-  }, { passive: false });
-  roller?.addEventListener("keydown", event => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    event.preventDefault();
-    rollSubject(root, config, state, event.key === "ArrowRight" ? 1 : -1, true);
+  root.querySelectorAll("[data-middle-unit]").forEach(button => {
+    button.addEventListener("click", () => {
+      state.unit = button.dataset.unitKey;
+      state.middleUnit = button.dataset.middleUnit;
+      renderCurationHome(root, config, state, "middle");
+    });
   });
-
-  let dragStartX = null;
-  roller?.addEventListener("pointerdown", event => {
-    if (event.target.closest("button")) return;
-    dragStartX = event.clientX;
-    roller.setPointerCapture(event.pointerId);
+  root.querySelector("[data-middle-select]")?.addEventListener("change", event => {
+    state.middleUnit = event.target.value;
+    renderCurationHome(root, config, state, "middleSelect");
   });
-  roller?.addEventListener("pointerup", event => {
-    if (dragStartX === null) return;
-    const distance = event.clientX - dragStartX;
-    dragStartX = null;
-    if (Math.abs(distance) >= 24) rollSubject(root, config, state, distance < 0 ? 1 : -1);
+  root.querySelector("[data-library-sort]")?.addEventListener("change", event => {
+    state.sort = event.target.value;
+    renderCurationHome(root, config, state, "sort");
   });
-  roller?.addEventListener("pointercancel", () => { dragStartX = null; });
 
   const search = root.querySelector("[data-library-search]");
   search?.addEventListener("input", event => {
     state.query = event.target.value || "";
     applyLibraryFilter(root, state);
+    renderSearchResults(root, config, state, state.query);
   });
 
   root.querySelectorAll("[data-unit]").forEach(button => {
     button.addEventListener("click", () => {
       state.unit = button.dataset.unit || "";
-      state.kind = "all";
-      state.query = "";
+      state.middleUnit = "";
       renderCurationHome(root, config, state, "unit");
     });
   });
@@ -497,6 +478,10 @@ function bindCurationEvents(root, config, state) {
     });
   });
 
+  bindTrackedLinks(root);
+}
+
+function bindTrackedLinks(root) {
   root.querySelectorAll("[data-track-action]").forEach(link => {
     link.addEventListener("click", () => {
       trackGroupClick({
@@ -510,7 +495,77 @@ function bindCurationEvents(root, config, state) {
   });
 }
 
-function toggleFavorite(root, button) {
+function showSearchResource(root, config, state, resourceId) {
+  const item = config.catalog.resources.find(resource => resource.id === resourceId);
+  if (!item) return;
+  const profile = normalizeTeacherProfile({ school: item.schools?.[0], subject: item.subjects?.[0] }, state.subjectOptions);
+  const unit = config.catalog.units.find(candidate =>
+    candidate.school === profile?.school
+    && candidate.subject === profile?.subject
+    && item.unitKeys.includes(candidate.key)
+  );
+  if (!profile || !unit) return;
+
+  state.profile = profile;
+  state.unit = unit.key;
+  state.middleUnit = "";
+  state.kind = "all";
+  state.query = "";
+  renderCurationHome(root, config, state);
+  [...root.querySelectorAll("[data-resource-id]")]
+    .find(card => card.dataset.resourceId === item.id)
+    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function renderSearchResults(root, config, state, query) {
+  const results = root.querySelector("[data-search-results]");
+  if (!results) return;
+  const normalized = normalizeSearch(query);
+  if (!normalized) {
+    results.hidden = true;
+    results.innerHTML = "";
+    return;
+  }
+
+  const matches = config.catalog.resources.filter(item => (item.searchText || "").includes(normalized) && item.actions?.length).slice(0, 4);
+  results.hidden = false;
+  results.innerHTML = `
+    <header><span>검색 결과</span><small>${matches.length ? `${matches.length}개` : "0개"}</small></header>
+    ${matches.length ? `<ul>${matches.map(renderSearchResult).join("")}</ul>` : "<p>일치하는 수업이 없습니다.</p>"}
+  `;
+  results.querySelectorAll("[data-search-resource]").forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      showSearchResource(root, config, state, link.dataset.searchResource);
+    });
+  });
+  bindTrackedLinks(results);
+}
+
+function renderSearchResult(item) {
+  const subject = item.subjects?.[0] || "수업 자료";
+  const unit = item.middleUnits?.[0] || "수업 자료";
+  return `<li><a href="#unit-detail" data-search-resource="${escapeAttr(item.id)}"><span><small>${escapeHtml(subject)} · ${escapeHtml(unit)} · ${escapeHtml(item.kind === "game" ? "게임" : "수업")}</small><strong>${escapeHtml(item.title)}</strong></span><i aria-hidden="true">↓</i></a></li>`;
+}
+
+async function hydrateFavoriteCounts(root, resources) {
+  const resourcesById = new Map(resources.map(resource => [resource.id, resource]));
+  await Promise.all(loadFavoriteIds().filter(id => resourcesById.has(id)).map(id => setFavoriteState(id, true)));
+  const stats = await loadFavoriteStats();
+  if (!root.isConnected) return;
+  stats.forEach(stat => updateFavoriteCount(root, stat.resourceId, stat.count));
+}
+
+function updateFavoriteCount(root, resourceId, count) {
+  root.querySelectorAll("[data-favorite-count-for]").forEach(slot => {
+    if (slot.dataset.favoriteCountFor !== resourceId) return;
+    slot.hidden = false;
+    slot.textContent = `저장수 ${Number(count || 0).toLocaleString("ko-KR")}`;
+  });
+
+}
+
+async function toggleFavorite(root, button, resources) {
   const id = button.dataset.favoriteId || "";
   const favoriteIds = saveFavoriteIds(toggleFavoriteId(loadFavoriteIds(), id));
   const isFavorite = favoriteIds.includes(id);
@@ -521,57 +576,62 @@ function toggleFavorite(root, button) {
     item.setAttribute("aria-label", `${item.closest(".bundle-card")?.querySelector("h3")?.textContent || "수업"} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`);
     item.title = isFavorite ? "수업함에서 빼기" : "수업함에 담기";
     item.querySelector(".bundle-favorite__icon").textContent = isFavorite ? "★" : "☆";
+    item.disabled = true;
   });
 
+  const favoriteCount = getFavoriteResources(resources).length;
   root.querySelectorAll("[data-favorite-count]").forEach(item => {
-    item.textContent = favoriteIds.length;
-    item.closest(".curation-topbar__favorites")?.setAttribute("aria-label", `내 수업함, 저장한 수업 ${favoriteIds.length}개`);
+    item.textContent = favoriteCount;
+    item.closest(".curation-topbar__favorites")?.setAttribute("aria-label", `내 수업함, 저장한 수업 ${favoriteCount}개`);
   });
-  if (!root.querySelector(".curation-favorites") || isFavorite) return;
-
-  button.closest(".bundle-card")?.remove();
-  const hasItems = Boolean(root.querySelector("[data-favorites-list] .bundle-card"));
-  const list = root.querySelector("[data-favorites-list]");
-  const empty = root.querySelector("[data-favorites-empty]");
-  if (list) list.hidden = !hasItems;
-  if (empty) empty.hidden = hasItems;
+  if (root.querySelector(".curation-favorites") && !isFavorite) {
+    button.closest(".bundle-card")?.remove();
+    const hasItems = Boolean(root.querySelector("[data-favorites-list] .bundle-card"));
+    const list = root.querySelector("[data-favorites-list]");
+    const empty = root.querySelector("[data-favorites-empty]");
+    if (list) list.hidden = !hasItems;
+    if (empty) empty.hidden = hasItems;
+  }
+  const count = await setFavoriteState(id, isFavorite);
+  if (count !== null) updateFavoriteCount(root, id, count);
+  root.querySelectorAll("[data-favorite-id]").forEach(item => {
+    if (item.dataset.favoriteId === id) item.disabled = false;
+  });
 }
 
-function rollSubject(root, config, state, direction, restoreFocus = root.querySelector("[data-subject-roller]")?.contains(document.activeElement)) {
-  const nextProfile = getAdjacentTeacherProfile(state.profile, state.subjectOptions, direction);
-  if (nextProfile) selectSubject(root, config, state, nextProfile.school, nextProfile.subject, direction, restoreFocus);
-}
-
-function selectSubject(root, config, state, nextSchool, nextSubject, direction = 0, restoreFocus = false) {
-  if (state.subjectRolling || !normalizeTeacherProfile({ school: nextSchool, subject: nextSubject }, state.subjectOptions)) return;
+function selectSubject(root, config, state, nextSchool, nextSubject, restoreFocus = false) {
+  if (!normalizeTeacherProfile({ school: nextSchool, subject: nextSubject }, state.subjectOptions)) return;
   if (nextSchool === state.profile.school && nextSubject === state.profile.subject) return;
 
-  state.subjectRolling = true;
-  root.querySelector("[data-subject-roller]")?.classList.add(direction >= 0 ? "is-rolling-next" : "is-rolling-prev");
-  window.setTimeout(() => {
-    state.profile = { school: nextSchool, subject: nextSubject };
-    state.unit = "";
-    state.kind = "all";
-    state.query = "";
-    state.subjectRolling = false;
-    saveTeacherProfile(state.profile, state.subjectOptions);
-    renderCurationHome(root, config, state, restoreFocus ? "subject" : "");
-  }, 180);
+  state.profile = { school: nextSchool, subject: nextSubject };
+  state.unit = "";
+  state.middleUnit = "";
+  state.kind = "all";
+  state.query = "";
+  saveTeacherProfile(state.profile, state.subjectOptions);
+  renderCurationHome(root, config, state, restoreFocus ? "subject" : "");
+  if (root.id === "lesson-library") root.scrollIntoView({ block: "start", behavior: "instant" });
 }
 
 function applyLibraryFilter(root, state) {
   const query = normalizeSearch(state.query);
-  let count = 0;
+  const visibleIds = new Set();
   root.querySelectorAll("[data-library-item]").forEach(item => {
     const kindMatch = state.kind === "all" || item.dataset.kind === state.kind;
     const queryMatch = !query || (item.dataset.search || "").includes(query);
-    item.hidden = !(kindMatch && queryMatch);
-    if (!item.hidden) count += 1;
+    const middleMatch = !state.middleUnit || JSON.parse(item.dataset.middleUnits || "[]").includes(state.middleUnit);
+    item.hidden = !(kindMatch && queryMatch && middleMatch);
+    if (!item.hidden) visibleIds.add(item.dataset.resourceId);
+  });
+  root.querySelectorAll("[data-library-section]").forEach(section => {
+    const count = [...section.querySelectorAll("[data-library-item]")].filter(item => !item.hidden).length;
+    section.querySelector("[data-section-count]").textContent = `${count}개 자료`;
+    section.hidden = !state.unit && count === 0;
   });
   const countLabel = root.querySelector("[data-library-count]");
-  if (countLabel) countLabel.textContent = `${count}개 자료`;
+  if (countLabel) countLabel.textContent = `수업 ${visibleIds.size}개${state.middleUnit ? ` · ${state.middleUnit}` : ""}`;
   const empty = root.querySelector("[data-library-empty]");
-  if (empty) empty.hidden = count > 0;
+  if (empty) empty.hidden = visibleIds.size > 0;
 }
 
 function renderTeacherOnboarding(root, onComplete, initialProfile = {}, subjectOptions) {
@@ -675,13 +735,19 @@ function getCurationFocusTarget(root) {
   if (!active || !root.contains(active)) return "";
   if (active.matches("[data-library-search]")) return "search";
   if (active.matches("[data-unit]")) return "unit";
-  return active.closest("[data-subject-roller]") ? "subject" : "";
+  if (active.matches("[data-middle-unit]")) return "middle";
+  if (active.matches("[data-middle-select]")) return "middleSelect";
+  if (active.matches("[data-library-sort]")) return "sort";
+  return active.closest(".subject-roller") ? "subject" : "";
 }
 
 function restoreCurationFocus(root, target) {
   const selector = {
     search: "[data-library-search]",
-    subject: "[data-subject-value][aria-checked=\"true\"]",
+    subject: "[data-subject-value][aria-pressed=\"true\"]",
+    sort: "[data-library-sort]",
+    middle: "[data-middle-unit][aria-pressed=\"true\"]",
+    middleSelect: "[data-middle-select]",
     unit: "[data-unit][aria-pressed=\"true\"]",
   }[target];
   const element = selector ? root.querySelector(selector) : null;

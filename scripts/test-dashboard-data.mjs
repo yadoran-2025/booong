@@ -47,6 +47,11 @@ assert.deepEqual(catalog.resources.find(({ title }) => title === "HTTP 자료").
 ]);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "위험한 링크").actions, []);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "프로토콜 상대 링크").actions, []);
+for (const [url, expected] of [["/assets/lesson-thumbnails/popgrid-v1.webp", "/assets/lesson-thumbnails/popgrid-v1.webp"], ["https://example.com/cover.jpg", "https://example.com/cover.jpg"], ["", ""], ["javascript:alert(1)", ""], ["data:image/svg+xml,unsafe", ""], ["//evil.example/cover.jpg", ""]]) {
+  const [resource] = buildDashboardCatalog([{ ...groupRows[1], thumbnail_url: url, thumbnail_alt: "  세계지도  " }], unitRows).resources;
+  assert.equal(resource.thumbnailUrl, expected);
+  assert.equal(resource.thumbnailAlt, "세계지도");
+}
 assert.deepEqual(catalog.units.find(({ key }) => key === "사회2::III. 시장과 가격").middleUnits, [
   "2. 시장 가격의 결정",
   "3. 시장 가격의 변동",
@@ -66,12 +71,14 @@ assert.equal(merged.groups[0].lessons[0].id, "lesson-1");
 assert.equal(merged.games[0].id, "local-game");
 
 const legacy = normalizeDashboardConfig({
-  groups: [{ id: "legacy-lesson", school: "고등학교", subject: "사회1", title: "로컬 수업", lessons: [{ id: "lesson-1" }] }],
+  groups: [{ id: "legacy-lesson", school: "고등학교", subject: "사회1", title: "로컬 수업", thumbnail_url: "/local.webp", thumbnail_alt: "로컬 수업 이미지", lessons: [{ id: "lesson-1" }] }],
   games: [{ id: "legacy-game", subject: "경제", title: "로컬 게임", link: "https://example.com/game" }],
 });
 assert.equal(legacy.schemaVersion, 3);
 assert.equal(legacy.catalog.resources.length, 2);
 assert.equal(legacy.catalog.resources.every(({ unitKeys }) => unitKeys.length === 1), true);
+assert.equal(legacy.catalog.resources.find(({ title }) => title === "로컬 수업").thumbnailUrl, "/local.webp");
+assert.equal(legacy.catalog.resources.find(({ title }) => title === "로컬 수업").thumbnailAlt, "로컬 수업 이미지");
 assert.equal(legacy.catalog.units.every(({ title }) => title === "단원 미지정"), true);
 assert.equal(legacy.catalog.subjects.find(({ value }) => value === "사회1").school, "고등학교");
 assert.equal(legacy.catalog.units.find(({ subject }) => subject === "사회1").school, "고등학교");

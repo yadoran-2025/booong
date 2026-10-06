@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>BOOONG · 수업 대표 이미지 목업</title>
+  <link rel="icon" href="../assets/favicon.svg">
+  <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css">
+  <link rel="stylesheet" href="../css/font-overrides.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <style>
+    body { margin: 0; }
+    .mockup-note { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-8); background: var(--color-primary-subtle); color: var(--brand); font-size: var(--text-xs); }
+    .mockup-note a { display: inline-flex; align-items: center; min-height: var(--space-11); color: inherit; font-weight: 700; }
+    .mockup-note strong { margin-right: var(--space-3); }
+    .curation-topbar { position: static; }
+    .subject-roller { position: static; }
+    .unit-picker { position: static; }
+    .mockup-subject { display: flex; align-items: center; min-height: 72px; color: var(--desk-muted); text-decoration: none; font-size: var(--text-base); font-weight: 700; white-space: nowrap; }
+    .mockup-subject[aria-current] { border-bottom: 3px solid var(--brand); color: var(--brand); }
+    .mockup-card { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--space-3) var(--space-6); padding: var(--space-5); box-shadow: none; }
+    .mockup-cover { display: grid; align-content: start; gap: var(--space-2); margin: 0; }
+    .mockup-cover a { display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+    .mockup-cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .mockup-card .bundle-card__content { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "badges utilities" "title utilities" "description description" "actions actions"; align-content: start; gap: var(--space-2) var(--space-3); }
+    .mockup-card__meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); margin-top: 0; border-top: 1px solid var(--border); padding-top: var(--space-2); }
+    .mockup-card .bundle-card__makers { min-width: 0; justify-content: start; gap: var(--space-2); font-size: var(--text-xs); }
+    .mockup-card .bundle-card__maker-names { align-items: center; gap: var(--space-2); }
+    .mockup-card__engagement { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+    .mockup-card .bundle-card__stats { align-items: center; gap: var(--space-3); font-weight: 400; }
+    .mockup-card .bundle-card__stats > span { display: inline-flex; gap: var(--space-1); }
+    .mockup-card .bundle-card__stats b { color: var(--desk-ink); font-weight: 650; }
+    .mockup-card .bundle-comment-trigger { display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--space-11); border-radius: var(--radius-sm); font: inherit; }
+    .mockup-card .bundle-comment-trigger:disabled { cursor: default; }
+    .mockup-card .bundle-card__maker { min-height: var(--space-11); font-size: var(--text-xs); }
+    .mockup-card .bundle-actions { margin-top: var(--space-3); gap: var(--space-2); }
+    .mockup-card .bundle-action { min-width: 0; flex: 1; padding-inline: var(--space-3); }
+    .mockup-card .bundle-card__utilities { gap: 0; }
+    .mockup-card .bundle-card__stats { font-size: var(--text-xs); }
+    .mockup-description { grid-area: description; min-width: 0; }
+    .mockup-description p { margin: 0; color: var(--desk-muted); font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
+    .mockup-description p.is-collapsed { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .mockup-description button { min-height: var(--space-11); padding: 0 var(--space-2); margin-left: calc(-1 * var(--space-2)); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-primary-text); font-size: var(--text-xs); font-weight: 650; cursor: pointer; }
+    .mockup-description button:hover { background: var(--color-primary-subtle); }
+    .mockup-description button[hidden] { display: none; }
+    @media (min-width: 901px) and (max-width: 1150px) { .mockup-card { grid-template-columns: 200px minmax(0, 1fr); gap: var(--space-4); } }
+    @media (max-width: 620px) {
+      .mockup-note { padding: var(--space-2) var(--space-4); }
+      .mockup-note span { display: none; }
+      .mockup-card { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4); }
+      .mockup-cover a { aspect-ratio: 16 / 9; }
+      .mockup-card .bundle-card__content { grid-template-columns: minmax(0, 1fr) auto; }
+      .mockup-card .bundle-actions { flex-wrap: nowrap; }
+      .mockup-card .bundle-action { font-size: var(--text-xs) !important; padding-inline: var(--space-2); gap: var(--space-1); }
+      .mockup-subject { min-height: 64px; font-size: var(--text-sm); }
+      .mockup-card__meta { flex-direction: column; align-items: stretch; gap: 0; }
+      .mockup-card .bundle-card__makers { align-self: flex-start; }
+      .mockup-card__engagement { justify-content: space-between; }
+      .mockup-card .bundle-card__utilities { flex-direction: column; align-items: flex-end; }
+    }
+  </style>
+</head>
+<body class="curation-app">
+  <div class="curation-shell">
+    <aside class="mockup-note" aria-label="목업 안내"><div><strong>UI 목업</strong><span>수업마다 대표 이미지 한 장 · 실제 활동 화면 예시</span></div><a href="../index.html#lesson-library">현재 사이트 보기 ↗</a></aside>
+    <header class="curation-topbar">
+      <a class="curation-brand" href="../index.html"><img src="../assets/favicon.svg" width="44" height="44" alt=""><span><b>BOOONG</b><small>수업 준비실</small></span></a>
+      <div class="curation-search-wrap"><label class="curation-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="주제, 단원, 수업 이름으로 찾기" aria-label="수업 검색 목업" disabled></label></div>
+      <nav class="curation-topbar__actions"><a class="curation-topbar__favorites" href="../index.html?view=favorites">내 수업함 <b>0</b></a></nav>
+    </header>
+    <nav class="subject-roller" aria-label="과목"><div class="subject-roller__field"><a class="mockup-subject" href="../index.html#lesson-library">사회1</a><a class="mockup-subject" href="../index.html#lesson-library">사회2</a><a class="mockup-subject" href="#lessons" aria-current="page">사회2[15개정]</a><a class="mockup-subject" href="../index.html#lesson-library">통합사회2</a><a class="mockup-subject" href="../index.html#lesson-library">사회와 문화</a><a class="mockup-subject" href="../index.html#lesson-library">정치</a><a class="mockup-subject" href="../index.html#lesson-library">경제</a></div></nav>
+    <main id="lessons"><section class="unit-workspace" aria-label="수업 탐색">
+      <aside class="unit-picker" aria-label="단원 목차"><h2>단원 목차</h2><a class="unit-tab" href="#lessons" aria-current="page" style="background:var(--brand-soft);color:var(--brand);text-decoration:none"><strong>전체 단원</strong><small>예시 3개</small></a><div class="unit-axis__track"><div class="unit-picker__chapter"><a class="unit-tab" href="#economy" style="text-decoration:none"><strong>IV. 시장 경제와 가격</strong><small>1</small></a><div class="unit-picker__middle"><a class="unit-tab" href="#economy" style="text-decoration:none"><small>3. 시장 가격의 변동</small></a></div></div><div class="unit-picker__chapter"><a class="unit-tab" href="#population" style="text-decoration:none"><strong>VII. 인구 변화와 인구 문제</strong><small>2</small></a><div class="unit-picker__middle"><a class="unit-tab" href="#population" style="text-decoration:none"><small>1. 인구 분포</small></a><a class="unit-tab" href="#pyramid" style="text-decoration:none"><small>3. 인구 문제</small></a></div></div></div></aside>
+      <div class="unit-detail">
+        <header class="curation-library-head"><div><h1>사회2[15개정] 수업 모아보기</h1><p>과목과 단원에 맞는 수업을 한눈에 살펴보세요.</p></div><div class="curation-kind-filter" aria-label="자료 종류 목업"><button type="button" aria-pressed="true" disabled>전체</button><button type="button" disabled>수업</button><button type="button" disabled>게임</button></div></header>
+        <p class="curation-library-status">수업 카드 예시 3개 · 조회수·저장수·댓글 수는 배치용 예시</p>
+        <section class="curation-unit-section" id="economy" aria-labelledby="economy-title"><header class="curation-section-head"><h2 id="economy-title"><span>IV.</span> 시장 경제와 가격</h2><span>1개 자료</span></header><div class="bundle-list">
+          <article class="bundle-card mockup-card">
+            <figure class="mockup-cover"><a href="https://blog.naver.com/yadoransw/224298756242" target="_blank" rel="noopener" aria-label="뉴스 읽는 트레이더 수업 소개"><img src="lesson-images/trader.jpg" width="534" height="422" alt="아이스크림 수요에 영향을 주는 뉴스를 읽고 수요·공급과 소비자·생산자를 고르는 실제 활동 화면"></a></figure>
+            <div class="bundle-card__content"><div class="bundle-card__badges"><span>3. 시장 가격의 변동</span></div><div class="bundle-card__utilities"><button class="bundle-favorite" type="button" disabled aria-label="수업함에 담기 목업">☆</button></div><h3>뉴스 읽는 트레이더</h3><p>학생들은 투자자가 되어 폭염, 원재료 가격 상승, 새로운 생산 기술 등 여러 경제 뉴스를 읽고 시장의 변화를 예측합니다. 각 뉴스가 수요와 공급 중 무엇에 영향을 주는지, 소비자와 생산자는 어떤 선택을 하게 되는지 근거를 들어 판단합니다. 이후 모둠 안에서 서로의 해석을 비교하고, 제한된 투자금을 어디에 배분할지 결정합니다. 라운드가 끝나면 실제 가격 변화와 자신의 예측을 대조하며 투자 결과를 확인합니다. 단순히 수익을 많이 얻는 데서 끝나지 않고, 가격이 변한 이유를 수요·공급 곡선으로 설명하고 처음의 판단을 수정하도록 구성한 수업입니다. 마지막에는 같은 뉴스를 보고도 모둠마다 다른 결정을 내린 이유를 토론하며, 경제적 의사결정에서 정보와 불확실성이 어떤 역할을 하는지 정리합니다.</p><div class="bundle-actions"><a class="bundle-action" href="https://blog.naver.com/yadoransw/224298756242" target="_blank" rel="noopener"><strong>수업 소개</strong><span>↗</span></a><a class="bundle-action is-teacher" href="https://news-reading-trader.web.app/" target="_blank" rel="noopener"><strong>자료 링크</strong><span>↗</span></a><span class="bundle-action is-disabled">활동지 <small>미등록</small></span></div></div><footer class="mockup-card__meta"><div class="bundle-card__makers"><span>만든이</span><div class="bundle-card__maker-names"><a class="chip chip--gray bundle-card__maker" href="../about.html#hyum">HYUM</a><a class="chip chip--gray bundle-card__maker" href="../about.html#choi">CHOI</a><a class="chip chip--gray bundle-card__maker" href="../about.html#do">DO</a></div></div><div class="mockup-card__engagement"><div class="bundle-card__stats"><span>조회수 <b>25</b></span><span>저장수 <b>1</b></span></div><button class="bundle-comment-trigger" type="button" disabled aria-label="댓글 2개 목업">댓글 <b>2</b></button></div></footer>
+          </article>
+        </div></section>
+        <section class="curation-unit-section" id="population" aria-labelledby="population-title"><header class="curation-section-head"><h2 id="population-title"><span>VII.</span> 인구 변화와 인구 문제</h2><span>2개 자료</span></header><div class="bundle-list">
+          <article class="bundle-card mockup-card">
+            <figure class="mockup-cover"><a href="https://blog.naver.com/yadoransw/224395384659" target="_blank" rel="noopener" aria-label="인구 땅따먹기 수업 소개"><img src="lesson-images/popgrid.jpg" width="1122" height="418" alt="세계지도를 격자로 나누어 각 칸의 인구 분포를 색으로 표시한 인구 땅따먹기 활동 지도"></a></figure>
+            <div class="bundle-card__content"><div class="bundle-card__badges"><span>1. 인구 분포</span></div><div class="bundle-card__utilities"><button class="bundle-favorite" type="button" disabled aria-label="수업함에 담기 목업">☆</button></div><h3>인구 땅따먹기</h3><p>수계·해발고도·대도시 위치를 근거로 인구 분포를 추론하고,<br>인구가 가장 많을 것 같은 지도 속 칸을 가져가는 조별 게임입니다.</p><div class="bundle-actions"><a class="bundle-action" href="https://blog.naver.com/yadoransw/224395384659" target="_blank" rel="noopener"><strong>수업 소개</strong><span>↗</span></a><a class="bundle-action is-teacher" href="https://popgrid-game.vercel.app/" target="_blank" rel="noopener"><strong>자료 링크</strong><span>↗</span></a><span class="bundle-action is-disabled">활동지 <small>미등록</small></span></div></div><footer class="mockup-card__meta"><div class="bundle-card__makers"><span>만든이</span><div class="bundle-card__maker-names"><a class="chip chip--gray bundle-card__maker" href="../about.html#choi">CHOI</a></div></div><div class="mockup-card__engagement"><div class="bundle-card__stats"><span>조회수 <b>187</b></span><span>저장수 <b>1</b></span></div><button class="bundle-comment-trigger" type="button" disabled aria-label="댓글 0개 목업">댓글 <b>0</b></button></div></footer>
+          </article>
+          <article class="bundle-card mockup-card" id="pyramid">
+            <figure class="mockup-cover"><a href="https://blog.naver.com/yadoransw/224413996699" target="_blank" rel="noopener" aria-label="인구피라미드 추론 수업 소개"><img src="lesson-images/pyramid.jpg" width="574" height="399" alt="남녀와 연령별 인구 구조를 파란색과 주황색 막대로 표시한 실제 인구피라미드"></a></figure>
+            <div class="bundle-card__content"><div class="bundle-card__badges"><span>3. 인구 문제</span></div><div class="bundle-card__utilities"><button class="bundle-favorite" type="button" disabled aria-label="수업함에 담기 목업">☆</button></div><h3>인구피라미드 추론</h3><p>출산율 변화, 이입과 이출, 성비의 불균형을 살펴보며<br>그 나라의 인구피라미드가 어떤 모양일지 근거를 들어 추론합니다.</p><div class="bundle-actions"><a class="bundle-action" href="https://blog.naver.com/yadoransw/224413996699" target="_blank" rel="noopener"><strong>수업 소개</strong><span>↗</span></a><a class="bundle-action is-teacher" href="https://pyramidquiz.vercel.app/" target="_blank" rel="noopener"><strong>자료 링크</strong><span>↗</span></a><span class="bundle-action is-disabled">활동지 <small>미등록</small></span></div></div><footer class="mockup-card__meta"><div class="bundle-card__makers"><span>만든이</span><div class="bundle-card__maker-names"><a class="chip chip--gray bundle-card__maker" href="../about.html#choi">CHOI</a></div></div><div class="mockup-card__engagement"><div class="bundle-card__stats"><span>조회수 <b>37</b></span><span>저장수 <b>0</b></span></div><button class="bundle-comment-trigger" type="button" disabled aria-label="댓글 1개 목업">댓글 <b>1</b></button></div></footer>
+          </article>
+        </div></section>
+      </div>
+    </section></main>
+    <footer class="curation-footer"><div class="curation-footer__identity"><strong>BOOONG <span>사회교육공동체</span></strong><p>우리는 함께일 때 강하다</p></div><a href="../about.html">BOOONG 소개 →</a></footer>
+  </div>
+  <script>
+    document.querySelectorAll('.mockup-card .bundle-card__content > p').forEach((description, index) => {
+      const container = document.createElement('div');
+      container.className = 'mockup-description';
+      description.before(container);
+      container.append(description);
+      description.id = `lesson-description-${index}`;
+      description.classList.add('is-collapsed');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = '더 보기';
+      button.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-controls', description.id);
+      container.append(button);
+      const update = () => {
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        description.classList.add('is-collapsed');
+        button.hidden = description.scrollHeight <= description.clientHeight + 1;
+        description.classList.toggle('is-collapsed', !expanded);
+      };
+      button.addEventListener('click', () => {
+        const expanded = button.getAttribute('aria-expanded') !== 'true';
+        button.setAttribute('aria-expanded', String(expanded));
+        button.textContent = expanded ? '접기' : '더 보기';
+        description.classList.toggle('is-collapsed', !expanded);
+      });
+      window.addEventListener('resize', update);
+      document.fonts.ready.then(update);
+      update();
+    });
+  </script>
+</body>
+</html>

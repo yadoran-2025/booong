@@ -16,6 +16,7 @@
 .home-intro__eyebrow { color: var(--color-primary); font-size: var(--text-sm); font-weight: 750; letter-spacing: 0.04em; }
 .home-intro__copy h1 { margin: var(--space-4) 0 var(--space-6); color: var(--color-text-primary); font-size: clamp(var(--text-4xl), 4.4vw, var(--text-display)); font-weight: 850; letter-spacing: -0.045em; line-height: 1.2; }
 .home-intro__copy p { margin: 0 0 var(--space-8); color: var(--color-text-secondary); font-size: var(--text-lg); line-height: 1.7; }
+.home-intro__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .home-intro__start { min-height: var(--space-14); padding-inline: var(--space-8); border-radius: var(--radius-full); font-size: var(--text-base); font-weight: 700; text-decoration: none; }
 .home-intro__scroll { position: absolute; bottom: var(--space-6); left: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: var(--space-11); gap: var(--space-2); transform: translateX(-50%); color: var(--color-text-primary); font-size: var(--text-xs); font-weight: 650; text-decoration: none; white-space: nowrap; }
 .home-intro__scroll span { font-size: var(--text-xl); }
@@ -33,7 +34,6 @@
   .home-intro__copy { position: relative; top: auto; left: auto; grid-row: 2; width: auto; padding: var(--space-4) var(--space-6); }
   .home-intro__copy h1 { font-size: clamp(var(--text-3xl), 5svh, var(--text-4xl)); margin-block: var(--space-3) var(--space-4); }
   .home-intro__copy p { font-size: var(--text-base); margin-bottom: var(--space-4); }
-  .home-intro__copy p br { display: none; }
   .home-intro__start { min-height: var(--space-11); padding-inline: var(--space-5); font-size: var(--text-sm); }
   .home-intro__scroll { position: relative; inset: auto; grid-row: 3; justify-self: center; flex-direction: row; transform: none; }
 }

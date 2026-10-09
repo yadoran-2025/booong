@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><base href="/"><title>BOOONG · 단원 들여쓰기 목업</title>
+<link rel="icon" href="assets/favicon.svg">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css">
+<link rel="stylesheet" href="css/font-overrides.css"><link rel="stylesheet" href="css/dashboard.css">
+<style>
+body { margin: 0; }
+.mockup-note { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-8); background: var(--color-primary-subtle); color: var(--color-primary-text); font-size: var(--text-xs); }
+.mockup-note strong { margin-right: var(--space-3); }
+.mockup-note a { display: inline-flex; align-items: center; min-height: var(--space-8); color: inherit; font-weight: 700; }
+.curation-topbar, .subject-roller { position: static; }
+.unit-picker { top: 0; max-height: 100dvh; }
+.mockup-unit-link, .mockup-middle-link, .mockup-subject-current { text-decoration: none; }
+.mockup-unit-link[aria-current] { background: var(--color-primary-subtle); color: var(--color-primary); }
+.mockup-middle-link { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); min-height: var(--space-11); padding: var(--space-2) var(--space-3); color: var(--color-text-secondary); font-size: var(--text-xs); line-height: 1.6; }
+.mockup-middle-link small { flex-shrink: 0; }
+.mockup-middle-link:hover { color: var(--color-primary); }
+.mockup-subject-current { display: flex; align-items: center; min-height: 72px; padding: var(--space-3) var(--space-2); border-bottom: 3px solid var(--color-primary); color: var(--color-primary); font-size: var(--text-base); font-weight: 700; white-space: nowrap; }
+.mockup-sort { display: flex; gap: var(--space-3); align-items: center; font-size: var(--text-xs); color: var(--color-text-secondary); }
+.mockup-sort span[aria-current] { color: var(--color-primary-text); font-weight: 700; }
+.curation-unit-section + .curation-unit-section { margin-top: var(--space-10); }
+.curation-unit-section > .curation-section-head { border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; background: transparent; gap: var(--space-2) var(--space-4); padding: 0 0 var(--space-3); }
+.curation-unit-section > .curation-section-head > span { font-size: var(--text-xs); }
+.curation-unit-section > .bundle-list { margin-top: var(--space-5); margin-left: var(--space-5); gap: var(--space-6); }
+.mockup-middle { min-width: 0; }
+.mockup-middle > .bundle-list { margin-left: var(--space-3); }
+.mockup-middle-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin-bottom: var(--space-3); }
+.mockup-middle-head h3 { margin: 0; font-size: var(--text-base); color: var(--color-text-secondary); font-weight: 650; line-height: 1.6; }
+.mockup-middle-count { flex-shrink: 0; font-size: var(--text-2xs); color: var(--color-text-tertiary); }
+.mockup-middle .bundle-card { padding: var(--space-5); box-shadow: var(--shadow-sm); }
+.mockup-middle .bundle-card__content > h4 { grid-area: title; margin: 0; font-size: var(--text-xl); font-weight: 750; letter-spacing: -0.025em; line-height: 1.4; }
+.mockup-middle .bundle-card__badges > span { font-size: var(--text-2xs); font-weight: 600; color: var(--color-text-secondary); }
+.mockup-middle .bundle-actions { margin-top: var(--space-2); }
+.curation-kind-filter button:disabled, .subject-roller button:disabled { cursor: default; opacity: 1; }
+@media (max-width: 620px) {
+ .mockup-note { padding-inline: var(--space-4); }
+ .curation-unit-section > .bundle-list, .mockup-middle > .bundle-list { margin-left: var(--space-2); }
+ .mockup-middle .bundle-card.has-cover { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+ .mockup-middle .bundle-card__content > h4 { font-size: var(--text-lg); }
+ .mockup-subject-current { min-height: 64px; font-size: var(--text-sm); }
+}
+</style></head><body class="curation-app"><div class="curation-shell"><aside class="mockup-note"><span><strong>단원 들여쓰기 목업</strong> 대단원 → 중단원 → 수업 카드</span><a href="/index.html#lesson-library">현재 대시보드 ↗</a></aside>
+<header class="curation-topbar">
+<a aria-label="BOOONG 홈" class="curation-brand" href="index.html">
+<span aria-hidden="true" class="curation-brand__mark"><svg focusable="false" role="img" viewbox="0 0 24 24"><circle cx="6" cy="18" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="M6 15.5V11l2-2h3.5l1.5 1.5v5M10 9V5h3"></path></svg></span>
+<span><b>BOOONG</b><small>수업 준비실</small></span>
+</a>
+<div class="curation-search-wrap">
+<label class="curation-search">
+<span aria-hidden="true">⌕</span>
+<input aria-label="수업 검색" data-library-search="" disabled="" placeholder="주제, 단원, 수업 이름으로 찾기" type="search" value=""/>
+</label>
+
+</div>
+<nav aria-label="빠른 이동" class="curation-topbar__actions">
+<div aria-live="polite" class="curation-topbar__views" data-view-counter="">
+<span>today <b data-view-today="">32회</b></span>
+<span>total <b data-view-total="">978회</b></span>
+</div>
+<a aria-label="내 수업함, 저장한 수업 0개" class="curation-topbar__favorites" href="index.html?view=favorites">
+<span>내 수업함</span><b data-favorite-count="">0</b>
+</a>
+</nav>
+</header>
+<nav aria-label="과목 변경" class="subject-roller">
+<div aria-label="과목 선택" class="subject-roller__field" role="group">
+<div aria-label="중학교 과목" class="subject-roller__group" role="group"><button aria-pressed="false" data-subject-school="중학교" data-subject-value="사회1" disabled="" type="button">사회1</button><button aria-pressed="false" data-subject-school="중학교" data-subject-value="사회2" disabled="" type="button">사회2</button><button aria-pressed="false" data-subject-school="중학교" data-subject-value="사회2[15개정]" disabled="" type="button">사회2[15개정]</button></div><div aria-label="고등학교 과목" class="subject-roller__group" role="group"><a aria-pressed="true" class="mockup-subject-current" data-subject-school="고등학교" data-subject-value="통합사회2" href="/mockups/unit-containers.html#unit-detail" type="button">통합사회2</a><button aria-pressed="false" data-subject-school="고등학교" data-subject-value="사회와문화" disabled="" type="button">사회와 문화</button><button aria-pressed="false" data-subject-school="고등학교" data-subject-value="정치" disabled="" type="button">정치</button><button aria-pressed="false" data-subject-school="고등학교" data-subject-value="경제" disabled="" type="button">경제</button></div>
+</div>
+</nav>
+<main>
+<section aria-label="교육과정별 수업 탐색" class="unit-workspace">
+<aside aria-label="단원 목차" class="unit-picker">
+<h2>단원 목차</h2>
+<a aria-current="page" class="unit-tab mockup-unit-link" href="/mockups/unit-containers.html#unit-detail"><strong>전체 단원</strong><small>자료 3개</small></a>
+<div aria-label="단원 선택" class="unit-axis__track" role="group">
+<div class="unit-picker__chapter">
+<a class="unit-tab mockup-unit-link" href="/mockups/unit-containers.html#chapter-1">
+<strong>I. 인권 보장과 헌법</strong><small>2</small>
+</a>
+<div aria-label="I. 인권 보장과 헌법 중단원" class="unit-picker__middle" role="group">
+<a class="mockup-middle-link" href="/mockups/unit-containers.html#middle-1"><span>2. 인권 보장을 위한 헌법의 역할과 시민 참여</span><small>1개</small></a><a class="mockup-middle-link" href="/mockups/unit-containers.html#middle-2"><span>3. 인권 문제 해결을 위한 노력</span><small>1개</small></a>
+</div>
+</div>
+<div class="unit-picker__chapter">
+<a class="unit-tab mockup-unit-link" href="/mockups/unit-containers.html#chapter-2">
+<strong>II. 사회 정의와 불평등</strong><small>1</small>
+</a>
+<div aria-label="II. 사회 정의와 불평등 중단원" class="unit-picker__middle" role="group">
+<a class="mockup-middle-link" href="/mockups/unit-containers.html#middle-3"><span>2. 다양한 정의관의 비교 및 적용</span><small>1개</small></a>
+</div>
+</div>
+</div>
+</aside>
+<div class="unit-detail" id="unit-detail">
+<header class="curation-library-head">
+<div><h1>통합사회2 수업 모아보기</h1><p>과목과 단원에 맞는 수업을 한눈에 살펴보세요.</p></div>
+<div class="curation-library-controls">
+<div aria-label="자료 종류" class="curation-kind-filter" role="group">
+<button aria-pressed="true" data-kind="all" disabled="" type="button">전체</button><button aria-pressed="false" data-kind="lesson" disabled="" type="button">수업</button><button aria-pressed="false" data-kind="game" disabled="" type="button">게임</button>
+</div>
+<div aria-label="정렬 목업" class="mockup-sort"><span aria-current="true">단원순</span><span>가나다순</span></div>
+</div>
+</header>
+<p aria-live="polite" class="curation-library-status" data-library-count="">수업 3개</p>
+<section aria-labelledby="unit-title-%ED%86%B5%ED%95%A9%EC%82%AC%ED%9A%8C2%3A%3AI.%20%EC%9D%B8%EA%B6%8C%20%EB%B3%B4%EC%9E%A5%EA%B3%BC%20%ED%97%8C%EB%B2%95" class="curation-unit-section" data-library-section="" id="chapter-1">
+<header class="curation-section-head">
+<h2 id="unit-title-%ED%86%B5%ED%95%A9%EC%82%AC%ED%9A%8C2%3A%3AI.%20%EC%9D%B8%EA%B6%8C%20%EB%B3%B4%EC%9E%A5%EA%B3%BC%20%ED%97%8C%EB%B2%95"><span>I.</span>인권 보장과 헌법</h2>
+<span data-section-count="">중단원 2개 · 수업 2개</span>
+</header>
+<div class="bundle-list" data-library-grid="">
+
+
+<section aria-labelledby="middle-title-1" class="mockup-middle" id="middle-1"><header class="mockup-middle-head"><h3 id="middle-title-1">2. 인권 보장을 위한 헌법의 역할과 시민 참여</h3><span class="mockup-middle-count">수업 1개</span></header><div class="bundle-list"><article class="bundle-card has-cover" data-kind="game" data-library-item="" data-middle-units='["2. 인권 보장을 위한 헌법의 역할과 시민 참여"]' data-resource-id="group-4" data-search="놀라운 수요일 진행용 도구 현수토리 선생님의 놀라운 수요일 게임을 쉽게 진행하기 위한 웹페이지 도구입니다.
+다른 선생님들께서 만들어주신 수업들 링크도 함께 제시됩니다. 사회1 통합사회2 xii. 인권과 기본권 2. 기본권 제한과 기본권 침해 시 구제 i. 인권 보장과 헌법 2. 인권 보장을 위한 헌법의 역할과 시민 참여 사회1 - xii. 인권과 기본권 - 2. 기본권 제한과 기본권 침해 시 구제
+통합사회2 - i. 인권 보장과 헌법 - 2. 인권 보장을 위한 헌법의 역할과 시민 참여 choi">
+<figure class="bundle-card__cover is-placeholder"><img alt="" data-fallback-src="/assets/lesson-thumbnails/economics-default-v1.jpg" decoding="async" height="500" loading="lazy" src="/assets/lesson-thumbnails/economics-default-v1.jpg" width="800"/></figure>
+<div class="bundle-card__content">
+<div class="bundle-card__badges"><span>게임</span></div>
+<div class="bundle-card__utilities">
+<button aria-label="놀라운 수요일 진행용 도구 수업함에 담기" aria-pressed="false" class="bundle-favorite" data-favorite-id="group-4" disabled="" title="수업함에 담기" type="button">
+<span aria-hidden="true" class="bundle-favorite__icon">☆</span>
+</button>
+</div>
+<h4>놀라운 수요일 진행용 도구</h4>
+<div class="bundle-card__description" data-resource-description="">
+<p id="resource-description-0">현수토리 선생님의 놀라운 수요일 게임을 쉽게 진행하기 위한 웹페이지 도구입니다.
+다른 선생님들께서 만들어주신 수업들 링크도 함께 제시됩니다.</p>
+<button aria-controls="resource-description-0" aria-expanded="false" aria-label="더 보기" disabled="" hidden="" type="button">더 보기</button>
+</div>
+<div class="bundle-actions">
+<span aria-disabled="true" class="bundle-action is-disabled" title="아직 등록되지 않은 링크입니다">수업 소개<small>미등록</small></span><a class="bundle-action is-teacher" data-action-key="teacher" data-group-id="group-4" data-group-title="놀라운 수요일 진행용 도구" data-group-type="game" data-track-action="" href="https://yadoran-2025.github.io/wow-wednesday/" rel="noopener" target="_blank">
+<strong>자료 링크</strong><span aria-hidden="true">↗</span>
+</a><span aria-disabled="true" class="bundle-action is-disabled" title="아직 등록되지 않은 링크입니다">활동지<small>미등록</small></span>
+</div>
+</div>
+<footer class="bundle-card__meta">
+<div aria-label="만든이" class="bundle-card__makers"><span>만든이</span><div class="bundle-card__maker-names"><a class="chip chip--gray bundle-card__maker" href="about.html#choi">choi</a></div></div>
+<div class="bundle-card__engagement">
+<div class="bundle-card__stats">
+<span class="bundle-card__count" data-click-id="group-4" data-resource-count="" data-view-key="" title="이 자료의 링크를 누른 횟수 (외부 사이트라 실제 조회수는 셀 수 없습니다)">조회수 82</span>
+<span data-favorite-count-for="group-4">저장수 0</span>
+</div>
+<div class="bundle-card__discussion"><button aria-label="놀라운 수요일 진행용 도구 댓글 보기" class="bundle-action bundle-comment-trigger" data-comment-open="" disabled="" type="button">
+<strong>댓글</strong><span data-comment-count="">–</span>
+</button>
+<dialog aria-label="놀라운 수요일 진행용 도구 댓글" class="bundle-discussion" data-card-discussion="group-4">
+<header class="bundle-discussion__header">
+<div><h2>댓글 <span data-discussion-count="">–</span></h2><p>놀라운 수요일 진행용 도구</p></div>
+<button aria-label="댓글 창 닫기" data-comment-close="" disabled="" type="button">×</button>
+</header>
+<div class="bundle-discussion__body">
+<div class="bundle-discussion__list" data-comment-list=""></div>
+<div class="bundle-discussion__composer">
+<p aria-live="polite" class="bundle-discussion__status" data-comment-status=""></p>
+<form class="bundle-discussion__form" data-comment-form="" hidden="">
+<label><span data-form-label="">댓글 남기기</span><textarea maxlength="500" placeholder="이 수업에 대한 생각을 남겨주세요" required="" rows="3"></textarea></label>
+<div class="bundle-discussion__form-actions"><small>최대 500자</small><div><button data-comment-cancel="" disabled="" hidden="" type="button">취소</button><button data-comment-submit="" disabled="" type="submit">댓글 등록</button></div></div>
+</form>
+</div>
+</div>
+</dialog></div>
+</div>
+</footer>
+</article></div></section><section aria-labelledby="middle-title-2" class="mockup-middle" id="middle-2"><header class="mockup-middle-head"><h3 id="middle-title-2">3. 인권 문제 해결을 위한 노력</h3><span class="mockup-middle-count">수업 1개</span></header><div class="bundle-list"><article class="bundle-card has-cover" data-kind="game" data-library-item="" data-middle-units='["3. 인권 문제 해결을 위한 노력"]' data-resource-id="group-12" data-search="거절도 연습이 필요하니까 아르바이트 중 마주할 수 있는 부당한 요구에 거절하는 연습을 하는 활동입니다. 점장님의 문자에 답장을 작성하고, 친구들끼리 답장을 공유하고, 첫 답장을 고쳐봅시다. 사회1 통합사회2 xii. 인권과 기본권 3. 근로자의 권리와 노동권 보장 i. 인권 보장과 헌법 3. 인권 문제 해결을 위한 노력 사회1 - xii. 인권과 기본권 - 3. 근로자의 권리와 노동권 보장
+통합사회2 - i. 인권 보장과 헌법 - 3. 인권 문제 해결을 위한 노력 hyum">
+<figure class="bundle-card__cover is-placeholder"><a aria-label="거절도 연습이 필요하니까 수업 소개" data-action-key="blog" data-group-id="group-12" data-group-title="거절도 연습이 필요하니까" data-group-type="game" data-track-action="" href="https://blog.naver.com/nk316s/224428076082" rel="noopener" target="_blank"><img alt="" data-fallback-src="/assets/lesson-thumbnails/history-default-v1.jpg" decoding="async" height="500" loading="lazy" src="/assets/lesson-thumbnails/history-default-v1.jpg" width="800"/></a></figure>
+<div class="bundle-card__content">
+<div class="bundle-card__badges"><span>게임</span></div>
+<div class="bundle-card__utilities">
+<button aria-label="거절도 연습이 필요하니까 수업함에 담기" aria-pressed="false" class="bundle-favorite" data-favorite-id="group-12" disabled="" title="수업함에 담기" type="button">
+<span aria-hidden="true" class="bundle-favorite__icon">☆</span>
+</button>
+</div>
+<h4>거절도 연습이 필요하니까</h4>
+<div class="bundle-card__description" data-resource-description="">
+<p id="resource-description-1">아르바이트 중 마주할 수 있는 부당한 요구에 거절하는 연습을 하는 활동입니다. 점장님의 문자에 답장을 작성하고, 친구들끼리 답장을 공유하고, 첫 답장을 고쳐봅시다.</p>
+<button aria-controls="resource-description-1" aria-expanded="false" aria-label="더 보기" disabled="" hidden="" type="button">더 보기</button>
+</div>
+<div class="bundle-actions">
+<a class="bundle-action" data-action-key="blog" data-group-id="group-12" data-group-title="거절도 연습이 필요하니까" data-group-type="game" data-track-action="" href="https://blog.naver.com/nk316s/224428076082" rel="noopener" target="_blank">
+<strong>수업 소개</strong><span aria-hidden="true">↗</span>
+</a><a class="bundle-action is-teacher" data-action-key="teacher" data-group-id="group-12" data-group-title="거절도 연습이 필요하니까" data-group-type="game" data-track-action="" href="https://rejection-practice.vercel.app/" rel="noopener" target="_blank">
+<strong>자료 링크</strong><span aria-hidden="true">↗</span>
+</a><span aria-disabled="true" class="bundle-action is-disabled" title="아직 등록되지 않은 링크입니다">활동지<small>미등록</small></span>
+</div>
+</div>
+<footer class="bundle-card__meta">
+<div aria-label="만든이" class="bundle-card__makers"><span>만든이</span><div class="bundle-card__maker-names"><a class="chip chip--gray bundle-card__maker" href="about.html#hyum">hyum</a></div></div>
+<div class="bundle-card__engagement">
+<div class="bundle-card__stats">
+<span class="bundle-card__count" data-click-id="group-12" data-resource-count="" data-view-key="" title="이 자료의 링크를 누른 횟수 (외부 사이트라 실제 조회수는 셀 수 없습니다)">조회수 2</span>
+<span data-favorite-count-for="group-12">저장수 0</span>
+</div>
+<div class="bundle-card__discussion"><button aria-label="거절도 연습이 필요하니까 댓글 보기" class="bundle-action bundle-comment-trigger" data-comment-open="" disabled="" type="button">
+<strong>댓글</strong><span data-comment-count="">–</span>
+</button>
+<dialog aria-label="거절도 연습이 필요하니까 댓글" class="bundle-discussion" data-card-discussion="group-12">
+<header class="bundle-discussion__header">
+<div><h2>댓글 <span data-discussion-count="">–</span></h2><p>거절도 연습이 필요하니까</p></div>
+<button aria-label="댓글 창 닫기" data-comment-close="" disabled="" type="button">×</button>
+</header>
+<div class="bundle-discussion__body">
+<div class="bundle-discussion__list" data-comment-list=""></div>
+<div class="bundle-discussion__composer">
+<p aria-live="polite" class="bundle-discussion__status" data-comment-status=""></p>
+<form class="bundle-discussion__form" data-comment-form="" hidden="">
+<label><span data-form-label="">댓글 남기기</span><textarea maxlength="500" placeholder="이 수업에 대한 생각을 남겨주세요" required="" rows="3"></textarea></label>
+<div class="bundle-discussion__form-actions"><small>최대 500자</small><div><button data-comment-cancel="" disabled="" hidden="" type="button">취소</button><button data-comment-submit="" disabled="" type="submit">댓글 등록</button></div></div>
+</form>
+</div>
+</div>
+</dialog></div>
+</div>
+</footer>
+</article></div></section></div>
+</section>
+<section aria-labelledby="unit-title-%ED%86%B5%ED%95%A9%EC%82%AC%ED%9A%8C2%3A%3AII.%20%EC%82%AC%ED%9A%8C%20%EC%A0%95%EC%9D%98%EC%99%80%20%EB%B6%88%ED%8F%89%EB%93%B1" class="curation-unit-section" data-library-section="" id="chapter-2">
+<header class="curation-section-head">
+<h2 id="unit-title-%ED%86%B5%ED%95%A9%EC%82%AC%ED%9A%8C2%3A%3AII.%20%EC%82%AC%ED%9A%8C%20%EC%A0%95%EC%9D%98%EC%99%80%20%EB%B6%88%ED%8F%89%EB%93%B1"><span>II.</span>사회 정의와 불평등</h2>
+<span data-section-count="">중단원 1개 · 수업 1개</span>
+</header>
+<div class="bundle-list" data-library-grid="">
+
+<section aria-labelledby="middle-title-3" class="mockup-middle" id="middle-3"><header class="mockup-middle-head"><h3 id="middle-title-3">2. 다양한 정의관의 비교 및 적용</h3><span class="mockup-middle-count">수업 1개</span></header><div class="bundle-list"><article class="bundle-card has-cover" data-kind="game" data-library-item="" data-middle-units='["2. 다양한 정의관의 비교 및 적용"]' data-resource-id="group-7" data-search="무지의 베일 자신의 계층을 모르는 채로 사회를 정책을 설계하고, 계층이 공개된 뒤 그 선택을 재검토하는 수업용 시뮬레이터입니다. 통합사회2 ii. 사회 정의와 불평등 2. 다양한 정의관의 비교 및 적용 통합사회2 - ii. 사회 정의와 불평등 - 2. 다양한 정의관의 비교 및 적용 hyum">
+<figure class="bundle-card__cover is-placeholder"><a aria-label="무지의 베일 수업 소개" data-action-key="blog" data-group-id="group-7" data-group-title="무지의 베일" data-group-type="game" data-track-action="" href="https://blog.naver.com/nk316s/224394129423" rel="noopener" target="_blank"><img alt="" data-fallback-src="/assets/lesson-thumbnails/civics-default-v1.jpg" decoding="async" height="500" loading="lazy" src="/assets/lesson-thumbnails/civics-default-v1.jpg" width="800"/></a></figure>
+<div class="bundle-card__content">
+<div class="bundle-card__badges"><span>게임</span></div>
+<div class="bundle-card__utilities">
+<button aria-label="무지의 베일 수업함에 담기" aria-pressed="false" class="bundle-favorite" data-favorite-id="group-7" disabled="" title="수업함에 담기" type="button">
+<span aria-hidden="true" class="bundle-favorite__icon">☆</span>
+</button>
+</div>
+<h4>무지의 베일</h4>
+<div class="bundle-card__description" data-resource-description="">
+<p id="resource-description-2">자신의 계층을 모르는 채로 사회를 정책을 설계하고, 계층이 공개된 뒤 그 선택을 재검토하는 수업용 시뮬레이터입니다.</p>
+<button aria-controls="resource-description-2" aria-expanded="false" aria-label="더 보기" disabled="" hidden="" type="button">더 보기</button>
+</div>
+<div class="bundle-actions">
+<a class="bundle-action" data-action-key="blog" data-group-id="group-7" data-group-title="무지의 베일" data-group-type="game" data-track-action="" href="https://blog.naver.com/nk316s/224394129423" rel="noopener" target="_blank">
+<strong>수업 소개</strong><span aria-hidden="true">↗</span>
+</a><a class="bundle-action is-teacher" data-action-key="teacher" data-group-id="group-7" data-group-title="무지의 베일" data-group-type="game" data-track-action="" href="https://who-am-i-rebuild.vercel.app/" rel="noopener" target="_blank">
+<strong>자료 링크</strong><span aria-hidden="true">↗</span>
+</a><span aria-disabled="true" class="bundle-action is-disabled" title="아직 등록되지 않은 링크입니다">활동지<small>미등록</small></span>
+</div>
+</div>
+<footer class="bundle-card__meta">
+<div aria-label="만든이" class="bundle-card__makers"><span>만든이</span><div class="bundle-card__maker-names"><a class="chip chip--gray bundle-card__maker" href="about.html#hyum">hyum</a></div></div>
+<div class="bundle-card__engagement">
+<div class="bundle-card__stats">
+<span class="bundle-card__count" data-click-id="group-7" data-resource-count="" data-view-key="" title="이 자료의 링크를 누른 횟수 (외부 사이트라 실제 조회수는 셀 수 없습니다)">조회수 16</span>
+<span data-favorite-count-for="group-7">저장수 0</span>
+</div>
+<div class="bundle-card__discussion"><button aria-label="무지의 베일 댓글 보기" class="bundle-action bundle-comment-trigger" data-comment-open="" disabled="" type="button">
+<strong>댓글</strong><span data-comment-count="">–</span>
+</button>
+<dialog aria-label="무지의 베일 댓글" class="bundle-discussion" data-card-discussion="group-7">
+<header class="bundle-discussion__header">
+<div><h2>댓글 <span data-discussion-count="">–</span></h2><p>무지의 베일</p></div>
+<button aria-label="댓글 창 닫기" data-comment-close="" disabled="" type="button">×</button>
+</header>
+<div class="bundle-discussion__body">
+<div class="bundle-discussion__list" data-comment-list=""></div>
+<div class="bundle-discussion__composer">
+<p aria-live="polite" class="bundle-discussion__status" data-comment-status=""></p>
+<form class="bundle-discussion__form" data-comment-form="" hidden="">
+<label><span data-form-label="">댓글 남기기</span><textarea maxlength="500" placeholder="이 수업에 대한 생각을 남겨주세요" required="" rows="3"></textarea></label>
+<div class="bundle-discussion__form-actions"><small>최대 500자</small><div><button data-comment-cancel="" disabled="" hidden="" type="button">취소</button><button data-comment-submit="" disabled="" type="submit">댓글 등록</button></div></div>
+</form>
+</div>
+</div>
+</dialog></div>
+</div>
+</footer>
+</article></div></section></div>
+</section>
+<div class="curation-library__empty" data-library-empty="" hidden="">
+<strong>조건에 맞는 수업이 없습니다.</strong><span>다른 단원을 선택하거나 검색어와 자료 종류를 바꿔보세요.</span>
+</div>
+</div>
+</section>
+</main>
+<footer class="curation-footer">
+<div class="curation-footer__identity">
+<strong>BOOONG <span>사회교육공동체</span></strong>
+<p>우리는 함께일 때 강하다</p>
+</div>
+<nav aria-label="사이트 안내" class="curation-footer__links"><a href="about.html">BOOONG 소개 →</a><a class="curation-footer__operator" href="admin.html">운영자</a></nav>
+</footer>
+</div></body></html>

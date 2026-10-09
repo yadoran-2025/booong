@@ -3767,6 +3767,1088 @@
           "sha256": "957e649d074c054f424340c82cc1741a4da4983cad724ab40bc02bba385c2407"
         }
       ]
+    },
+    {
+      "id": "donga-social1-2022",
+      "publisher": "동아출판",
+      "title": "중학교 사회 ① · 교과서",
+      "school": "중학교",
+      "subject": "사회1",
+      "revision": "2022 개정",
+      "sourceFilename": "(22개정)중등 사회1(26)교과서(Web).pdf",
+      "sourceSha256": "5b87b004e86f8112e1b88bce68acac41211b0cb2cce4aeb61bd934ac26e17d31",
+      "sourceBytes": 174144934,
+      "sourcePages": 254,
+      "sourcePath": "booong/textbooks/donga-social1-2022/source.pdf",
+      "units": [
+        {
+          "key": "사회1::I. 세계화 시대, 지리의 힘",
+          "title": "I. 세계화 시대, 지리의 힘",
+          "printedStart": 6,
+          "printedEnd": 23,
+          "pdfStart": 6,
+          "pdfEnd": 23,
+          "path": "booong/textbooks/donga-social1-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 세계 여러 지역의 다양한 특성",
+              "printedStart": 8,
+              "printedEnd": 11,
+              "pdfStart": 8,
+              "pdfEnd": 11,
+              "path": "booong/textbooks/donga-social1-2022/unit-01-chapter-01.pdf",
+              "bytes": 8937331,
+              "sha256": "4effdb236819071b81d3e2b122ab7d4e5bd1400b182d03072142c62f72ab8b10"
+            },
+            {
+              "title": "2. 세계 각 지역의 공간적 상호 작용",
+              "printedStart": 12,
+              "printedEnd": 15,
+              "pdfStart": 12,
+              "pdfEnd": 15,
+              "path": "booong/textbooks/donga-social1-2022/unit-01-chapter-02.pdf",
+              "bytes": 3931586,
+              "sha256": "543890f8fa599acae25c388a3e184c86cc88d951ecd94110c09d012e4ca13731"
+            },
+            {
+              "title": "3. 세계와 지역의 상호 영향과 변화",
+              "printedStart": 16,
+              "printedEnd": 23,
+              "pdfStart": 16,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/donga-social1-2022/unit-01-chapter-03.pdf",
+              "bytes": 11189763,
+              "sha256": "26b9aedc7183635fc3992db9dfc76e67a3c27ca83f716817bc569e6ac38d9459"
+            }
+          ],
+          "bytes": 25850279,
+          "sha256": "bafeb145a4b4c4ee294ed1355af4e16137a5e4ee093ce7bbaea03bc24b79b960"
+        },
+        {
+          "key": "사회1::II. 아시아",
+          "title": "II. 아시아",
+          "printedStart": 24,
+          "printedEnd": 45,
+          "pdfStart": 24,
+          "pdfEnd": 45,
+          "path": "booong/textbooks/donga-social1-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 아시아의 국가 및 주요 도시와 자연환경",
+              "printedStart": 26,
+              "printedEnd": 29,
+              "pdfStart": 26,
+              "pdfEnd": 29,
+              "path": "booong/textbooks/donga-social1-2022/unit-02-chapter-01.pdf",
+              "bytes": 8662347,
+              "sha256": "3182ed9f570ac2af99eeabf7da8d94312abc24302042e95aa5b3907e6d7d84ea"
+            },
+            {
+              "title": "2. 아시아의 종교와 생활양식",
+              "printedStart": 30,
+              "printedEnd": 33,
+              "pdfStart": 30,
+              "pdfEnd": 33,
+              "path": "booong/textbooks/donga-social1-2022/unit-02-chapter-02.pdf",
+              "bytes": 4723916,
+              "sha256": "f3007a0b9923240569061c9f93c1f2e1f5b22daae369c7edc53a18cddc8c11d1"
+            },
+            {
+              "title": "3. 아시아의 인구 구조와 변화",
+              "printedStart": 34,
+              "printedEnd": 37,
+              "pdfStart": 34,
+              "pdfEnd": 37,
+              "path": "booong/textbooks/donga-social1-2022/unit-02-chapter-03.pdf",
+              "bytes": 3484169,
+              "sha256": "6babf178a6d0f552b29bb02afa1e190903343f961f63752dd5d5db228b8d2bd5"
+            },
+            {
+              "title": "4. 아시아의 산업 구조와 변화",
+              "printedStart": 38,
+              "printedEnd": 45,
+              "pdfStart": 38,
+              "pdfEnd": 45,
+              "path": "booong/textbooks/donga-social1-2022/unit-02-chapter-04.pdf",
+              "bytes": 4271870,
+              "sha256": "8d4788774b3d82119bd229a85eb1bdf2161a1b9cd8baa1c69e7badc8aa60565f"
+            }
+          ],
+          "bytes": 20789285,
+          "sha256": "0ed27cd8eb13ebbfba2bca5dd5512f65a5ec40a61661720728cea2dd15235121"
+        },
+        {
+          "key": "사회1::III. 유럽",
+          "title": "III. 유럽",
+          "printedStart": 46,
+          "printedEnd": 63,
+          "pdfStart": 46,
+          "pdfEnd": 63,
+          "path": "booong/textbooks/donga-social1-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 유럽의 국가 및 주요 도시와 자연환경",
+              "printedStart": 48,
+              "printedEnd": 51,
+              "pdfStart": 48,
+              "pdfEnd": 51,
+              "path": "booong/textbooks/donga-social1-2022/unit-03-chapter-01.pdf",
+              "bytes": 6162321,
+              "sha256": "b2bb6a15988e5677eb82fe2313b94e644b05f804fcf91d7ef9455e5802888dbf"
+            },
+            {
+              "title": "2. 연합 도시의 다양한 특성",
+              "printedStart": 52,
+              "printedEnd": 55,
+              "pdfStart": 52,
+              "pdfEnd": 55,
+              "path": "booong/textbooks/donga-social1-2022/unit-03-chapter-02.pdf",
+              "bytes": 4005207,
+              "sha256": "8439f80fb513b77e049a573c55efb13bc7f02729246235d166bfa88530ed007c"
+            },
+            {
+              "title": "3. 유럽 통합과 분리 움직임",
+              "printedStart": 56,
+              "printedEnd": 63,
+              "pdfStart": 56,
+              "pdfEnd": 63,
+              "path": "booong/textbooks/donga-social1-2022/unit-03-chapter-03.pdf",
+              "bytes": 9556454,
+              "sha256": "51fb1f6bb864c35681f225cfcbdaae1b07a9f269469fae46e3d79dbb1c8f928c"
+            }
+          ],
+          "bytes": 21031893,
+          "sha256": "abd49f196531310547b646789a2dacab10cecea97636f3a725a89be34951bee5"
+        },
+        {
+          "key": "사회1::IV. 아프리카",
+          "title": "IV. 아프리카",
+          "printedStart": 64,
+          "printedEnd": 81,
+          "pdfStart": 64,
+          "pdfEnd": 81,
+          "path": "booong/textbooks/donga-social1-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 아프리카의 국가 및 주요 도시와 자연환경",
+              "printedStart": 66,
+              "printedEnd": 69,
+              "pdfStart": 66,
+              "pdfEnd": 69,
+              "path": "booong/textbooks/donga-social1-2022/unit-04-chapter-01.pdf",
+              "bytes": 5718206,
+              "sha256": "7c17201f27a5e8e7a071490079bab012b97e7aee4e04bb0554e41c59f12766de"
+            },
+            {
+              "title": "2. 아프리카의 문화와 지역 잠재력",
+              "printedStart": 70,
+              "printedEnd": 73,
+              "pdfStart": 70,
+              "pdfEnd": 73,
+              "path": "booong/textbooks/donga-social1-2022/unit-04-chapter-02.pdf",
+              "bytes": 3619881,
+              "sha256": "6744c9bc1a81c0e12a8308d15c96f035c03758c64112cec10a1f28e144c21ee5"
+            },
+            {
+              "title": "3. 아프리카의 지속가능한 발전을 위한 노력",
+              "printedStart": 74,
+              "printedEnd": 81,
+              "pdfStart": 74,
+              "pdfEnd": 81,
+              "path": "booong/textbooks/donga-social1-2022/unit-04-chapter-03.pdf",
+              "bytes": 5132724,
+              "sha256": "f89c3cd541db44505d5b8c39ad7f22ab5fe37c60b852dd904f93622ed6f607d6"
+            }
+          ],
+          "bytes": 15752457,
+          "sha256": "9e7abc1eeb00ed9dd96010ca153e3ae4a2952e4640c1fbcea2099cf11f46b8ee"
+        },
+        {
+          "key": "사회1::V. 아메리카",
+          "title": "V. 아메리카",
+          "printedStart": 82,
+          "printedEnd": 101,
+          "pdfStart": 82,
+          "pdfEnd": 101,
+          "path": "booong/textbooks/donga-social1-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 아메리카의 국가 및 주요 도시와 자연환경",
+              "printedStart": 84,
+              "printedEnd": 89,
+              "pdfStart": 84,
+              "pdfEnd": 89,
+              "path": "booong/textbooks/donga-social1-2022/unit-05-chapter-01.pdf",
+              "bytes": 7804931,
+              "sha256": "7cf024036470c10ddc20588f120881665b9ff1d1f9a8f6053004ecbd9290d464"
+            },
+            {
+              "title": "2. 다양한 민족과 공존으로 구성된 메리카",
+              "printedStart": 90,
+              "printedEnd": 93,
+              "pdfStart": 90,
+              "pdfEnd": 93,
+              "path": "booong/textbooks/donga-social1-2022/unit-05-chapter-02.pdf",
+              "bytes": 4835184,
+              "sha256": "971b39c43becdaf3da5a40d8dbb480b37bfc83fb4db41ec1b1eadf0222aaf2d0"
+            },
+            {
+              "title": "3. 아메리카의 초국적 기업",
+              "printedStart": 94,
+              "printedEnd": 101,
+              "pdfStart": 94,
+              "pdfEnd": 101,
+              "path": "booong/textbooks/donga-social1-2022/unit-05-chapter-03.pdf",
+              "bytes": 10013102,
+              "sha256": "d0465d83c31a0fbdfbc5370cfb4b35bcc75cb2440690b4344f0abb35a409688c"
+            }
+          ],
+          "bytes": 24340335,
+          "sha256": "e86bc744e3a683a42fa6ba3cc762b658a04a0412c9852b7830ec2dd95c51c591"
+        },
+        {
+          "key": "사회1::VI. 오세아니아와 극지방",
+          "title": "VI. 오세아니아와 극지방",
+          "printedStart": 102,
+          "printedEnd": 119,
+          "pdfStart": 102,
+          "pdfEnd": 119,
+          "path": "booong/textbooks/donga-social1-2022/unit-06.pdf",
+          "chapters": [
+            {
+              "title": "1. 발전 가능성이 큰 오세아니아",
+              "printedStart": 104,
+              "printedEnd": 107,
+              "pdfStart": 104,
+              "pdfEnd": 107,
+              "path": "booong/textbooks/donga-social1-2022/unit-06-chapter-01.pdf",
+              "bytes": 6032655,
+              "sha256": "b77713d39240e6fdd767d89d15bcaa27a2cb5110b35be43bfb8440bce69bf9ca"
+            },
+            {
+              "title": "2. 태평양 자원의 환경 문제와 해결 방안",
+              "printedStart": 108,
+              "printedEnd": 111,
+              "pdfStart": 108,
+              "pdfEnd": 111,
+              "path": "booong/textbooks/donga-social1-2022/unit-06-chapter-02.pdf",
+              "bytes": 3415983,
+              "sha256": "c3c60cf8bf521e3cca396937a479a3f566067cf77d924ca0ddc3b855a1a1973c"
+            },
+            {
+              "title": "3. 극지방의 미래 자원 쟁점과 지역 개발",
+              "printedStart": 112,
+              "printedEnd": 119,
+              "pdfStart": 112,
+              "pdfEnd": 119,
+              "path": "booong/textbooks/donga-social1-2022/unit-06-chapter-03.pdf",
+              "bytes": 13113241,
+              "sha256": "e8bb0ee51479c7faf70a9fe1aac2ab4614fd8c8291306be5bcbf926622ccf335"
+            }
+          ],
+          "bytes": 22375470,
+          "sha256": "1430ff3bdd65545a6d35a8819cc0a3c65b160d53e5aa7bea885c86b474424f75"
+        },
+        {
+          "key": "사회1::VII. 인간과 사회생활",
+          "title": "VII. 인간과 사회생활",
+          "printedStart": 120,
+          "printedEnd": 137,
+          "pdfStart": 120,
+          "pdfEnd": 137,
+          "path": "booong/textbooks/donga-social1-2022/unit-07.pdf",
+          "chapters": [
+            {
+              "title": "1. 사회화와 자아 정체성",
+              "printedStart": 122,
+              "printedEnd": 125,
+              "pdfStart": 122,
+              "pdfEnd": 125,
+              "path": "booong/textbooks/donga-social1-2022/unit-07-chapter-01.pdf",
+              "bytes": 2506408,
+              "sha256": "1d0f13af2cad2c2bfc022886e98099fe4c83955d3c62276d0427fdd9f21749cd"
+            },
+            {
+              "title": "2. 사회적 지위와 역할",
+              "printedStart": 126,
+              "printedEnd": 129,
+              "pdfStart": 126,
+              "pdfEnd": 129,
+              "path": "booong/textbooks/donga-social1-2022/unit-07-chapter-02.pdf",
+              "bytes": 1971568,
+              "sha256": "5b11dd34429c4ce8675cabf890e6f02b685b062d8c1c4dcae98ddd68ff3e50ef"
+            },
+            {
+              "title": "3. 우리 사회의 갈등과 차별",
+              "printedStart": 130,
+              "printedEnd": 137,
+              "pdfStart": 130,
+              "pdfEnd": 137,
+              "path": "booong/textbooks/donga-social1-2022/unit-07-chapter-03.pdf",
+              "bytes": 2459122,
+              "sha256": "d060957334ab9e458549bcae075d87f19eef0e2d7e343bc183ef528c92bc6219"
+            }
+          ],
+          "bytes": 6389408,
+          "sha256": "eb27231b4f350b155e01fd7920bc99968052a17944dbb865a669d306ba90fdb4"
+        },
+        {
+          "key": "사회1::VIII. 다양한 문화의 이해",
+          "title": "VIII. 다양한 문화의 이해",
+          "printedStart": 138,
+          "printedEnd": 155,
+          "pdfStart": 138,
+          "pdfEnd": 155,
+          "path": "booong/textbooks/donga-social1-2022/unit-08.pdf",
+          "chapters": [
+            {
+              "title": "1. 문화의 의미와 특징",
+              "printedStart": 140,
+              "printedEnd": 143,
+              "pdfStart": 140,
+              "pdfEnd": 143,
+              "path": "booong/textbooks/donga-social1-2022/unit-08-chapter-01.pdf",
+              "bytes": 2458433,
+              "sha256": "79f96d745844eaa1064b2b2cbf5692a706714c05a69fb6a8f0d20132d6bdd2a7"
+            },
+            {
+              "title": "2. 미디어와 문화",
+              "printedStart": 144,
+              "printedEnd": 147,
+              "pdfStart": 144,
+              "pdfEnd": 147,
+              "path": "booong/textbooks/donga-social1-2022/unit-08-chapter-02.pdf",
+              "bytes": 1750361,
+              "sha256": "5b1ddeb452b242964555a8fee3e9401b74c385cb5bcb83ed593e1a38382d5e4f"
+            },
+            {
+              "title": "3. 문화를 이해하는 태도",
+              "printedStart": 148,
+              "printedEnd": 155,
+              "pdfStart": 148,
+              "pdfEnd": 155,
+              "path": "booong/textbooks/donga-social1-2022/unit-08-chapter-03.pdf",
+              "bytes": 2317894,
+              "sha256": "3d7ba2c0ee49776ca2789b33e0bf09feaaffce9a8698932cfe3bb90c6fdb0e98"
+            }
+          ],
+          "bytes": 6082208,
+          "sha256": "111082e99c1f0395c486993e1489f144678a5c346007c336c296e42bcaba208f"
+        },
+        {
+          "key": "사회1::IX. 민주주의와 시민",
+          "title": "IX. 민주주의와 시민",
+          "printedStart": 156,
+          "printedEnd": 173,
+          "pdfStart": 156,
+          "pdfEnd": 173,
+          "path": "booong/textbooks/donga-social1-2022/unit-09.pdf",
+          "chapters": [
+            {
+              "title": "1. 정보와 민주주의",
+              "printedStart": 158,
+              "printedEnd": 161,
+              "pdfStart": 158,
+              "pdfEnd": 161,
+              "path": "booong/textbooks/donga-social1-2022/unit-09-chapter-01.pdf",
+              "bytes": 2090345,
+              "sha256": "58919a4440a4e1d172bf09941523e8a0054319cc13bb0139e594db245825ce76"
+            },
+            {
+              "title": "2. 민주주의의 발전",
+              "printedStart": 162,
+              "printedEnd": 165,
+              "pdfStart": 162,
+              "pdfEnd": 165,
+              "path": "booong/textbooks/donga-social1-2022/unit-09-chapter-02.pdf",
+              "bytes": 1891706,
+              "sha256": "c35189774e19776387d71cd613d5690036c39d06636b7e72f963ce5704e3d81f"
+            },
+            {
+              "title": "3. 민주주의의 발전 과제",
+              "printedStart": 166,
+              "printedEnd": 173,
+              "pdfStart": 166,
+              "pdfEnd": 173,
+              "path": "booong/textbooks/donga-social1-2022/unit-09-chapter-03.pdf",
+              "bytes": 3612725,
+              "sha256": "b45262d651ea0168edc0a6250cff6a2acd43573f5033c99110e4b869e04c838d"
+            }
+          ],
+          "bytes": 7037624,
+          "sha256": "67e23268f7ab9721dca710f7c6945860a32e24334eaad1b1eb93907aa6c7f779"
+        },
+        {
+          "key": "사회1::X. 정치과정과 시민 참여",
+          "title": "X. 정치과정과 시민 참여",
+          "printedStart": 174,
+          "printedEnd": 191,
+          "pdfStart": 174,
+          "pdfEnd": 191,
+          "path": "booong/textbooks/donga-social1-2022/unit-10.pdf",
+          "chapters": [
+            {
+              "title": "1. 선거와 민주 정치",
+              "printedStart": 176,
+              "printedEnd": 179,
+              "pdfStart": 176,
+              "pdfEnd": 179,
+              "path": "booong/textbooks/donga-social1-2022/unit-10-chapter-01.pdf",
+              "bytes": 1730037,
+              "sha256": "59a4cdde62e706228085d907f3aa646e2f95cf36e1a3acbacb73db74c72c772b"
+            },
+            {
+              "title": "2. 정치 주체의 역할과 정치과정",
+              "printedStart": 180,
+              "printedEnd": 183,
+              "pdfStart": 180,
+              "pdfEnd": 183,
+              "path": "booong/textbooks/donga-social1-2022/unit-10-chapter-02.pdf",
+              "bytes": 1799512,
+              "sha256": "30f105a7b9b0b11597c29aecffc9b49c7f5104798ada9241f0efe316d83658ab"
+            },
+            {
+              "title": "3. 지방 자치와 시민 참여",
+              "printedStart": 184,
+              "printedEnd": 191,
+              "pdfStart": 184,
+              "pdfEnd": 191,
+              "path": "booong/textbooks/donga-social1-2022/unit-10-chapter-03.pdf",
+              "bytes": 2159916,
+              "sha256": "4d9b14742948d57077f83d0722d1b97d4f14f20fa75d487a0caa5c6935c574ab"
+            }
+          ],
+          "bytes": 5129826,
+          "sha256": "631cc28a5622708c2643561283c4eb682936008a3d57e211b1df523057a6f505"
+        },
+        {
+          "key": "사회1::XI. 일상생활과 법",
+          "title": "XI. 일상생활과 법",
+          "printedStart": 192,
+          "printedEnd": 211,
+          "pdfStart": 192,
+          "pdfEnd": 211,
+          "path": "booong/textbooks/donga-social1-2022/unit-11.pdf",
+          "chapters": [
+            {
+              "title": "1. 법의 의미와 목적",
+              "printedStart": 194,
+              "printedEnd": 197,
+              "pdfStart": 194,
+              "pdfEnd": 197,
+              "path": "booong/textbooks/donga-social1-2022/unit-11-chapter-01.pdf",
+              "bytes": 2421837,
+              "sha256": "7a4d8912be604aa544cf7e641b2e86294d55e11217cd9c04f30ce873099654d1"
+            },
+            {
+              "title": "2. 법의 종류와 사회법",
+              "printedStart": 198,
+              "printedEnd": 201,
+              "pdfStart": 198,
+              "pdfEnd": 201,
+              "path": "booong/textbooks/donga-social1-2022/unit-11-chapter-02.pdf",
+              "bytes": 2118791,
+              "sha256": "669d33266e400d90f939bbc8786a6859e85a6ac947b12f06043b53136ba4cb56"
+            },
+            {
+              "title": "3. 재판의 의미와 공정한 재판",
+              "printedStart": 202,
+              "printedEnd": 211,
+              "pdfStart": 202,
+              "pdfEnd": 211,
+              "path": "booong/textbooks/donga-social1-2022/unit-11-chapter-03.pdf",
+              "bytes": 3767747,
+              "sha256": "ced6b17ec8d826b3c71a76b6c92a331c34fff099ade883eca54461e60b5fc7b4"
+            }
+          ],
+          "bytes": 7604177,
+          "sha256": "d3413ecbbec0fda966dc39fb91eed5f9c71f6ff8c1d4f262fbdff0cbb3ed7f0b"
+        },
+        {
+          "key": "사회1::XII. 인권과 기본권",
+          "title": "XII. 인권과 기본권",
+          "printedStart": 212,
+          "printedEnd": 229,
+          "pdfStart": 212,
+          "pdfEnd": 229,
+          "path": "booong/textbooks/donga-social1-2022/unit-12.pdf",
+          "chapters": [
+            {
+              "title": "1. 인권 보장과 기본권",
+              "printedStart": 214,
+              "printedEnd": 217,
+              "pdfStart": 214,
+              "pdfEnd": 217,
+              "path": "booong/textbooks/donga-social1-2022/unit-12-chapter-01.pdf",
+              "bytes": 1728582,
+              "sha256": "3087f65a99a1c3c351d5dcb14d6219ff086ab28d64684e86a0f50751af9716d6"
+            },
+            {
+              "title": "2. 기본권 제한과 기본권 침해 시 구제",
+              "printedStart": 218,
+              "printedEnd": 221,
+              "pdfStart": 218,
+              "pdfEnd": 221,
+              "path": "booong/textbooks/donga-social1-2022/unit-12-chapter-02.pdf",
+              "bytes": 1777384,
+              "sha256": "ba30dad3e9a996bea796bea062a4d9061da8f6e5be44d7bb256403551556daac"
+            },
+            {
+              "title": "3. 근로자의 권리와 노동권 보장",
+              "printedStart": 222,
+              "printedEnd": 229,
+              "pdfStart": 222,
+              "pdfEnd": 229,
+              "path": "booong/textbooks/donga-social1-2022/unit-12-chapter-03.pdf",
+              "bytes": 2479431,
+              "sha256": "2a1640e23f2c2989f0ef2c394c27ecad6b105897387f02aa890e707941b974df"
+            }
+          ],
+          "bytes": 5791244,
+          "sha256": "2324660b2ee88dd5a165a955e36397e774bc0241b10b9d9dcde7cbc729d9fc78"
+        }
+      ]
+    },
+    {
+      "id": "donga-social2-2022",
+      "publisher": "동아출판",
+      "title": "중학교 사회 ② · 교과서",
+      "school": "중학교",
+      "subject": "사회2",
+      "revision": "2022 개정",
+      "sourceFilename": "(22개정)중등 사회2(26)교과서(Web).pdf",
+      "sourceSha256": "4d8a267ceb0eea9dc8b8cbd09bc5a927211c7c8f20a8e47bcc2915cbd01e6be3",
+      "sourceBytes": 169741329,
+      "sourcePages": 262,
+      "sourcePath": "booong/textbooks/donga-social2-2022/source.pdf",
+      "units": [
+        {
+          "key": "사회2::I. 헌법과 국가기관",
+          "title": "I. 헌법과 국가기관",
+          "printedStart": 6,
+          "printedEnd": 23,
+          "pdfStart": 6,
+          "pdfEnd": 23,
+          "path": "booong/textbooks/donga-social2-2022/unit-01.pdf",
+          "chapters": [
+            {
+              "title": "1. 대통령과 행정부",
+              "printedStart": 8,
+              "printedEnd": 11,
+              "pdfStart": 8,
+              "pdfEnd": 11,
+              "path": "booong/textbooks/donga-social2-2022/unit-01-chapter-01.pdf",
+              "bytes": 1352750,
+              "sha256": "aa1c3bae88ae6107e26b385d80884a3fb3414361d914cb41813ea476054b2532"
+            },
+            {
+              "title": "2. 국회",
+              "printedStart": 12,
+              "printedEnd": 15,
+              "pdfStart": 12,
+              "pdfEnd": 15,
+              "path": "booong/textbooks/donga-social2-2022/unit-01-chapter-02.pdf",
+              "bytes": 1511659,
+              "sha256": "6fd77646e6c188ae2754bad18fe2580822cb0de3fa40aeb10386274efb692c0b"
+            },
+            {
+              "title": "3. 법원과 헌법재판소",
+              "printedStart": 16,
+              "printedEnd": 23,
+              "pdfStart": 16,
+              "pdfEnd": 23,
+              "path": "booong/textbooks/donga-social2-2022/unit-01-chapter-03.pdf",
+              "bytes": 1997475,
+              "sha256": "157e9a662960e44aa8062f0e06bf99da0b50e24671e69fe8159739fcbe6ea804"
+            }
+          ],
+          "bytes": 5068002,
+          "sha256": "9a0c585ae26008d8e9f630d7cf1e55ef937e04f497a7fff36ed1342e38009337"
+        },
+        {
+          "key": "사회2::II. 경제생활과 선택",
+          "title": "II. 경제생활과 선택",
+          "printedStart": 24,
+          "printedEnd": 41,
+          "pdfStart": 24,
+          "pdfEnd": 41,
+          "path": "booong/textbooks/donga-social2-2022/unit-02.pdf",
+          "chapters": [
+            {
+              "title": "1. 경제생활과 합리적 선택",
+              "printedStart": 26,
+              "printedEnd": 29,
+              "pdfStart": 26,
+              "pdfEnd": 29,
+              "path": "booong/textbooks/donga-social2-2022/unit-02-chapter-01.pdf",
+              "bytes": 1345232,
+              "sha256": "3a8e59be0b487bce20f6491ac90d9f4e8176ea0ab670c34f35d3f6ca835eae9d"
+            },
+            {
+              "title": "2. 안정적인 금융 생활",
+              "printedStart": 30,
+              "printedEnd": 33,
+              "pdfStart": 30,
+              "pdfEnd": 33,
+              "path": "booong/textbooks/donga-social2-2022/unit-02-chapter-02.pdf",
+              "bytes": 1356751,
+              "sha256": "b6a33cd2605b02e00b0419013e8a97b285b5e17a13381066553e33581c65566e"
+            },
+            {
+              "title": "3. 기업의 역할과 기업가 정신",
+              "printedStart": 34,
+              "printedEnd": 41,
+              "pdfStart": 34,
+              "pdfEnd": 41,
+              "path": "booong/textbooks/donga-social2-2022/unit-02-chapter-03.pdf",
+              "bytes": 2245015,
+              "sha256": "cce2a0fbd82fb06993fb454556ad769bedaba7bab7760440df90e810a89f41da"
+            }
+          ],
+          "bytes": 5172276,
+          "sha256": "ac0e1a15ae256143c9641fb95046941564d421a10501f724bfa3dff656e07f04"
+        },
+        {
+          "key": "사회2::III. 시장과 가격",
+          "title": "III. 시장과 가격",
+          "printedStart": 42,
+          "printedEnd": 59,
+          "pdfStart": 42,
+          "pdfEnd": 59,
+          "path": "booong/textbooks/donga-social2-2022/unit-03.pdf",
+          "chapters": [
+            {
+              "title": "1. 시장의 의미와 필요성",
+              "printedStart": 44,
+              "printedEnd": 47,
+              "pdfStart": 44,
+              "pdfEnd": 47,
+              "path": "booong/textbooks/donga-social2-2022/unit-03-chapter-01.pdf",
+              "bytes": 1879538,
+              "sha256": "2dcc24a9c96b4680cba0e086abbae650805a9fd7971b2aebfaeac459f7a5e0fd"
+            },
+            {
+              "title": "2. 시장 가격의 결정",
+              "printedStart": 48,
+              "printedEnd": 51,
+              "pdfStart": 48,
+              "pdfEnd": 51,
+              "path": "booong/textbooks/donga-social2-2022/unit-03-chapter-02.pdf",
+              "bytes": 1428689,
+              "sha256": "3f80f695ab2ddf0d7e9c13eb9bad47f560cc5fe2bbc6bdaf980cb84e5ffc0f1a"
+            },
+            {
+              "title": "3. 시장 가격의 변동",
+              "printedStart": 52,
+              "printedEnd": 59,
+              "pdfStart": 52,
+              "pdfEnd": 59,
+              "path": "booong/textbooks/donga-social2-2022/unit-03-chapter-03.pdf",
+              "bytes": 2169714,
+              "sha256": "081d0f39beed08b1f33e7ed787ce209da9a0d88790786913b79046597651c4ae"
+            }
+          ],
+          "bytes": 5649574,
+          "sha256": "1069b5f8416692a101bdcef4810ecb85b45339d50bce52ee96f21dbc0fc276a0"
+        },
+        {
+          "key": "사회2::IV. 우리나라 경제와 세계화",
+          "title": "IV. 우리나라 경제와 세계화",
+          "printedStart": 60,
+          "printedEnd": 77,
+          "pdfStart": 60,
+          "pdfEnd": 77,
+          "path": "booong/textbooks/donga-social2-2022/unit-04.pdf",
+          "chapters": [
+            {
+              "title": "1. 경제 성장과 국내 총생산",
+              "printedStart": 62,
+              "printedEnd": 65,
+              "pdfStart": 62,
+              "pdfEnd": 65,
+              "path": "booong/textbooks/donga-social2-2022/unit-04-chapter-01.pdf",
+              "bytes": 2006130,
+              "sha256": "9ed9006a3c1639bde276e54b89ef64640ac620268333161f47caaa6671dcfcf4"
+            },
+            {
+              "title": "2. 물가 변동과 실업",
+              "printedStart": 66,
+              "printedEnd": 69,
+              "pdfStart": 66,
+              "pdfEnd": 69,
+              "path": "booong/textbooks/donga-social2-2022/unit-04-chapter-02.pdf",
+              "bytes": 1332491,
+              "sha256": "0dbe571a01277767711dad3976ae5808d8edb96d1925f2c4cbb8e23f1c95c732"
+            },
+            {
+              "title": "3. 국제 거래와 환율 변동",
+              "printedStart": 70,
+              "printedEnd": 77,
+              "pdfStart": 70,
+              "pdfEnd": 77,
+              "path": "booong/textbooks/donga-social2-2022/unit-04-chapter-03.pdf",
+              "bytes": 3804938,
+              "sha256": "dd9f0299e07e2fa94aceaa5d8dc34fbefaa7e4ec8812e7671590704c4c8dfeea"
+            }
+          ],
+          "bytes": 7482462,
+          "sha256": "61cc65b0233cf8c74b1ff4bb2b3000929f9b2feccdd649378a370de06b9cf73a"
+        },
+        {
+          "key": "사회2::V. 국제 사회와 한반도",
+          "title": "V. 국제 사회와 한반도",
+          "printedStart": 78,
+          "printedEnd": 95,
+          "pdfStart": 78,
+          "pdfEnd": 95,
+          "path": "booong/textbooks/donga-social2-2022/unit-05.pdf",
+          "chapters": [
+            {
+              "title": "1. 국제 사회의 행위 주체와 특징",
+              "printedStart": 80,
+              "printedEnd": 83,
+              "pdfStart": 80,
+              "pdfEnd": 83,
+              "path": "booong/textbooks/donga-social2-2022/unit-05-chapter-01.pdf",
+              "bytes": 2173419,
+              "sha256": "8ef531a2072f1d4c292b5de852771655146fc2eed1665b0e58ef08a803f48008"
+            },
+            {
+              "title": "2. 국제 사회의 다양한 분쟁과 우리의 역할",
+              "printedStart": 84,
+              "printedEnd": 87,
+              "pdfStart": 84,
+              "pdfEnd": 87,
+              "path": "booong/textbooks/donga-social2-2022/unit-05-chapter-02.pdf",
+              "bytes": 1572919,
+              "sha256": "7957484ce9404e22503e992f07514a0f6506bcf27c0eb2e1c0e90c814b28b1be"
+            },
+            {
+              "title": "3. 우리나라가 직면한 국제 문제",
+              "printedStart": 88,
+              "printedEnd": 95,
+              "pdfStart": 88,
+              "pdfEnd": 95,
+              "path": "booong/textbooks/donga-social2-2022/unit-05-chapter-03.pdf",
+              "bytes": 2739842,
+              "sha256": "9af79b2ac6884a8f41307f55e68d4981eade81d40ff07193585685f34eee7bf4"
+            }
+          ],
+          "bytes": 6554926,
+          "sha256": "30fc3b0c03c9255d94d4bef33f76408e1108f2b7177b9e081551ac657a65698f"
+        },
+        {
+          "key": "사회2::VI. 사회 변동과 사회문제",
+          "title": "VI. 사회 변동과 사회문제",
+          "printedStart": 96,
+          "printedEnd": 115,
+          "pdfStart": 96,
+          "pdfEnd": 115,
+          "path": "booong/textbooks/donga-social2-2022/unit-06.pdf",
+          "chapters": [
+            {
+              "title": "1. 우리 사회의 사회 변동",
+              "printedStart": 98,
+              "printedEnd": 103,
+              "pdfStart": 98,
+              "pdfEnd": 103,
+              "path": "booong/textbooks/donga-social2-2022/unit-06-chapter-01.pdf",
+              "bytes": 2609953,
+              "sha256": "01a776e3a72294d967a71bff15229e0c5a48fd7923b57aeca444890d4b005b26"
+            },
+            {
+              "title": "2. 오늘날의 사회문제",
+              "printedStart": 104,
+              "printedEnd": 107,
+              "pdfStart": 104,
+              "pdfEnd": 107,
+              "path": "booong/textbooks/donga-social2-2022/unit-06-chapter-02.pdf",
+              "bytes": 1535176,
+              "sha256": "65facdccb93554eaa98e5b3128d155990d11b8da5d3d834ccbd49e2ae65f6341"
+            },
+            {
+              "title": "3. 사회 변동과 사회문제의 대응",
+              "printedStart": 108,
+              "printedEnd": 115,
+              "pdfStart": 108,
+              "pdfEnd": 115,
+              "path": "booong/textbooks/donga-social2-2022/unit-06-chapter-03.pdf",
+              "bytes": 2513606,
+              "sha256": "08046a5ff8d6d108e287b75b8e61c45320d0df6795d0d98fce920bf9768f6622"
+            }
+          ],
+          "bytes": 6702234,
+          "sha256": "a771b0572179572471b9e5d8663d8ae9aafb818deb1b92a2e3b674502e6babfe"
+        },
+        {
+          "key": "사회2::VII. 대한민국, 우리가 살아가는 곳",
+          "title": "VII. 대한민국, 우리가 살아가는 곳",
+          "printedStart": 116,
+          "printedEnd": 133,
+          "pdfStart": 116,
+          "pdfEnd": 133,
+          "path": "booong/textbooks/donga-social2-2022/unit-07.pdf",
+          "chapters": [
+            {
+              "title": "1. 우리 국토의 위치와 영역",
+              "printedStart": 118,
+              "printedEnd": 121,
+              "pdfStart": 118,
+              "pdfEnd": 121,
+              "path": "booong/textbooks/donga-social2-2022/unit-07-chapter-01.pdf",
+              "bytes": 6178810,
+              "sha256": "50c1288fd5326ee2f1c64f42e67fe940148ae919b308a51c6eaf785682c641ca"
+            },
+            {
+              "title": "2. 우리나라의 행정 구역과 내가 사는 곳",
+              "printedStart": 122,
+              "printedEnd": 125,
+              "pdfStart": 122,
+              "pdfEnd": 125,
+              "path": "booong/textbooks/donga-social2-2022/unit-07-chapter-02.pdf",
+              "bytes": 5887242,
+              "sha256": "77b73db815a3b0672a1c5f62eb226b8eadc8c4f42c0d30e9276a7ff5e7297561"
+            },
+            {
+              "title": "3. 우리 지역의 지리적 문제",
+              "printedStart": 126,
+              "printedEnd": 133,
+              "pdfStart": 126,
+              "pdfEnd": 133,
+              "path": "booong/textbooks/donga-social2-2022/unit-07-chapter-03.pdf",
+              "bytes": 4898045,
+              "sha256": "4351bdd7477a5cb81a3ca73485669f039e646ff549b627be35f0a42c1f21b0af"
+            }
+          ],
+          "bytes": 18607411,
+          "sha256": "ea0a3c7144b396240a874bf6e9126a38f9452a982fcae3aa77254c74e30154b5"
+        },
+        {
+          "key": "사회2::VIII. 우리나라의 자연환경과 인간 생활",
+          "title": "VIII. 우리나라의 자연환경과 인간 생활",
+          "printedStart": 134,
+          "printedEnd": 153,
+          "pdfStart": 134,
+          "pdfEnd": 153,
+          "path": "booong/textbooks/donga-social2-2022/unit-08.pdf",
+          "chapters": [
+            {
+              "title": "1. 우리나라의 매력적인 지형 경관",
+              "printedStart": 136,
+              "printedEnd": 140,
+              "pdfStart": 136,
+              "pdfEnd": 140,
+              "path": "booong/textbooks/donga-social2-2022/unit-08-chapter-01.pdf",
+              "bytes": 12991881,
+              "sha256": "aeeaa1297c6da4e1415c4373d3ae72292e4cbf504576b66c97397d186cf01435"
+            },
+            {
+              "title": "2. 우리나라의 기후 특성",
+              "printedStart": 141,
+              "printedEnd": 145,
+              "pdfStart": 141,
+              "pdfEnd": 145,
+              "path": "booong/textbooks/donga-social2-2022/unit-08-chapter-02.pdf",
+              "bytes": 3857225,
+              "sha256": "22ad2f345ab01507e060c1a329056883bec3e2f416d57d17ee77e3c449551331"
+            },
+            {
+              "title": "3. 자연재해의 특성과 대처 방안",
+              "printedStart": 146,
+              "printedEnd": 153,
+              "pdfStart": 146,
+              "pdfEnd": 153,
+              "path": "booong/textbooks/donga-social2-2022/unit-08-chapter-03.pdf",
+              "bytes": 11088537,
+              "sha256": "d306f5245c07a1a28c1af60d0c20eccb808eb34f4b53cc3af08b800ae6c2bab7"
+            }
+          ],
+          "bytes": 30879923,
+          "sha256": "4de5e4b329aec7364af558da5956cb99b26a63c16c8e994d6ac837bb131ac1c2"
+        },
+        {
+          "key": "사회2::IX. 중부 지역",
+          "title": "IX. 중부 지역",
+          "printedStart": 154,
+          "printedEnd": 175,
+          "pdfStart": 154,
+          "pdfEnd": 175,
+          "path": "booong/textbooks/donga-social2-2022/unit-09.pdf",
+          "chapters": [
+            {
+              "title": "1. 중부 지역의 지리적 특성과 매력적인 여정",
+              "printedStart": 156,
+              "printedEnd": 159,
+              "pdfStart": 156,
+              "pdfEnd": 159,
+              "path": "booong/textbooks/donga-social2-2022/unit-09-chapter-01.pdf",
+              "bytes": 6113872,
+              "sha256": "5b07b75efd6f268241a47fb4c3f85411d9d58f72e8e284db0c074dc481babb5c"
+            },
+            {
+              "title": "2. 수도권 공간 구조의 변화",
+              "printedStart": 160,
+              "printedEnd": 163,
+              "pdfStart": 160,
+              "pdfEnd": 163,
+              "path": "booong/textbooks/donga-social2-2022/unit-09-chapter-02.pdf",
+              "bytes": 3952261,
+              "sha256": "f8aeeb1e5749fa15a3de484ac93d52bc0f197cee34e720e5a3bfaddc3c0bb21d"
+            },
+            {
+              "title": "3. 강원·충청 지역의 변화",
+              "printedStart": 164,
+              "printedEnd": 167,
+              "pdfStart": 164,
+              "pdfEnd": 167,
+              "path": "booong/textbooks/donga-social2-2022/unit-09-chapter-03.pdf",
+              "bytes": 2900586,
+              "sha256": "5704ab14472e25508f4a1d88a5730da15ee61738fcb654497f4981e1b1437124"
+            },
+            {
+              "title": "4. 수도권과 비수도권 간의 지역 불균형",
+              "printedStart": 168,
+              "printedEnd": 175,
+              "pdfStart": 168,
+              "pdfEnd": 175,
+              "path": "booong/textbooks/donga-social2-2022/unit-09-chapter-04.pdf",
+              "bytes": 3768846,
+              "sha256": "4d5db80a3b4c107020d56fe0be8b541d7d1fdef5cdf01cf994f898fff214ad79"
+            }
+          ],
+          "bytes": 19046503,
+          "sha256": "bbf096bb16d97f95d9b8a28d3d1fe3d87e4fc44dd3ddf5f6eefd49917fc61dfa"
+        },
+        {
+          "key": "사회2::X. 남부 지역",
+          "title": "X. 남부 지역",
+          "printedStart": 176,
+          "printedEnd": 193,
+          "pdfStart": 176,
+          "pdfEnd": 193,
+          "path": "booong/textbooks/donga-social2-2022/unit-10.pdf",
+          "chapters": [
+            {
+              "title": "1. 남부 지역의 지리적 특성과 매력적인 여정",
+              "printedStart": 178,
+              "printedEnd": 181,
+              "pdfStart": 178,
+              "pdfEnd": 181,
+              "path": "booong/textbooks/donga-social2-2022/unit-10-chapter-01.pdf",
+              "bytes": 4766902,
+              "sha256": "b169b3a15f69a4b5acb257e2aee796171e8ccff90f91ef00f1d33da030b13637"
+            },
+            {
+              "title": "2. 영남·호남 지역의 위상과 산업 변화",
+              "printedStart": 182,
+              "printedEnd": 185,
+              "pdfStart": 182,
+              "pdfEnd": 185,
+              "path": "booong/textbooks/donga-social2-2022/unit-10-chapter-02.pdf",
+              "bytes": 2433224,
+              "sha256": "e26caf58e17c822578fe1f7ac772193a97acf629991e1cc126fe0627352690b2"
+            },
+            {
+              "title": "3. 다양한 가치를 산출한 제주도",
+              "printedStart": 186,
+              "printedEnd": 193,
+              "pdfStart": 186,
+              "pdfEnd": 193,
+              "path": "booong/textbooks/donga-social2-2022/unit-10-chapter-03.pdf",
+              "bytes": 5066791,
+              "sha256": "8c78828b5328c08347f9895130615a0cc66b513916096d70236f3b1702a0c27d"
+            }
+          ],
+          "bytes": 13891357,
+          "sha256": "698d4eac60ed8c8a595407ddc8ff9845605f2bd287b9b38b0e728486a35d7de8"
+        },
+        {
+          "key": "사회2::XI. 북부 지역",
+          "title": "XI. 북부 지역",
+          "printedStart": 194,
+          "printedEnd": 211,
+          "pdfStart": 194,
+          "pdfEnd": 211,
+          "path": "booong/textbooks/donga-social2-2022/unit-11.pdf",
+          "chapters": [
+            {
+              "title": "1. 북부 지역의 자연환경과 인문환경",
+              "printedStart": 196,
+              "printedEnd": 199,
+              "pdfStart": 196,
+              "pdfEnd": 199,
+              "path": "booong/textbooks/donga-social2-2022/unit-11-chapter-01.pdf",
+              "bytes": 4167233,
+              "sha256": "b8eb2483be68830da7b9332b37d23436fabc1c9bb817cab0c0a6226aea79a945"
+            },
+            {
+              "title": "2. 분단의 영향과 접경 지역",
+              "printedStart": 200,
+              "printedEnd": 203,
+              "pdfStart": 200,
+              "pdfEnd": 203,
+              "path": "booong/textbooks/donga-social2-2022/unit-11-chapter-02.pdf",
+              "bytes": 1999354,
+              "sha256": "25e87d0366da50c833795968a2662a4464619fce6602a70a9b48f4e458b01ad7"
+            },
+            {
+              "title": "3. 한반도 평화와 우리의 미래",
+              "printedStart": 204,
+              "printedEnd": 211,
+              "pdfStart": 204,
+              "pdfEnd": 211,
+              "path": "booong/textbooks/donga-social2-2022/unit-11-chapter-03.pdf",
+              "bytes": 8825944,
+              "sha256": "b5c76eef1dda5de2747463f953c0dd45ceb3fbd3513765f1723c8b054a200f5d"
+            }
+          ],
+          "bytes": 16370583,
+          "sha256": "3f0e4b04150f0bbf8e7d44822b9b0e8ed471ab141a98f77680a5fa689b955be3"
+        },
+        {
+          "key": "사회2::XII. 지속가능한 세계와 글로벌 시민",
+          "title": "XII. 지속가능한 세계와 글로벌 시민",
+          "printedStart": 212,
+          "printedEnd": 229,
+          "pdfStart": 212,
+          "pdfEnd": 229,
+          "path": "booong/textbooks/donga-social2-2022/unit-12.pdf",
+          "chapters": [
+            {
+              "title": "1. 자원의 지속가능한 이용",
+              "printedStart": 214,
+              "printedEnd": 217,
+              "pdfStart": 214,
+              "pdfEnd": 217,
+              "path": "booong/textbooks/donga-social2-2022/unit-12-chapter-01.pdf",
+              "bytes": 2426740,
+              "sha256": "06fc1f9f81dc40bbb55489cf7165964e53682ce68a7ff71c9ed96b32af574cd2"
+            },
+            {
+              "title": "2. 환경과 인간의 공존",
+              "printedStart": 218,
+              "printedEnd": 221,
+              "pdfStart": 218,
+              "pdfEnd": 221,
+              "path": "booong/textbooks/donga-social2-2022/unit-12-chapter-02.pdf",
+              "bytes": 2795938,
+              "sha256": "ff8f143f9faef8e41f8bfa7b49c768e4ac7eb278b22f8bd15578f406d35cf7cc"
+            },
+            {
+              "title": "3. 지속가능한 삶터 조성을 위한 노력",
+              "printedStart": 222,
+              "printedEnd": 229,
+              "pdfStart": 222,
+              "pdfEnd": 229,
+              "path": "booong/textbooks/donga-social2-2022/unit-12-chapter-03.pdf",
+              "bytes": 5755194,
+              "sha256": "43013030b9de592325964af54f643cd46dff457331037753a7a0196c59ee32ed"
+            }
+          ],
+          "bytes": 12641346,
+          "sha256": "3cb8b6cbe835630f2afc924e1a34220162831dc065b6bec0c4040f4af504a58d"
+        }
+      ]
     }
   ]
 }

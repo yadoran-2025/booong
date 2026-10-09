@@ -74,6 +74,13 @@ const makers = ["moon", "choi", "hyum", "dol"];
 const jointMarkup = renderResourceCard({ ...resource, makers });
 assert.equal((jointMarkup.match(/chip chip--gray bundle-card__maker/g) || []).length, 4);
 for (const maker of makers) assert.ok(jointMarkup.includes(`href="about.html#${maker}">${maker}</a>`));
+for (const collaborationMakers of [["Dooclass"], ["dooclass", "moon"]]) {
+  const collaborationMarkup = renderResourceCard({ ...resource, makers: collaborationMakers });
+  assert.match(collaborationMarkup, /class="chip bundle-card__collaboration">두클래스 협업 컨텐츠<\/span>/);
+  assert.doesNotMatch(collaborationMarkup, /bundle-card__makers|bundle-card__maker-names|about\.html#/);
+}
+assert.doesNotMatch(renderResourceCard({ ...resource, makers: ["Dooclass-other"] }), /bundle-card__collaboration/);
+assert.doesNotMatch(renderResourceCard({ ...resource, makers: [] }), /bundle-card__collaboration|bundle-card__makers/);
 const missing = renderResourceCard({ ...resource, actions: [actions[1]] });
 assert.equal((missing.match(/aria-disabled="true"/g) || []).length, 2);
 assert.equal((missing.match(/data-track-action/g) || []).length, 1);
@@ -184,6 +191,10 @@ const units = [
 const state = { unit: "", middleUnit: "", kind: "all", query: "", sort: "unit" };
 const grouped = renderUnitNavigator(units, null, [resource], state, "통합사회2");
 assert.equal((grouped.match(/data-library-section/g) || []).length, 2);
+assert.equal((grouped.match(/data-middle-section/g) || []).length, 2);
+assert.match(grouped, /<h3 id="middle-title-u1[^\"]*">1\. 첫 단원<\/h3>/);
+assert.match(grouped, /<h4>사례 &lt;탐구&gt;<\/h4>/);
+assert.doesNotMatch(grouped, /<h3[^>]*>2\. 자료 없는 중단원<\/h3>/);
 assert.match(grouped, /data-unit="" aria-pressed="true"/);
 assert.match(grouped, /data-middle-unit="1\. 첫 단원"/);
 assert.match(grouped, /<span>1\. 첫 단원<\/span><small>1개<\/small>/);
@@ -199,29 +210,49 @@ assert.equal((selected.match(/data-library-section/g) || []).length, 1);
 assert.match(selected, /2\. 다음 단원 \(1개\)<\/option>/);
 assert.ok(compareResourceByMiddleUnit(resource, { ...resource, middleUnitsByKey: { u1: ["2. 둘째 단원"] } }, "u1") < 0);
 
+const shared = { ...resource, middleUnitsByKey: { u1: ["1. 첫 단원", "2. 자료 없는 중단원", "1. 첫 단원"] } };
+const sharedMarkup = renderUnitNavigator([units[0]], units[0], [shared], { ...state, unit: "u1" }, "통합사회2");
+assert.equal((sharedMarkup.match(/data-resource-id="r1"/g) || []).length, 2, "a lesson appears once in each linked middle unit");
+assert.match(sharedMarkup, /중단원 2개 · 수업 1개/);
+assert.match(sharedMarkup, /data-middle-units="\[&quot;2\. 자료 없는 중단원&quot;\]"/, "each copy filters by its own middle unit");
+const unassignedMarkup = renderUnitNavigator([units[0]], units[0], [{ ...resource, middleUnitsByKey: { u1: [] } }], state, "통합사회2");
+assert.match(unassignedMarkup, />단원 공통 자료<\/h3>/);
+assert.equal((unassignedMarkup.match(/data-resource-id="r1"/g) || []).length, 1);
+const sortedMarkup = renderUnitNavigator([units[0]], units[0], [{ ...resource, title: "하 수업" }, { ...resource, id: "r2", title: "가 수업" }], { ...state, sort: "title" }, "통합사회2");
+assert.ok(sortedMarkup.indexOf("<h4>가 수업") < sortedMarkup.indexOf("<h4>하 수업"), "title sorting works within a middle unit");
+
 const item = (id, kind, middle) => ({ hidden: false, dataset: { resourceId: id, kind, middleUnits: JSON.stringify([middle]), search: "사례 탐구" } });
 const rows = [item("r1", "lesson", "1. 첫 단원"), item("r1", "lesson", "2. 다음 단원"), item("r2", "game", "2. 다음 단원")];
-const sections = [[rows[0]], [rows[1], rows[2]]].map(items => {
+const middleSections = rows.map(row => ({ hidden: false, label: {}, querySelectorAll: () => [row], querySelector() { return this.label; } }));
+const sections = [[middleSections[0]], [middleSections[1], middleSections[2]]].map(groups => {
   const label = {};
-  return { hidden: false, label, querySelectorAll: () => items, querySelector: () => label };
+  return { hidden: false, label, querySelectorAll: selector => selector === "[data-library-item]" ? groups.flatMap(group => group.querySelectorAll()) : groups, querySelector: () => label };
 });
 const count = {}, empty = {};
 const root = {
-  querySelectorAll: selector => selector === "[data-library-item]" ? rows : sections,
+  querySelectorAll: selector => selector === "[data-library-item]" ? rows : selector === "[data-middle-section]" ? middleSections : sections,
   querySelector: selector => selector === "[data-library-count]" ? count : empty,
 };
 applyLibraryFilter(root, state);
 assert.equal(count.textContent, "수업 2개"); // A resource linked to two units is counted once.
+assert.equal(sections[1].label.textContent, "중단원 2개 · 수업 2개");
 applyLibraryFilter(root, { ...state, middleUnit: "1. 첫 단원" });
 assert.equal(rows[0].hidden, false);
 assert.equal(rows[1].hidden, true);
 assert.equal(sections[1].hidden, true);
+assert.equal(middleSections[1].hidden, true);
 applyLibraryFilter(root, { ...state, kind: "game" });
 assert.equal(sections[0].hidden, true);
 assert.equal(rows[2].hidden, false);
+assert.equal(middleSections[1].hidden, true);
+assert.equal(middleSections[2].hidden, false);
 applyLibraryFilter(root, { ...state, query: "없는 검색어" });
 assert.equal(empty.hidden, false);
 assert.ok(sections.every(section => section.hidden));
+assert.ok(middleSections.every(section => section.hidden));
+const duplicateSection = { ...sections[0], querySelectorAll: selector => selector === "[data-library-item]" ? [rows[0], rows[1]] : [middleSections[0], middleSections[1]] };
+applyLibraryFilter({ ...root, querySelectorAll: selector => selector === "[data-library-section]" ? [duplicateSection] : root.querySelectorAll(selector) }, state);
+assert.equal(duplicateSection.label.textContent, "중단원 2개 · 수업 1개", "chapter totals deduplicate lessons linked to multiple middle units");
 console.log("Dashboard library: grouped units, links, scoped sorting and filters passed.");
 
 // Counts and cards use the same catalog, while saved missing IDs survive outages.

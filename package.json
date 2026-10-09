@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "serve": "node scripts/serve.mjs",
-    "test": "node scripts/test-lesson-markup.mjs && node scripts/test-dashboard-data.mjs && node scripts/test-dashboard-library.mjs && node scripts/test-teacher-profile.mjs && node scripts/test-member-data.mjs && node scripts/test-favorites.mjs && node scripts/test-visitor-journeys.mjs && node scripts/test-card-discussions.mjs && node scripts/test-dorms-auth.mjs && node scripts/test-admin.mjs && node scripts/test-watcha-library.mjs && node scripts/test-watcha-shared.mjs && node scripts/test-textbook-analysis.mjs && node scripts/test-textbook-pdf.mjs && node scripts/test-textbook-export.mjs",
+    "test": "node scripts/test-lesson-markup.mjs && node scripts/test-dashboard-data.mjs && node scripts/test-dashboard-library.mjs && node scripts/test-teacher-profile.mjs && node scripts/test-member-data.mjs && node scripts/test-favorites.mjs && node scripts/test-visitor-journeys.mjs && node scripts/test-card-discussions.mjs && node scripts/test-dorms-auth.mjs && node scripts/test-admin.mjs && node scripts/test-notices.mjs && node scripts/test-watcha-library.mjs && node scripts/test-watcha-shared.mjs && node scripts/test-textbook-analysis.mjs && node scripts/test-textbook-pdf.mjs && node scripts/test-textbook-export.mjs",
     "check": "node scripts/check-js.mjs && node scripts/check-local-imports.mjs",
     "smoke": "node scripts/smoke-pages.mjs",
     "vendor:intro": "node scripts/vendor-intro-three.mjs"

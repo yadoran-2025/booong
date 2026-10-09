@@ -42,7 +42,32 @@ for (const unit of book.units) {
     assert.match(section.sha256, /^[a-f0-9]{64}$/);
   }
 }
-assert.equal(textbooksForUnit(library, "사회2::III. 시장과 가격").length, 0);
+assert.equal(textbooksForUnit(library, "사회2::III. 시장과 가격").length, 1);
+for (const number of [1, 2]) {
+  const added = library.books.find(item => item.id === `donga-social${number}-2022`);
+  assert.equal(added.publisher, "동아출판");
+  assert.equal(added.subject, `사회${number}`);
+  assert.equal(added.revision, "2022 개정");
+  assert.equal(added.sourcePages, number === 1 ? 254 : 262);
+  assert.equal(added.units.length, 12);
+  assert.equal(added.units.flatMap(unit => unit.chapters).length, 37);
+  for (const unit of added.units) {
+    assert.ok(unit.key.startsWith(`${added.subject}::`));
+    assert.equal(unit.chapters[0].pdfStart, unit.pdfStart + 2);
+    assert.equal(unit.chapters.at(-1).pdfEnd, unit.pdfEnd);
+    for (const [index, chapter] of unit.chapters.entries()) {
+      if (index) assert.equal(chapter.pdfStart, unit.chapters[index - 1].pdfEnd + 1);
+      assert.equal(chapter.pdfStart, chapter.printedStart);
+      assert.equal(chapter.pdfEnd, chapter.printedEnd);
+      assert.ok(chapter.pdfStart <= chapter.pdfEnd && chapter.pdfEnd <= unit.pdfEnd);
+      assert.ok(chapter.bytes > 0);
+      assert.match(chapter.sha256, /^[a-f0-9]{64}$/);
+      assert.ok(chapter.path.startsWith(`booong/textbooks/${added.id}/`));
+      const link = createTextbookLink("https://booong.vercel.app", library, added.id, unit.key, index);
+      assert.equal(readTextbookLink(link, library).chapter, index);
+    }
+  }
+}
 const imported = library.books.filter(item => item.school === "고등학교");
 assert.equal(imported.length, 14);
 for (const importedBook of imported) {

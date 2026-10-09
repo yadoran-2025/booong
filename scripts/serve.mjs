@@ -17,6 +17,7 @@ const authRoutes = new Map([
   ["/api/auth/dorms/logout", "../api/auth/dorms/logout.js"],
   ["/api/comments", "../api/comments.js"],
   ["/api/admin", "../api/admin.js"],
+  ["/api/notices", "../api/notices.js"],
   ["/api/textbooks", "../api/textbooks.js"],
   ["/api/watcha-library", "../api/watcha-library.js"],
 ]);

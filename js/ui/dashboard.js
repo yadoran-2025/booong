@@ -7,6 +7,7 @@ import { hydrateViewCounts, renderResourceCount, renderViewCounter } from "./vie
 import { bindCardDiscussions, renderCardDiscussion } from "./card-discussions.js";
 import { bindResourceDescriptions } from "./resource-descriptions.js";
 import { bindHomeIntro, renderHomeIntro } from "./dashboard-intro.js";
+import { bindNotices, renderNoticeBar } from "./notices.js";
 
 let didWarnCatalogDiagnostics = false;
 const resourcePlaceholderUrls = ["social-studies", "civics", "economics", "history"]
@@ -99,6 +100,7 @@ function renderCurationHome(root, config, state, focusTarget = "") {
   root.innerHTML = `
     <div class="curation-shell">
       ${renderTopbar(config.catalog.resources, false, state)}
+      ${renderNoticeBar()}
       ${renderSubjectRoller(state.profile, state.subjectOptions)}
       <main>
         ${renderUnitNavigator(units, selectedUnit, subjectItems, state, subjectLabel)}
@@ -292,14 +294,31 @@ function renderResourcePanel(items, unit, state) {
   const sortedItems = [...items].sort(state.sort === "title"
     ? (a, b) => a.title.localeCompare(b.title, "ko")
     : (a, b) => compareResourceByMiddleUnit(a, b, unit.key));
+  const middleGroups = new Map();
+  sortedItems.forEach(item => {
+    const titles = item.middleUnitsByKey?.[unit.key] || item.middleUnits || [];
+    for (const middleUnit of new Set(titles.length ? titles : [""])) {
+      if (!middleGroups.has(middleUnit)) middleGroups.set(middleUnit, []);
+      middleGroups.get(middleUnit).push(item);
+    }
+  });
+  const middleTitles = [...new Set([...(unit.middleUnits || []), ...middleGroups.keys()])]
+    .filter(title => middleGroups.has(title));
   const [, number = "", title = unit.title] = unit.title.match(/^([IVXLCDM]+\.)\s*(.+)$/) || [];
   return `
     <section class="curation-unit-section" data-library-section aria-labelledby="unit-title-${escapeAttr(encodeURIComponent(unit.key))}">
       <header class="curation-section-head">
         <h2 id="unit-title-${escapeAttr(encodeURIComponent(unit.key))}">${number ? `<span>${escapeHtml(number)}</span>` : ""}${escapeHtml(title)}</h2>
-        <span data-section-count>${sortedItems.length}개 자료</span>
+        <span data-section-count>중단원 ${middleTitles.length}개 · 수업 ${sortedItems.length}개</span>
       </header>
-      <div class="bundle-list" data-library-grid>${sortedItems.map(item => renderResourceCard(item, unit.key)).join("")}</div>
+      <div class="bundle-list" data-library-grid>${middleTitles.map(middleUnit => {
+        const group = middleGroups.get(middleUnit);
+        const headingId = `middle-title-${encodeURIComponent(`${unit.key}::${middleUnit}`)}`;
+        return `<section class="curation-middle-section" data-middle-section aria-labelledby="${escapeAttr(headingId)}">
+          <header class="curation-middle-head"><h3 id="${escapeAttr(headingId)}">${escapeHtml(middleUnit || "단원 공통 자료")}</h3><span data-middle-count>수업 ${group.length}개</span></header>
+          <div class="bundle-list">${group.map(item => renderResourceCard(item, unit.key, middleUnit)).join("")}</div>
+        </section>`;
+      }).join("")}</div>
     </section>
   `;
 }
@@ -318,22 +337,24 @@ function renderKindButton(value, label, state) {
   return `<button type="button" data-kind="${value}" aria-pressed="${selected}">${label}</button>`;
 }
 
-function renderResourceCard(item, selectedUnitKey = "") {
+function renderResourceCard(item, selectedUnitKey = "", groupedMiddleUnit = null) {
   const middleUnits = item.middleUnitsByKey?.[selectedUnitKey] || item.middleUnits || [];
+  const grouped = groupedMiddleUnit !== null;
+  const heading = grouped ? "h4" : "h3";
   const isFavorite = loadFavoriteIds().includes(item.id);
   return `
-    <article class="bundle-card has-cover" data-resource-id="${escapeAttr(item.id)}" data-library-item data-kind="${escapeAttr(item.kind)}" data-middle-units="${escapeAttr(JSON.stringify(middleUnits))}" data-search="${escapeAttr(item.searchText)}">
+    <article class="bundle-card has-cover" data-resource-id="${escapeAttr(item.id)}" data-library-item data-kind="${escapeAttr(item.kind)}" data-middle-units="${escapeAttr(JSON.stringify(grouped ? [groupedMiddleUnit] : middleUnits))}" data-search="${escapeAttr(item.searchText)}">
       ${renderResourceCover(item)}
       <div class="bundle-card__content">
         <div class="bundle-card__badges">
-          ${middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
+          ${grouped ? `<span>${item.kind === "game" ? "게임" : "수업"}</span>` : middleUnits.length ? `<span>${escapeHtml(formatUnitList(middleUnits))}</span>` : ""}
         </div>
         <div class="bundle-card__utilities">
           <button class="bundle-favorite" type="button" data-favorite-id="${escapeAttr(item.id)}" aria-pressed="${isFavorite}" aria-label="${escapeAttr(`${item.title} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`)}" title="${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}">
             <span class="bundle-favorite__icon" aria-hidden="true">${isFavorite ? "★" : "☆"}</span>
           </button>
         </div>
-        <h3>${escapeHtml(item.title)}</h3>
+        <${heading}>${escapeHtml(item.title)}</${heading}>
         <div class="bundle-card__description" data-resource-description>
           <p>${escapeHtml(item.desc || "수업에 바로 활용할 수 있는 자료입니다.")}</p>
           <button type="button" aria-expanded="false" hidden>더 보기</button>
@@ -346,7 +367,7 @@ function renderResourceCard(item, selectedUnitKey = "") {
         </div>
       </div>
       <footer class="bundle-card__meta">
-          ${item.makers.length ? `<div class="bundle-card__makers" aria-label="만든이"><span>만든이</span><div class="bundle-card__maker-names">${item.makers.map(maker => `<a class="chip chip--gray bundle-card__maker" href="about.html#${escapeAttr(encodeURIComponent(maker))}">${escapeHtml(maker)}</a>`).join("")}</div></div>` : ""}
+          ${item.makers.some(maker => maker.toLowerCase() === "dooclass") ? `<span class="chip bundle-card__collaboration">두클래스 협업 컨텐츠</span>` : item.makers.length ? `<div class="bundle-card__makers" aria-label="만든이"><span>만든이</span><div class="bundle-card__maker-names">${item.makers.map(maker => `<a class="chip chip--gray bundle-card__maker" href="about.html#${escapeAttr(encodeURIComponent(maker))}">${escapeHtml(maker)}</a>`).join("")}</div></div>` : ""}
           <div class="bundle-card__engagement">
             <div class="bundle-card__stats">
               ${renderResourceCount(escapeAttr(getResourceViewKey(item)), escapeAttr(item.id))}
@@ -425,6 +446,7 @@ function renderFooter() {
 }
 
 function bindCurationEvents(root, config, state) {
+  bindNotices(root);
   bindResourceImages(root);
   bindResourceDescriptions(root);
   hydrateViewCounts(root);
@@ -573,7 +595,7 @@ async function toggleFavorite(root, button, resources) {
   root.querySelectorAll("[data-favorite-id]").forEach(item => {
     if (item.dataset.favoriteId !== id) return;
     item.setAttribute("aria-pressed", String(isFavorite));
-    item.setAttribute("aria-label", `${item.closest(".bundle-card")?.querySelector("h3")?.textContent || "수업"} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`);
+    item.setAttribute("aria-label", `${item.closest(".bundle-card")?.querySelector("h3, h4")?.textContent || "수업"} ${isFavorite ? "수업함에서 빼기" : "수업함에 담기"}`);
     item.title = isFavorite ? "수업함에서 빼기" : "수업함에 담기";
     item.querySelector(".bundle-favorite__icon").textContent = isFavorite ? "★" : "☆";
     item.disabled = true;
@@ -623,9 +645,15 @@ function applyLibraryFilter(root, state) {
     item.hidden = !(kindMatch && queryMatch && middleMatch);
     if (!item.hidden) visibleIds.add(item.dataset.resourceId);
   });
-  root.querySelectorAll("[data-library-section]").forEach(section => {
+  root.querySelectorAll("[data-middle-section]").forEach(section => {
     const count = [...section.querySelectorAll("[data-library-item]")].filter(item => !item.hidden).length;
-    section.querySelector("[data-section-count]").textContent = `${count}개 자료`;
+    section.querySelector("[data-middle-count]").textContent = `수업 ${count}개`;
+    section.hidden = count === 0;
+  });
+  root.querySelectorAll("[data-library-section]").forEach(section => {
+    const count = new Set([...section.querySelectorAll("[data-library-item]")].filter(item => !item.hidden).map(item => item.dataset.resourceId)).size;
+    const middleCount = [...section.querySelectorAll("[data-middle-section]")].filter(group => !group.hidden).length;
+    section.querySelector("[data-section-count]").textContent = `중단원 ${middleCount}개 · 수업 ${count}개`;
     section.hidden = !state.unit && count === 0;
   });
   const countLabel = root.querySelector("[data-library-count]");

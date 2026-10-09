@@ -13,10 +13,14 @@ export function renderHomeIntro() {
           <nav aria-label="첫 화면 빠른 이동"><a href="#lesson-library" data-intro-skip>수업 바로 보기 ↓</a><a href="index.html?view=favorites">내 수업함</a></nav>
         </header>
         <div class="home-intro__copy">
-          <span class="home-intro__eyebrow">함께일 때 더 멀리</span>
+          <span class="home-intro__eyebrow">사회교육공동체 booong</span>
           <h1 id="home-intro-title">함께 가면,<br>더 멀리 간다</h1>
-          <p>선생님의 아이디어가<br>다음 수업의 길이 됩니다.</p>
-          <a class="btn btn--primary home-intro__start" href="#lesson-library" data-intro-skip>수업 둘러보기 ↓</a>
+          <p>“많은 개인적 곤경은 개인의 문제로만 해결할 수 없으며,<br>공적 쟁점으로 이해해야 한다.”<br>
+            <small>— C. 라이트 밀스, 『사회학적 상상력』 (발췌·번역)</small></p>
+          <div class="home-intro__actions">
+            <a class="btn btn--primary home-intro__start" href="#lesson-library" data-intro-skip>수업 둘러보기 ↓</a>
+            <a class="btn btn--secondary home-intro__start" href="index.html?view=favorites">내 수업함</a>
+          </div>
         </div>
         <a class="home-intro__credit" href="assets/models/credits.txt" target="_blank" rel="noopener">BOOONG Scooter · Three.js</a>
         <a class="home-intro__scroll" href="#lesson-library" data-intro-skip>스크롤해서 수업 만나기 <span aria-hidden="true">↓</span></a>

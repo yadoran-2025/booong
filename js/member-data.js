@@ -15,6 +15,7 @@ export function normalizeMemberRow(row) {
     avatar: String(row.avatar || "").trim(),
     interests: String(row.interests || "").trim(),
     career: splitList(row.career),
+    trainingCareer: splitList(row["세부 연수경력"]),
     bio: String(row.bio || "").trim(),
     making: splitList(row.making),
     homepage: String(row.homepage || "").trim(),

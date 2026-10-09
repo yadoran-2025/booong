@@ -1,6 +1,7 @@
 import { createMakerWorkMap, createWorkMap, getMemberLookupKeys, loadCachedDashboardConfig, loadDashboardConfig } from "./dashboard-data.js";
 import { loadMembers } from "./member-data.js";
 import { escapeHtml } from "./utils.js";
+import { getLessonPageKey, loadGroupClickStats, loadPageVisitStats } from "./visitor-analytics.js";
 
 const root = document.getElementById("about-root");
 
@@ -21,6 +22,8 @@ const state = {
   workMap: new Map(),
   makerWorkMap: new Map(),
   selectedMemberId: "",
+  pageViews: new Map(),
+  linkClicks: new Map(),
 };
 
 init();
@@ -35,6 +38,7 @@ async function init() {
 
     renderAbout();
     refreshWorks();
+    refreshWorkStats();
   } catch (err) {
     root.innerHTML = renderError(err);
   }
@@ -47,6 +51,17 @@ async function refreshWorks() {
   } catch (err) {
     console.warn("About works refresh failed:", err);
   }
+}
+
+async function refreshWorkStats() {
+  const [pages, clicks] = await Promise.all([loadPageVisitStats(), loadGroupClickStats()]);
+  state.pageViews = new Map(pages.map(page => [page.key, page.views]));
+  state.linkClicks = new Map(clicks.map(click => [click.groupId, click.views]));
+  root.querySelectorAll("[data-work-metric]").forEach(slot => {
+    const values = slot.dataset.metricType === "조회수" ? state.pageViews : state.linkClicks;
+    const value = values.get(slot.dataset.metricKey);
+    slot.querySelector("strong").textContent = value == null ? "—" : Number(value).toLocaleString("ko-KR");
+  });
 }
 
 function applyDashboardConfig(config) {
@@ -171,6 +186,12 @@ function bindMemberCardActions() {
   root.querySelector("[data-action='close-member']")?.addEventListener("click", () => {
     selectMember("");
   });
+  const trainingToggle = root.querySelector("[data-action='toggle-training']");
+  trainingToggle?.addEventListener("click", () => {
+    const expanded = trainingToggle.getAttribute("aria-expanded") !== "true";
+    trainingToggle.setAttribute("aria-expanded", String(expanded));
+    trainingToggle.nextElementSibling.inert = !expanded;
+  });
 }
 
 function selectMember(memberId) {
@@ -229,11 +250,27 @@ function renderMemberCard(member, works) {
       <section class="member-card__career" aria-label="${escapeAttr(name)} 경력">
         <h3 class="member-card__section-title">경력</h3>
         ${career.length ? renderCareer(career) : `<p class="member-card__empty">—</p>`}
+        ${member.trainingCareer?.length ? `
+          <section class="member-card__training">
+            <button class="member-card__training-toggle" type="button" data-action="toggle-training" aria-expanded="false" aria-controls="member-training-content">
+              <span>세부 연수경력</span>
+              <span class="member-card__training-count">${member.trainingCareer.length}건</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="member-card__training-content" id="member-training-content" inert>
+              <div>${renderCareer(member.trainingCareer.map(place => ({ place })), "ol")}</div>
+            </div>
+          </section>
+        ` : ""}
       </section>
 
       <aside class="member-lessons" aria-label="${escapeAttr(name)} 제작 자료">
-        <h3 class="member-card__section-title">만든 자료</h3>
+        <div class="member-lessons__header">
+          <h3>만든 자료 <span>${works.length}</span></h3>
+          ${works.length ? `<p>수업 ${works.filter(work => work.type === "lesson").length} · 게임 ${works.filter(work => work.type === "game").length}</p>` : ""}
+        </div>
         ${works.length ? renderWorkLinks(works) : `<p class="member-card__empty">—</p>`}
+        ${works.length ? `<p class="member-lessons__note">링크 클릭은 BOOONG에서 자료를 연 횟수입니다.</p>` : ""}
       </aside>
     </article>
   `;
@@ -247,16 +284,16 @@ function renderInterests(interests) {
   `;
 }
 
-function renderCareer(career) {
+function renderCareer(career, listTag = "ul") {
   return `
-    <ul class="member-career">
+    <${listTag} class="member-career">
       ${career.map(item => `
         <li>
           <span class="member-career__place">${escapeHtml(item.place)}</span>
           ${item.period ? `<span class="member-career__period">${escapeHtml(item.period)}</span>` : ""}
         </li>
       `).join("")}
-    </ul>
+    </${listTag}>
   `;
 }
 
@@ -266,21 +303,35 @@ function renderWorkLinks(works) {
       ${works.map(work => {
         const typeStyle = TYPE_COLORS[work.type] || { label: work.label || "자료", bg: "#F4F6FA", color: "#5A6372" };
         const meta = getWorkMeta(work);
+        const metric = getWorkMetric(work);
         return `
           <li>
             <a href="${escapeAttr(work.href)}" ${work.external ? `target="_blank" rel="noopener"` : ""}>
-              ${meta ? `<span class="member-lessons__meta">${escapeHtml(meta)}</span>` : ""}
-              <span class="member-lessons__name">${escapeHtml(getWorkTitle(work))}</span>
-              <span
-                class="member-lessons__type"
-                style="--work-bg: ${escapeAttr(typeStyle.bg)}; --work-color: ${escapeAttr(typeStyle.color)};"
-              >${escapeHtml(typeStyle.label)}</span>
+              <span class="member-lessons__details">
+                <span class="member-lessons__type" style="--work-bg: ${escapeAttr(typeStyle.bg)}; --work-color: ${escapeAttr(typeStyle.color)};">${escapeHtml(typeStyle.label)}</span>
+                <span class="member-lessons__name">${escapeHtml(getWorkTitle(work))} <span class="member-lessons__arrow" aria-hidden="true">${work.external ? "↗" : "→"}</span></span>
+                ${meta ? `<span class="member-lessons__meta" title="${escapeAttr((work.units || []).join(" · "))}">${escapeHtml(meta)}</span>` : ""}
+              </span>
+              <span class="member-lessons__metric" data-work-metric data-metric-type="${metric.label}" data-metric-key="${escapeAttr(metric.key)}" title="${metric.label === "조회수" ? "BOOONG 안에서 이 수업을 연 횟수" : "외부 사이트의 조회수가 아닌 BOOONG에서 링크를 연 횟수"}">
+                <strong>${metric.value == null ? "—" : Number(metric.value).toLocaleString("ko-KR")}</strong>
+                <span>${metric.label}</span>
+              </span>
             </a>
           </li>
         `;
       }).join("")}
     </ul>
   `;
+}
+
+function getWorkMetric(work) {
+  const lessonId = !work.external && new URL(work.href, "https://booong.vercel.app").searchParams.get("lesson");
+  if (lessonId) {
+    const key = getLessonPageKey(lessonId);
+    return { label: "조회수", key, value: state.pageViews.get(key) };
+  }
+  const clickId = String(work.id).trim().toLowerCase().replace(/[^a-z0-9가-힣_-]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 96);
+  return { label: "링크 클릭", key: clickId, value: state.linkClicks.get(clickId) };
 }
 
 function resolveMemberWorks(member, makerWorkMap) {

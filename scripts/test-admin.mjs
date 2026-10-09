@@ -72,7 +72,8 @@ try {
   const catalog = response();
   await textbookApi({ ...textbookRequest, url: "/api/textbooks?catalog=1" }, catalog);
   assert.equal(catalog.statusCode, 200);
-  assert.equal(JSON.parse(catalog.body).books.length, 15);
+  const textbookCatalog = JSON.parse(await readFile(new URL("../data/textbooks.json", import.meta.url), "utf8"));
+  assert.deepEqual(JSON.parse(catalog.body).books.map(book => book.id), textbookCatalog.books.map(book => book.id));
   const { privateKey: readerKey } = await generateKeyPair("RS256", { extractable: true });
   process.env.FIREBASE_TEXTBOOK_READER = Buffer.from(JSON.stringify({
     type: "service_account", project_id: "yadoran-2025",
@@ -157,6 +158,7 @@ try {
   assert.match(container.innerHTML, /href="analytics.html"/);
   assert.match(container.innerHTML, /href="textbook-analysis.html"/);
   assert.match(container.innerHTML, /href="watcha-library.html"/);
+  assert.match(container.innerHTML, /href="notice-admin.html"/);
   await render(document, () => fakeAuth, {}, async () => new Response('{"reason":"access_denied"}', { status: 403 }), String, { origin: "https://booong.vercel.app" });
   assert.doesNotMatch(container.innerHTML, /admin-cards|href="analytics.html"/);
   const fetchSource = source.replace("await renderAdmin();", "return adminFetch;");

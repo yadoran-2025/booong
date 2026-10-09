@@ -14,6 +14,7 @@ const pages = [
   "about.html",
   "analytics.html",
   "admin.html",
+  "notice-admin.html",
   "textbook-analysis.html",
   "watcha-library.html",
   "login.html",

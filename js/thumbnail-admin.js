@@ -1,5 +1,5 @@
 import { adminFetch, requireAdmin, adminAccountId, onAdminAccountChange } from "./admin.js";
-import { loadDashboardConfig } from "./dashboard-data.js";
+import { loadDashboardConfig, buildDashboardCatalog } from "./dashboard-data.js";
 import { renderResourceCard } from "./ui/dashboard.js";
 import { escapeHtml } from "./utils.js";
 import { thumbnailUrl, thumbnailCrop, encodeThumbnail, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_MIME_TYPE, THUMBNAIL_QUALITY } from "./thumbnail-data.js";
@@ -204,7 +204,10 @@ async function start() {
   if (!response || run !== epoch) return;
   account = adminAccountId();
   records = (await response.json()).thumbnails;
-  const config = await loadDashboardConfig();
+  const catalogResponse = await adminFetch("/api/lesson-catalog?admin=1");
+  if (!catalogResponse.ok) throw new Error("수업 목록을 불러오지 못했습니다.");
+  const managed = (await catalogResponse.json()).state;
+  const config = managed ? { catalog: buildDashboardCatalog(managed.rows.map(row => ({ ...row, published: "TRUE" })), managed.unitRows) } : await loadDashboardConfig();
   if (run !== epoch || account !== adminAccountId()) return;
   resources = config.catalog.resources;
   root.innerHTML = `<div class="admin-shell"><nav class="analytics__nav admin-nav" aria-label="운영자 페이지 이동"><a class="analytics__brand" href="admin.html">BOOONG</a><a class="analytics__back" href="admin.html">← 운영자 공간</a></nav>
@@ -231,6 +234,8 @@ async function start() {
     finally { setBusy(false); }
   });
   renderGallery();
+  const target = resources.find(item => item.id === new URLSearchParams(location.search).get("lesson"));
+  if (target) openEditor(target, root.querySelector(`[data-edit-thumbnail="${CSS.escape(target.id)}"]`));
 }
 
 onAdminAccountChange(id => {

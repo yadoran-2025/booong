@@ -24,6 +24,7 @@ const authRoutes = new Map([
   ["/api/comments", "../api/comments.js"],
   ["/api/admin", "../api/admin.js"],
   ["/api/lesson-thumbnails", "../api/admin.js"],
+  ["/api/lesson-catalog", "../api/admin.js"],
   ["/api/rice-basket", "../api/rice-basket.js"],
   ["/api/bungmo-session", "../api/bungmo-session.js"],
   ["/api/notices", "../api/notices.js"],
@@ -88,7 +89,7 @@ const server = createServer(async (req, res) => {
   if (authRoute) {
     try {
       const run = () => import(authRoute).then(module => module.default(req, res));
-      if (localRequest && ['/api/admin', '/api/lesson-thumbnails', '/api/notices', '/api/research-erp', '/api/textbooks', '/api/watcha-library', '/api/bungmo-session'].includes(pathname)) await withLocalAdmin(req, run);
+      if (localRequest && ['/api/admin', '/api/lesson-catalog', '/api/lesson-thumbnails', '/api/notices', '/api/research-erp', '/api/textbooks', '/api/watcha-library', '/api/bungmo-session'].includes(pathname)) await withLocalAdmin(req, run);
       else await run();
     }
     catch { res.writeHead(503); res.end("Authentication unavailable"); }

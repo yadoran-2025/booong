@@ -5,7 +5,7 @@ const DASHBOARD_SHEET_URLS = {
   units: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=1789849359&single=true&output=csv",
 };
 
-const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v3";
+const DASHBOARD_CONFIG_CACHE_KEY = "booong-dashboard-config-v4";
 const DASHBOARD_CONFIG_CACHE_TTL = 10 * 60 * 1000;
 
 const SCHOOL_BY_SUBJECT = {
@@ -34,9 +34,25 @@ const SUBJECT_LABELS = {
 export async function loadDashboardConfig(options = {}) {
   const useCache = options.cache !== false;
   const cached = useCache ? loadCachedDashboardConfig() : null;
-  if (cached) return cached;
-
   const local = await loadLocalDashboardConfig();
+
+  try {
+    const response = await fetch("/api/lesson-catalog", { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error("Managed catalog unavailable");
+    const managed = await response.json();
+    if (managed.active === true && Array.isArray(managed.catalog?.resources) && Array.isArray(managed.catalog?.units) && Array.isArray(managed.catalog?.subjects)) {
+      const config = { ...mergeDashboardCatalog(local, managed.catalog), catalogSource: "managed" };
+      if (useCache) saveCachedDashboardConfig(config);
+      return config;
+    }
+    if (managed.active !== false) throw new Error("Invalid managed catalog response");
+  } catch (error) {
+    if (cached?.catalogSource === "managed") return cached;
+    console.warn("Managed catalog unavailable, using existing catalog:", error);
+    // An unavailable store must not republish lessons hidden after the sheet import.
+    return options.fallbackConfig || { ...mergeDashboardCatalog(local, buildDashboardCatalog([], [])), catalogUnavailable: true };
+  }
+  if (cached) return cached;
 
   try {
     const merged = mergeDashboardCatalog(local, await loadSheetDashboardCatalog());
@@ -442,7 +458,7 @@ function splitSheetList(value) {
   return String(value || "").split(/[,;\n]+/).map(item => item.trim()).filter(Boolean);
 }
 
-function createResourceId(resourceId, title, unitCodes) {
+export function createResourceId(resourceId, title, unitCodes) {
   const explicitId = slugifyResourceId(resourceId);
   if (explicitId) return explicitId;
 
@@ -485,15 +501,20 @@ function normalizeActionHref(value) {
 }
 
 async function loadSheetDashboardCatalog() {
+  const { rows, unitRows } = await loadSheetDashboardRows();
+  return buildDashboardCatalog(rows, unitRows);
+}
+
+export async function loadSheetDashboardRows() {
   const [groupText, unitText] = await Promise.all([
     fetchSheetText(DASHBOARD_SHEET_URLS.groups),
     fetchSheetText(DASHBOARD_SHEET_URLS.units),
   ]);
-  return buildDashboardCatalog(csvToObjects(groupText), csvToObjects(unitText));
+  return { rows: csvToObjects(groupText), unitRows: csvToObjects(unitText) };
 }
 
 async function fetchSheetText(url) {
-  const res = await fetch(`${url}&_=${Date.now()}`, { cache: "no-store" });
+  const res = await fetch(`${url}&_=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.text();
 }

@@ -57,6 +57,12 @@ export async function adminAccess(req) {
 
 export default async function handler(req, res) {
   const url = new URL(req.url || "/api/admin", "https://booong.invalid");
+  if (url.pathname === "/api/lesson-catalog" || url.searchParams.has("catalog") || req.query?.catalog === "1") {
+    if (url.searchParams.getAll("catalog").length > 1 || (url.searchParams.has("catalog") && url.searchParams.get("catalog") !== "1")) return sendJson(res, 400, { error: "요청 주소를 확인해주세요." });
+    url.searchParams.delete("catalog");
+    req.url = `/api/lesson-catalog${url.search}`;
+    return (await import("../lib/lesson-catalog-api.js")).default(req, res);
+  }
   if (url.pathname === "/api/lesson-thumbnails" || url.searchParams.has("thumbnail") || req.query?.thumbnail === "1") {
     if (url.searchParams.getAll("thumbnail").length > 1 || (url.searchParams.has("thumbnail") && url.searchParams.get("thumbnail") !== "1")) return sendJson(res, 400, { error: "요청 주소를 확인해주세요." });
     url.searchParams.delete("thumbnail");

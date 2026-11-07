@@ -16,6 +16,7 @@ const pages = [
   "admin.html",
   "notice-admin.html",
   "thumbnail-admin.html",
+  "lesson-admin.html",
   "research-erp.html",
   "textbook-analysis.html",
   "watcha-library.html",

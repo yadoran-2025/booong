@@ -29,6 +29,11 @@ export async function showDashboard() {
   document.body.style.cssText = "";
 
   const [loadedConfig, thumbnails] = await Promise.all([loadDashboardConfig(), loadManagedThumbnails().catch(error => { console.warn("Managed thumbnails unavailable:", error); return {}; }), loadCurriculum().catch(error => console.warn("Curriculum unavailable:", error))]);
+  if (loadedConfig.catalogUnavailable) {
+    document.body.innerHTML = '<main class="analytics"><div class="admin-shell"><h1>수업 목록에 연결하지 못했습니다</h1><p role="alert">잠시 후 다시 불러와주세요.</p><button class="btn btn--primary" type="button">다시 불러오기</button></div></main>';
+    document.querySelector("button").addEventListener("click", () => location.reload());
+    return;
+  }
   managedThumbnails = thumbnails;
   const config = addCurriculumCatalog(loadedConfig);
   const root = document.createElement("div");

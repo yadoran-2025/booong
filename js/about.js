@@ -1,5 +1,6 @@
 import { createMakerWorkMap, createWorkMap, getMemberLookupKeys, loadCachedDashboardConfig, loadDashboardConfig } from "./dashboard-data.js";
 import { loadMembers } from "./member-data.js";
+import { memberTrainingCareer, normalizeTrainingMembers } from "./member-training.js";
 import { escapeHtml } from "./utils.js";
 import { getLessonPageKey, loadGroupClickStats, loadPageVisitStats } from "./visitor-analytics.js";
 
@@ -24,6 +25,9 @@ const state = {
   selectedMemberId: "",
   pageViews: new Map(),
   linkClicks: new Map(),
+  trainings: [],
+  trainingError: false,
+  trainingLoading: false,
 };
 
 init();
@@ -39,8 +43,30 @@ async function init() {
     renderAbout();
     refreshWorks();
     refreshWorkStats();
+    refreshTraining();
   } catch (err) {
     root.innerHTML = renderError(err);
+  }
+}
+
+async function refreshTraining() {
+  if (state.trainingLoading) return;
+  state.trainingLoading = true;
+  const retry = root.querySelector("[data-action='retry-training']");
+  if (retry) retry.disabled = true;
+  try {
+    const response = await fetch('/api/rice-basket?route=/api/member-training', { credentials: 'omit' });
+    if (!response.ok) throw new Error('연수 이력을 불러오지 못했습니다.');
+    const { trainings } = await response.json();
+    if (!Array.isArray(trainings) || trainings.some(t => !t || ['name', 'school', 'lectureDate'].some(key => typeof t[key] !== 'string'))) throw new Error('연수 이력 형식을 확인해 주세요.');
+    state.trainings = trainings.map(t => ({ ...t, memberCodes: normalizeTrainingMembers(t.memberCodes) }));
+    state.trainingError = false;
+  } catch (error) {
+    state.trainingError = true;
+    console.warn('Member training refresh failed:', error);
+  } finally {
+    state.trainingLoading = false;
+    renderMemberDetail();
   }
 }
 
@@ -183,6 +209,7 @@ function bindMemberExplorer() {
 }
 
 function bindMemberCardActions() {
+  root.querySelector("[data-action='retry-training']")?.addEventListener("click", refreshTraining);
   root.querySelector("[data-action='close-member']")?.addEventListener("click", () => {
     selectMember("");
   });
@@ -226,6 +253,7 @@ function renderMemberCard(member, works) {
   const name = member.name || "이름 미등록";
   const interests = splitInterests(member.interests);
   const career = normalizeCareer(member.career);
+  const trainingCareer = memberTrainingCareer(member, state.trainings);
   const bio = member.bio || "";
   const code = getMemberCode(member);
   const { color, bg } = getMemberColors(member);
@@ -250,18 +278,19 @@ function renderMemberCard(member, works) {
       <section class="member-card__career" aria-label="${escapeAttr(name)} 경력">
         <h3 class="member-card__section-title">경력</h3>
         ${career.length ? renderCareer(career) : `<p class="member-card__empty">—</p>`}
-        ${member.trainingCareer?.length ? `
+        ${trainingCareer.length ? `
           <section class="member-card__training">
             <button class="member-card__training-toggle" type="button" data-action="toggle-training" aria-expanded="false" aria-controls="member-training-content">
               <span>세부 연수경력</span>
-              <span class="member-card__training-count">${member.trainingCareer.length}건</span>
+              <span class="member-card__training-count">${trainingCareer.length}건</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="member-card__training-content" id="member-training-content" inert>
-              <div>${renderCareer(member.trainingCareer.map(place => ({ place })), "ol")}</div>
+              <div>${renderCareer(trainingCareer.map(place => ({ place })), "ol")}</div>
             </div>
           </section>
         ` : ""}
+        ${state.trainingError ? `<p role="status">연수 이력을 불러오지 못했습니다. <button type="button" class="btn btn--ghost" data-action="retry-training">다시 시도</button></p>` : ""}
       </section>
 
       <aside class="member-lessons" aria-label="${escapeAttr(name)} 제작 자료">

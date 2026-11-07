@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { normalizeMemberRow, parseMemberProfileCsv } from "../js/member-data.js";
 import { escapeHtml } from "../js/utils.js";
+import { memberTrainingCareer, normalizeTrainingMembers } from "../js/member-training.js";
 
 const members = parseMemberProfileCsv("id,name,aliases,career,making\nDo,이도빈,doh|dobby,학교(2025)|부대(2026-),수업 A|game-1\n");
 assert.deepEqual(members[0].aliases, ["doh", "dobby"]);
@@ -19,8 +20,18 @@ const source = readFileSync(new URL("../js/about.js", import.meta.url), "utf8")
   .replace(/^import .*;$/gm, "")
   .replace(/^init\(\);$/m, "");
 const root = { querySelector: () => null };
+const trainings = [
+  { name: '수업 만들기', school: '잠원중학교', lectureDate: '2026-09-28', memberCodes: ['DOH', 'CHOI'] },
+  { name: '다른 연수', school: '학교', lectureDate: '2026-10-01', memberCodes: ['HOON'] },
+];
+assert.deepEqual(normalizeTrainingMembers(['Do', 'do', 'CHOI']), ['Do', 'CHOI']);
+for (const invalid of [null, {}, 'Do', [1], [''], ['<script>'], Array(51).fill('Do')]) assert.throws(() => normalizeTrainingMembers(invalid));
+assert.deepEqual(memberTrainingCareer({ ...members[0], trainingCareer: ['기존 경력'] }, trainings), ['2026.09.28 · 수업 만들기 · 잠원중학교', '기존 경력']);
+assert.deepEqual(memberTrainingCareer({ id: 'HOON' }, trainings), ['2026.10.01 · 다른 연수 · 학교']);
+assert.deepEqual(memberTrainingCareer({ id: 'Han' }, trainings), []);
+assert.deepEqual(memberTrainingCareer({ id: 'Do', aliases: ['doh'], trainingCareer: ['2026.09.28 · 수업 만들기 · 잠원중학교'] }, trainings), ['2026.09.28 · 수업 만들기 · 잠원중학교']);
 const context = vm.createContext({
-  document: { getElementById: () => root }, escapeHtml, URL,
+  document: { getElementById: () => root }, escapeHtml, URL, memberTrainingCareer, normalizeTrainingMembers,
   getLessonPageKey: id => `view:${id}`,
   loadPageVisitStats: async () => [{ key: "view:수업 A", views: 73 }],
   loadGroupClickStats: async () => [{ groupId: "external-work", views: 9999 }],
@@ -35,6 +46,13 @@ assert.ok(html.indexOf("연수 A") < html.indexOf("연수 B"));
 assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
 assert.doesNotMatch(html, /<img src=x/);
 assert.doesNotMatch(context.renderMemberCard(members[0], []), /member-card__training/);
+context.testTrainings = trainings;
+vm.runInContext('state.trainings = testTrainings;', context);
+const automaticHtml = context.renderMemberCard(members[0], []);
+assert.match(automaticHtml, /2026.09.28 · 수업 만들기 · 잠원중학교/);
+assert.match(automaticHtml, /member-card__training-count">1건/);
+vm.runInContext('state.trainings = [];', context);
+assert.doesNotMatch(context.renderMemberCard(members[0], []), /수업 만들기/);
 
 const toggle = {
   expanded: "false",

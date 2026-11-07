@@ -79,6 +79,11 @@ const makers = ["moon", "choi", "hyum", "dol"];
 const jointMarkup = renderResourceDetail({ ...resource, makers });
 assert.equal((jointMarkup.match(/chip chip--gray bundle-card__maker/g) || []).length, 4);
 for (const maker of makers) assert.ok(jointMarkup.includes(`href="about.html#${maker}">${maker}</a>`));
+const contributionMarkup = renderResourceDetail({ ...resource, makers: ["choi", "hoon"], contributors: [{ code: "CHOI", role: "수업 기획" }, { code: "HOON", role: '<img src=x onerror=alert(1)>' }] });
+assert.match(contributionMarkup, /lesson-detail__contribution">수업 기획/);
+assert.match(contributionMarkup, /&lt;img src=x onerror=alert\(1\)&gt;/);
+assert.doesNotMatch(contributionMarkup, /<img src=x/);
+assert.match(contributionMarkup, /href="about.html#choi"/);
 for (const collaborationMakers of [["Dooclass"], ["dooclass", "moon"]]) {
   const collaborationMarkup = renderResourceDetail({ ...resource, makers: collaborationMakers });
   assert.match(collaborationMarkup, /class="chip bundle-card__collaboration">두클래스 협업 컨텐츠<\/span>/);

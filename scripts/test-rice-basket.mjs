@@ -31,7 +31,7 @@ async function token(changes={},aud='yadoran-2025'){
 async function request(path,identity,method='GET',body,extra={}){
  const target=new URL(path,'https://booong.invalid');target.searchParams.set('route',target.pathname);
  const r=await originalFetch(base+'/api/rice-basket?'+target.searchParams,{method,headers:{...(identity?{Authorization:`Bearer ${identity}`} : {}),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
- assert.equal(r.headers.get('cache-control'),'no-store');
+ assert.equal(r.headers.get('cache-control'),path==='/api/member-training'&&r.ok?'public, max-age=0, s-maxage=30':'no-store');
  return {status:r.status,data:await r.json()};
 }
 try{
@@ -65,6 +65,31 @@ try{
  assert.equal((await request('/api/pages/'+pageId+'?session=training',null)).status,200);
  assert.equal((await request('/api/pages/'+pageId+'?session=missing',null)).status,404);
  assert.equal((await request('/api/sessions/training/extra',null)).status,401);
+ const emptyHistoryLoads=loads;
+ assert.deepEqual((await request('/api/member-training',null)).data,{trainings:[]});
+ assert.deepEqual((await request('/api/member-training',null)).data,{trainings:[]});
+ assert.equal(loads,emptyHistoryLoads+1,'공개 프로필 이력은 30초간 저장소를 다시 읽지 않는다');
+ for(const body of [null,'CHOI',{},[''],['<script>'],[1],Array(51).fill('CHOI')]) {
+   const before=structuredClone(data);
+   assert.equal((await request('/api/sessions/training',operator,'PATCH',{name:'저장되면 안 됨',memberCodes:body})).status,400);
+   assert.deepEqual(data,before,'잘못된 참가자 코드는 다른 필드도 저장하지 않는다');
+ }
+ assert.equal((await request('/api/sessions/training',null,'PATCH',{memberCodes:['CHOI']})).status,401);
+ assert.equal((await request('/api/sessions/training',operator,'PATCH',{name:'바이브코딩 연수',school:'잠원중학교',lectureDate:'2026-09-28',memberCodes:['CHOI','choi','HOON']})).status,200);
+ assert.deepEqual((await request('/api/sessions/training',operator)).data.memberCodes,['CHOI','HOON']);
+ assert.deepEqual((await request('/api/member-training',null)).data,{trainings:[{name:'바이브코딩 연수',school:'잠원중학교',lectureDate:'2026-09-28',memberCodes:['CHOI','HOON']}]});
+ assert.equal(data.sessions[0].participants.length,1,'BOOONG 선택은 일반 참가자 응답을 바꾸지 않는다');
+ assert.equal((await request('/api/sessions/training',null)).data.memberCodes,undefined);
+ assert.equal((await request('/api/sessions/training',operator,'PATCH',{school:'수정한 학교'})).status,200);
+ assert.deepEqual(data.sessions[0].memberCodes,['CHOI','HOON'],'참가자 필드를 보내지 않으면 기존 선택을 유지한다');
+ assert.equal((await request('/api/member-training',null)).data.trainings[0].school,'수정한 학교');
+ assert.equal((await request('/api/sessions/training',operator,'PATCH',{memberCodes:[]})).status,200);
+ assert.deepEqual((await request('/api/member-training',null)).data.trainings,[],'선택 해제는 이력과 캐시에서도 제거한다');
+ const memberSession=await request('/api/sessions',operator,'POST',{name:'새 연수',school:'학교',lectureDate:'2026-10-01',pageIds:[pageId],memberCodes:['Do']});
+ assert.equal(memberSession.status,201);
+ assert.deepEqual((await request('/api/member-training',null)).data.trainings[0].memberCodes,['Do']);
+ assert.equal((await request(`/api/sessions/${memberSession.data.id}`,operator,'DELETE')).status,200);
+ assert.deepEqual((await request('/api/member-training',null)).data.trainings,[],'연수 삭제도 프로필에서 제거한다');
  const definition={title:'운영자가 작성한 설문',description:'',questions:[{id:'q1',title:'질문',type:'choice',required:true,options:['첫째','둘째']}]};
  const created=await request('/api/surveys?session=training',operator,'POST',definition);assert.equal(created.status,201);
  const id=created.data.id;

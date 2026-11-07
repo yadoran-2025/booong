@@ -3,11 +3,12 @@ import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
-import { createLessonCatalogStore, importCatalogRows, updateLesson } from "../lib/lesson-catalog-store.js";
+import { createLessonCatalogStore, importCatalogRows, updateLesson, updateLessonFlags } from "../lib/lesson-catalog-store.js";
 import { buildDashboardCatalog, loadDashboardConfig } from "../js/dashboard-data.js";
 import { createCatalogReadCache } from "../lib/lesson-catalog-api.js";
 import handler from "../api/admin.js";
 import { withLocalAdmin } from "../lib/local-admin.js";
+import { getLessonContributors } from "../js/lesson-contributors.js";
 
 const unitRows = [{ "단원_코드": "1", 과목: "사회1", 대단원: "I. 세계", 중단원: "1. 세계의 이해" }, { "단원_코드": "2", 과목: "통합사회2", 대단원: "I. 인권", 중단원: "1. 인권 보장" }];
 const rows = [{ group_id: "group-2", group_title: "기존 수업", published: "TRUE", "단원_코드": "1", kind: "lesson", rubric: "보존할 내용" }, { group_title: "비공개 자료", published: "FALSE", "단원_코드": "2" }];
@@ -22,9 +23,34 @@ assert.throws(() => importCatalogRows(rows, [...unitRows, unitRows[0]]), /단원
 assert.throws(() => importCatalogRows([{ ...rows[0], "단원_코드": "999" }], unitRows), /단원 코드/);
 const lesson = { ...imported.rows[0], desc: "소개", maker: "제작자", discipline: "사회", school: "", "단원명": "", blog_link: "https://example.com/intro", teacher_link: "/lesson.html", dorms_link: "", thumbnail_url: "", thumbnail_alt: "", new: "FALSE", "단원_코드": "1,2" };
 const changed = updateLesson(imported, lesson);
+const hidden = updateLessonFlags(changed, { id: "group-2", field: "published", value: false });
+assert.equal(hidden.rows[0].published, "FALSE");
+assert.equal(changed.rows[0].published, "TRUE", "A flag edit never mutates the previous snapshot");
+const flagged = updateLessonFlags(hidden, { id: "group-2", field: "new", value: true });
+assert.equal(flagged.rows[0].new, "TRUE");
+assert.equal(flagged.rows[0].desc, changed.rows[0].desc);
+assert.equal(flagged.rows[0].kind, changed.rows[0].kind);
+assert.equal(flagged.rows[0].rubric, "보존할 내용");
+assert.equal(updateLessonFlags(hidden, { id: "group-2", field: "published", value: true }).rows[0].published, "TRUE");
+for (const input of [{ id: "missing", field: "published", value: true }, { id: "group-2", field: "group_title", value: true }, { id: "group-2", field: "new", value: "TRUE" }, { id: "__proto__", field: "new", value: true }]) assert.throws(() => updateLessonFlags(changed, input));
+assert.throws(() => updateLessonFlags({ ...changed, rows: [{ ...changed.rows[0], "단원_코드": "" }] }, { id: "group-2", field: "published", value: true }), /과목·단원/);
 assert.equal(changed.rows[0].resource_id, "group-2");
 assert.equal(changed.rows[0].rubric, "보존할 내용");
 assert.equal(changed.rows[0]["단원_코드"], "1,2");
+assert.deepEqual(getLessonContributors({ maker: "choi, HOON; choi" }, [{ id: "CHOI" }, { id: "HOON" }]), [{ code: "CHOI", role: "" }, { code: "HOON", role: "" }]);
+assert.deepEqual(getLessonContributors({ maker: "old, Missing" }, [{ id: "CHOI", aliases: ["old"] }]), [{ code: "CHOI", role: "" }, { code: "Missing", role: "" }]);
+const credits = [{ code: "CHOI", role: " 수업 기획 " }, { code: "HOON", role: "활동지 제작" }];
+const credited = updateLesson(changed, { ...lesson, contributors: credits });
+assert.equal(credited.rows[0].maker, "CHOI, HOON");
+assert.deepEqual(credited.rows[0].contributors, [{ code: "CHOI", role: "수업 기획" }, { code: "HOON", role: "활동지 제작" }]);
+assert.deepEqual(updateLesson(credited, { ...lesson, maker: "CHOI, HOON" }).rows[0].contributors, credited.rows[0].contributors, "Older editors preserve existing roles");
+assert.deepEqual(updateLesson(credited, { ...lesson, maker: "HOON" }).rows[0].contributors, [{ code: "HOON", role: "활동지 제작" }], "Older editors retain roles for remaining people");
+const withCredits = buildDashboardCatalog(credited.rows, unitRows).resources[0];
+assert.deepEqual(withCredits.makers, ["choi", "hoon"]);
+assert.deepEqual(withCredits.contributors, credited.rows[0].contributors);
+assert.ok(withCredits.searchText.includes("활동지 제작"));
+assert.deepEqual(updateLesson(credited, { ...lesson, contributors: [] }).rows[0].contributors, []);
+for (const contributors of [null, {}, [{ code: "CHOI", role: 12 }], [{ code: "bad/link", role: "" }], [{ code: "CHOI", role: "a".repeat(201) }], [{ code: "CHOI", role: "" }, { code: "choi", role: "" }], Array.from({ length: 31 }, (_, index) => ({ code: `person-${index}`, role: "" }))]) assert.throws(() => updateLesson(changed, { ...lesson, contributors }));
 const renamed = updateLesson(changed, { ...lesson, group_title: "이름 변경" });
 assert.equal(renamed.rows[0].resource_id, "group-2");
 assert.equal(buildDashboardCatalog(renamed.rows, unitRows).resources[0].id, "group-2");
@@ -48,7 +74,7 @@ try {
   assert.ok(first.revision);
   await assert.rejects(store.mutate({ action: "import", revision: first.revision }), error => error.status === 409);
   const outcomes = await Promise.allSettled([
-    store.mutate({ action: "save", revision: first.revision, lesson }),
+    store.mutate({ action: "save", revision: first.revision, lesson: { ...lesson, contributors: credits } }),
     store.mutate({ action: "save", revision: first.revision, lesson: { ...lesson, group_title: "충돌" } }),
   ]);
   assert.equal(outcomes.filter(x => x.status === "fulfilled").length, 1);
@@ -56,6 +82,13 @@ try {
   const persisted = (await createLessonCatalogStore({ directory }).load()).state;
   assert.equal(persisted.rows[0].group_title, "기존 수업");
   assert.equal(persisted.rows[0].rubric, "보존할 내용");
+  assert.equal(persisted.rows[0].contributors[1].role, "활동지 제작");
+  const flaggedState = await store.mutate({ action: "flags", revision: persisted.revision, id: "group-2", field: "new", value: true });
+  assert.equal(flaggedState.rows[0].new, "TRUE");
+  assert.equal(flaggedState.rows[0].desc, persisted.rows[0].desc);
+  assert.deepEqual(flaggedState.rows[0].contributors, persisted.rows[0].contributors);
+  await assert.rejects(store.mutate({ action: "flags", revision: persisted.revision, id: "group-2", field: "published", value: false }), error => error.status === 409);
+  assert.equal((await createLessonCatalogStore({ directory }).load()).state.rows[0].new, "TRUE");
   const publicCatalog = buildDashboardCatalog(persisted.rows, persisted.unitRows);
   assert.equal(publicCatalog.resources.length, 1);
   assert.equal(publicCatalog.resources.some(x => x.title === "비공개 자료"), false);
@@ -85,6 +118,7 @@ async function request(url, method = "GET", body = "", headers = {}) {
 assert.equal((await request("/api/lesson-catalog?admin=1")).status, 401);
 assert.equal((await request("/api/admin?catalog=1&admin=1")).status, 401);
 assert.equal((await request("/api/lesson-catalog", "POST", "{}")).status, 401);
+assert.equal((await request("/api/lesson-catalog", "POST", JSON.stringify({ action: "flags", id: "group-2", field: "published", value: true, revision: null }))).status, 401);
 for (const url of ["/api/lesson-catalog?nonce=1", "/api/lesson-catalog?admin=1&admin=1", "/api/admin?catalog=0", "/api/admin?catalog=1&catalog=1", "/api/lesson-catalog?admin=no"]) assert.equal((await request(url)).status, 400);
 assert.equal((await request("/api/lesson-catalog", "PUT")).status, 405);
 assert.equal((await request("/api/admin")).status, 401);
@@ -110,7 +144,7 @@ const originalFetch = globalThis.fetch, originalStorage = globalThis.sessionStor
 let sheetReads = 0; const saved = new Map();
 globalThis.sessionStorage = { getItem: key => saved.get(key), setItem: (key, value) => saved.set(key, value) };
 globalThis.fetch = async url => {
-  if (String(url).startsWith("lessons/index.json")) return { ok: true, json: async () => ({ groups: [], games: [] }) };
+  if (String(url).startsWith("/lessons/index.json")) return { ok: true, json: async () => ({ groups: [], games: [] }) };
   if (url === "/api/lesson-catalog") return { ok: true, json: async () => results[0] };
   sheetReads++; throw new Error("Sheets should not be used after migration");
 };
@@ -119,7 +153,7 @@ try {
   assert.equal((await loadDashboardConfig()).catalog.resources[0].id, "group-2");
   assert.equal(sheetReads, 0);
   globalThis.fetch = async url => {
-    if (String(url).startsWith("lessons/index.json")) return { ok: true, json: async () => ({ groups: [], games: [] }) };
+    if (String(url).startsWith("/lessons/index.json")) return { ok: true, json: async () => ({ groups: [], games: [] }) };
     if (url === "/api/lesson-catalog") return { ok: false };
     sheetReads++; throw new Error("Do not resurrect the old sheet during an outage");
   };

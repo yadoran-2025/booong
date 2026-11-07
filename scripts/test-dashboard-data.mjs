@@ -101,7 +101,7 @@ const originalFetch = globalThis.fetch;
 const originalWarn = console.warn;
 try {
   globalThis.fetch = async input => {
-    if (String(input).startsWith("lessons/index.json")) {
+    if (String(input).startsWith("/lessons/index.json")) {
       return { ok: true, json: async () => ({ groups: [], games: [] }) };
     }
     throw new Error("offline");

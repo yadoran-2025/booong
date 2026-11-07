@@ -16,8 +16,7 @@ try {
   assert.deepEqual((await readdir(join(root, "public"))).sort(), [".generated", "assets", "bungmo", "index.html", "rice-basket"]);
   assert.equal(run().status, 0);
   await cp(new URL("../rice-basket/", import.meta.url), join(root, "rice-basket"), { recursive: true });
-  await mkdir(join(root, "js"));
-  await writeFile(join(root, "js/admin.js"), "");
+  await cp(new URL("../js/", import.meta.url), join(root, "js"), { recursive: true });
   assert.equal(run().status, 0);
   for (const name of (await readdir(join(root, "public/rice-basket"))).filter(name => name.endsWith(".js"))) {
     const file = join(root, "public/rice-basket", name);

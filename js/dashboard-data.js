@@ -1,4 +1,5 @@
 import { parseCSV } from "./api.js";
+import { getLessonContributors } from "./lesson-contributors.js";
 
 const DASHBOARD_SHEET_URLS = {
   groups: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqcg9kXgh8lcmeTO9xwQJKjqSQt6IotKtDHEbxj0YOpQ1V_TC3xSA3YoB4lcIr01g2FoiNapJfI8Wg/pub?gid=1091433397&single=true&output=csv",
@@ -68,7 +69,7 @@ export async function loadLocalDashboardConfig() {
   let config = { dashboard: {}, groups: [], games: [], tools: [], notices: [] };
 
   try {
-    const res = await fetch(`lessons/index.json?_=${Date.now()}`, { cache: "no-store" });
+    const res = await fetch(`/lessons/index.json?_=${Date.now()}`, { cache: "no-store" });
     if (res.ok) config = await res.json();
   } catch (err) {
     console.error("Dashboard config load failed:", err);
@@ -345,7 +346,8 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
       if (!middleUnitsByKey[key]) middleUnitsByKey[key] = [];
       if (unit.middleUnit && !middleUnitsByKey[key].includes(unit.middleUnit)) middleUnitsByKey[key].push(unit.middleUnit);
     });
-    const makers = normalizeMakers(row.maker);
+    const contributors = getLessonContributors(row);
+    const makers = normalizeMakers(contributors.map(person => person.code));
     const actions = [
       createResourceAction("blog", "수업 소개", row.blog_link),
       createResourceAction("teacher", "교사용 자료", row.teacher_link),
@@ -362,6 +364,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
       kind: normalizeKind(row.kind),
       discipline: String(row.discipline || "").trim(),
       makers,
+      contributors,
       isNew: normalizeNewFlag(getNewFlagValue(row)),
       unitCodes,
       unitKeys,
@@ -370,7 +373,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
       subjects,
       schools,
       actions,
-      searchText: [title, row.desc, row.discipline, ...subjects, ...joinedUnits.flatMap(unit => [unit.majorUnit, unit.middleUnit]), sourceUnitName, ...makers]
+      searchText: [title, row.desc, row.discipline, ...subjects, ...joinedUnits.flatMap(unit => [unit.majorUnit, unit.middleUnit]), sourceUnitName, ...makers, ...contributors.map(person => person.role)]
         .filter(Boolean).join(" ").normalize("NFKC").toLowerCase(),
     });
   });

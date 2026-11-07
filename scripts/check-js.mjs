@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const roots = ["api", "js", "lib", "scripts"];
+const roots = ["api", "js", "lib", "scripts", "rice-basket"];
 const files = [];
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 

@@ -1,0 +1,8 @@
+{
+  "framework": null,
+  "buildCommand": "npm run build:bungmo && node scripts/export-site.mjs",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/lesson-thumbnails", "destination": "/api/admin?thumbnail=1" }
+  ]
+}

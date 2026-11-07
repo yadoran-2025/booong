@@ -1,0 +1,50 @@
+.bungmo-app { background: var(--bg); color: var(--text); font-size: var(--text-base); }
+.bungmo-app :is(h1, h2, h3, h4, strong, b) { color: inherit; }
+.bungmo-app :is(
+  .meeting-context-copy > span, .meeting-home-heading > div > span, .meeting-home-heading > p,
+  .meeting-overview-card:not(.money) > span, .service-heading span, .card-title span,
+  .member-roster-group > header span, .meeting-gate-copy > span,
+  .access-intro > div > span, .access-ledger > header span, .access-denied span,
+  .expense-dialog > div:first-child p, .person-expense-group > header span, .person-final > span,
+  .person-expenses b small, .transfer-card > span
+) { color: var(--color-text-secondary); }
+.bungmo-app :is(
+  .meeting-overview-card.responses > strong, .meeting-trip-preview time,
+  .service-heading h1 em, .meeting-gate-copy h1 em, .access-intro h1 em,
+  .schedule-person.summary, .schedule-summary-slot, .settlement-readiness-summary .readiness-progress,
+  .transfer-list b, .transfer-person li b, .expense-history b, .expense-table-wrap b, .itinerary-list time b
+) { color: var(--text); }
+.bungmo-app :is(.meeting-member-avatars i, .meeting-money-people i, .member-roster-list i, .access-list li > i, .settlement-capture-card > header i) { color: var(--color-text-secondary); }
+.bungmo-app :is(button, input, select, summary) { min-height: 44px; }
+.bungmo-app :is(button, input, select, textarea, a):focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+.bungmo-app :is(button, a) { touch-action: manipulation; }
+.bungmo-app :is(button[disabled], input[disabled]) { cursor: not-allowed; }
+.operations-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand-deep); font-size: var(--text-sm); text-decoration: none; }
+.bungmo-sidebar > .operations-back { margin-top: auto; color: var(--color-text-on-brand); }
+.bungmo-sidebar-note { margin-top: var(--space-4); }
+.participant-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-2); }
+.participant-buttons button { padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--color-surface); color: var(--text); }
+.participant-buttons button[aria-pressed="true"] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-deep); font-weight: var(--weight-bold); }
+.settlement-workflow-actions { flex-wrap: wrap; gap: var(--space-2); }
+.settlement-readiness-summary { min-width: 0; }
+.access-list li > button { border-radius: var(--radius); background: var(--brand-soft); color: var(--brand-deep); padding-inline: var(--space-3); }
+.access-list li > button::before, .access-list li > button::after { content: none; }
+.auth-card a { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand-deep); }
+.auth-card p { font-size: var(--text-sm); line-height: var(--leading-normal); }
+.preview-notice { margin: 0; padding: var(--space-3) var(--space-4); background: var(--color-warning-subtle); color: var(--color-warning-text); font-size: var(--text-sm); }
+.bungmo-nav-link strong { font-size: var(--text-sm); }
+.bungmo-mobile-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.bungmo-mobile-nav .bungmo-nav-link strong { font-size: var(--text-2xs); }
+.meeting-overview-card.money :is(p, small), .member-roster-summary :is(span, small) { color: var(--color-text-on-brand); }
+.meeting-overview-card.money :is(h2, strong, span), .bungmo-sidebar :is(strong, span, p), .bungmo-mobile-nav .bungmo-nav-link :is(strong, span) { color: var(--color-text-on-brand); }
+.bungmo-mobile-nav .bungmo-nav-link.active { background: var(--brand); }
+.bungmo-app .profile-menu form { z-index: var(--z-dropdown); }
+@media (max-width: 900px) {
+  .meeting-context-actions > .operations-back { font-size: var(--text-2xs); }
+  .meeting-context-actions { flex-wrap: wrap; }
+  .settlement-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settlement-readiness-summary { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bungmo-app *, .bungmo-app *::before, .bungmo-app *::after { scroll-behavior: auto; transition: none; animation: none; }
+}

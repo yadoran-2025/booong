@@ -1,0 +1,20 @@
+// Screens captured from the registered lesson apps; explicit catalog covers take precedence.
+export const lessonScreenshots = {
+  "group-2": "/assets/lesson-thumbnails/apps/group-2.jpg",
+  "group-3": "/assets/lesson-thumbnails/apps/group-3.jpg",
+  "group-4": "/assets/lesson-thumbnails/apps/group-4.jpg",
+  "group-5": "/assets/lesson-thumbnails/apps/group-5.jpg",
+  "group-6": "/assets/lesson-thumbnails/apps/group-6.jpg",
+  "group-7": "/assets/lesson-thumbnails/apps/group-7.jpg",
+  "group-8": "/assets/lesson-thumbnails/apps/group-8.jpg",
+  "group-11": "/assets/lesson-thumbnails/apps/group-11.jpg",
+  "group-12": "/assets/lesson-thumbnails/apps/group-12.jpg",
+  "group-13": "/assets/lesson-thumbnails/apps/group-13.jpg",
+  "group-16": "/assets/lesson-thumbnails/apps/group-16.jpg",
+  "group-17": "/assets/lesson-thumbnails/apps/group-17.jpg",
+  "group-18": "/assets/lesson-thumbnails/apps/group-18.jpg",
+  "group-19": "/assets/lesson-thumbnails/apps/group-19.jpg",
+  "group-21": "/assets/lesson-thumbnails/apps/group-21.jpg",
+  "group-23": "/assets/lesson-thumbnails/apps/group-23.jpg",
+  "group-25": "/assets/lesson-thumbnails/apps/group-25.jpg",
+};

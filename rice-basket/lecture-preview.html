@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>강연 미리보기</title>
+  <style>
+    @font-face{font-family:SUIT;src:url('/rice-basket/fonts/SUIT-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+    *{box-sizing:border-box}body{margin:0;padding-bottom:84px;background:#f3f6f4;color:#24332c;font-family:"Apple SD Gothic Neo",-apple-system,sans-serif;line-height:1.5;word-break:keep-all}
+    button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.35}button:focus-visible,a:focus-visible{outline:3px solid #548f6c;outline-offset:3px}[hidden]{display:none!important}
+    .masthead{max-width:1600px;margin:auto;padding:22px 32px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .masthead h1{margin:0;font-family:SUIT,sans-serif;font-size:22px;font-weight:600;letter-spacing:-.04em}.masthead a{padding:9px 13px;border:1px solid #dce5df;border-radius:10px;background:#fff;color:#52685b;font-size:14px;text-decoration:none;white-space:nowrap}
+    main{display:grid;grid-template-columns:220px minmax(0,1fr);align-items:start;gap:28px;max-width:1600px;margin:auto;padding:0 32px 32px}.chapter-nav{position:sticky;top:24px;grid-column:1;grid-row:1;align-self:start}
+    .chapters{display:grid;gap:10px;margin:0;padding:0;list-style:none}.chapters li{min-width:0}.chapter{display:flex;align-items:flex-start;gap:12px;width:100%;height:100%;min-height:68px;padding:15px 14px;border:1px solid #dce5df;border-radius:12px;background:#fff;color:#5e7065;text-align:left}
+    .chapter:hover{border-color:#9bb7a6}.chapter[aria-current=step]{border-color:#315b42;background:#315b42;color:#fff}.chapter-number{display:grid;place-items:center;flex-shrink:0;width:28px;height:28px;border:1px solid #dce5df;border-radius:8px;font:600 13px SUIT,sans-serif}.chapter[aria-current=step] .chapter-number{border-color:#a2c2ad;background:#ffffff12}.chapter-title{padding-top:3px;font-size:15px;font-weight:600;line-height:1.5;letter-spacing:-.025em}
+    #slides,#status{grid-column:2;grid-row:1;min-width:0}.slide iframe{display:block;width:100%;height:680px;border:0;background:transparent}
+    .transport{position:fixed;inset:auto 0 0;z-index:6;border-top:1px solid #dce5df;background:#fffffff5;backdrop-filter:blur(12px)}.transport-inner{max-width:1360px;margin:auto;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px}.transport output{color:#52685b;font:600 15px SUIT,sans-serif;letter-spacing:.06em}.transport-actions{display:flex;gap:8px}.transport button{min-height:44px;padding:10px 18px;border:1px solid #dce5df;border-radius:10px;background:#fff;color:#3e5748;font-size:14px;font-weight:600}.transport #next{border-color:#315b42;background:#315b42;color:#fff}
+    #status{margin:30px 0;padding:24px;border:1px solid #dce5df;border-radius:12px;background:white;font-size:16px}
+    @media(max-width:1000px){.masthead{padding-inline:24px}main{grid-template-columns:180px minmax(0,1fr);gap:20px;padding-inline:24px}.chapter{gap:9px;padding:13px 12px}.chapter-title{font-size:14px}.transport-inner{padding-inline:24px}}
+    @media(max-width:700px){main{grid-template-columns:minmax(0,1fr)}.chapter-nav{position:static;grid-column:1;grid-row:auto}.chapters{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#slides,#status{grid-column:1;grid-row:auto}.chapter{min-height:60px}}
+    @media(max-width:600px){.masthead{padding:18px 16px 20px;gap:10px}.masthead h1{font-size:19px}.masthead a{font-size:12px;padding:8px 10px}main{padding-inline:16px}.chapter{gap:8px;padding:10px}.chapter-number{width:24px;height:24px;font-size:12px}.chapter-title{padding-top:1px;font-size:13px}.transport-inner{padding-inline:16px;gap:12px}.transport button{padding-inline:13px}}
+  </style>
+</head>
+<body>
+  <header class="masthead"><h1 id="lecture-name">강연 미리보기</h1><a id="original" href="/rice-basket/">원래 목차 ↗</a></header>
+  <main>
+    <nav class="chapter-nav" aria-label="강연 목차"><ol id="chapters" class="chapters"></ol></nav>
+    <p id="status" role="status">강연을 불러오는 중입니다.</p>
+    <div id="slides"></div>
+  </main>
+  <footer class="transport" hidden><div class="transport-inner"><output id="position" aria-live="polite"></output><div class="transport-actions"><button id="previous" type="button">← 이전</button><button id="next" type="button">다음 주제 →</button></div></div></footer>
+  <script type="module">
+    import { publicFetch } from "./operator.js";
+    const sessionId = new URLSearchParams(location.search).get('s');
+    const status = document.querySelector('#status');
+    const previous = document.querySelector('#previous');
+    const next = document.querySelector('#next');
+    const chapters = document.querySelector('#chapters');
+    const slides = document.querySelector('#slides');
+    const position = document.querySelector('#position');
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    try {
+      if (!sessionId) throw new Error('연수 주소에 포함된 수업 ID가 필요합니다.');
+      document.querySelector('#original').href = `/rice-basket/?s=${encodeURIComponent(sessionId)}`;
+      const response = await publicFetch(`/api/sessions/${encodeURIComponent(sessionId)}`);
+      const session = await response.json();
+      if (!response.ok) throw new Error(session.error || '강연을 불러오지 못했습니다.');
+      if (!Array.isArray(session.pages) || session.pages.some(page => !page || typeof page.id !== 'string' || typeof page.title !== 'string')) throw new Error('강연 내용을 확인할 수 없습니다.');
+      if (!session.pages.length) throw new Error('이 연수에는 아직 내용요소가 없습니다.');
+      document.querySelector('#lecture-name').textContent = session.name;
+      document.title = `${session.name} · 강연 미리보기`;
+      const buttons = [], panels = [], frames = [];
+      let current = -1;
+
+      session.pages.forEach((page, index) => {
+        const item = element('li');
+        const button = element('button', 'chapter');
+        button.type = 'button';
+        button.setAttribute('aria-label', `${index + 1}. ${page.title}`);
+        button.setAttribute('aria-controls', `lecture-slide-${index}`);
+        button.append(element('span', 'chapter-number', String(index + 1).padStart(2, '0')), element('span', 'chapter-title', page.title));
+        item.append(button);chapters.append(item);buttons.push(button);
+
+        const panel = element('section', 'slide');
+        panel.id = `lecture-slide-${index}`;
+        panel.setAttribute('aria-label', page.title);
+        panel.hidden = true;
+        const frame = element('iframe');
+        frame.title = page.title;
+        frame.onload = () => {
+          const doc = frame.contentDocument;
+          const style = doc.createElement('style');
+          style.textContent = `
+            .public-header,.learning-pagination{display:none!important}
+            .learning-app.has-learning-pagination{padding-bottom:0!important}
+            html,body,.learning-app,.learning-page{background:transparent!important}
+            .learning-app,.learning-page{min-height:0!important}
+            .learning-page>.lp-page-intro{max-width:none;margin:0 0 28px;padding:26px clamp(24px,5vw,48px);border:1px solid #dce5df;border-radius:16px;background:#fff;box-shadow:0 3px 14px #24332c04}
+            #basics-demo{padding:24px clamp(20px,4vw,40px) 60px;border:1px solid #dce5df;border-radius:16px;background:#fff;box-shadow:0 3px 14px #24332c04}
+            #basics-demo .lp-build-toc{margin-top:0}
+            @media(max-width:600px){.learning-page>.lp-page-intro{padding:22px 20px;margin-bottom:24px}#basics-demo{padding:18px 16px 40px}}
+          `;
+          doc.head.append(style);
+          const resize = () => {
+            if (panel.hidden) return;
+            const height = Math.ceil(doc.body.getBoundingClientRect().height);
+            if (height > 0) frame.style.height = `${Math.max(400, height) + 2}px`;
+          };
+          new ResizeObserver(resize).observe(doc.body);
+          resize();
+        };
+        panel.append(frame);slides.append(panel);panels.push(panel);frames.push(frame);
+        button.onclick = () => show(index);
+      });
+
+      function show(index) {
+        if (index < 0 || index >= panels.length) return;
+        current = index;
+        panels.forEach((panel, i) => {
+          panel.hidden = i !== current;
+          if (i === current) buttons[i].setAttribute('aria-current', 'step');
+          else buttons[i].removeAttribute('aria-current');
+        });
+        if (!frames[index].getAttribute('src')) frames[index].src = `/rice-basket/?p=${encodeURIComponent(session.pages[index].id)}&s=${encodeURIComponent(sessionId)}`;
+        position.textContent = `${String(index + 1).padStart(2, '0')} / ${String(panels.length).padStart(2, '0')}`;
+        previous.disabled = index === 0;
+        next.disabled = index === panels.length - 1;
+        buttons[index].focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
+      previous.onclick = () => show(current - 1);
+      next.onclick = () => show(current + 1);
+      document.addEventListener('keydown', event => {
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.target.closest('input,textarea,select,[contenteditable]')) return;
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        show(current + (event.key === 'ArrowRight' ? 1 : -1));
+      });
+      status.hidden = true;
+      document.querySelector('.transport').hidden = false;
+      show(0);
+    } catch (error) { status.textContent = error.message; }
+  </script>
+</body>
+</html>

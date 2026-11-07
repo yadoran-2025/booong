@@ -1367,3 +1367,98 @@ assert.deepEqual((await createFavoritePage()).getCart()[0].libraryIds,['gyeonggi
 preferences.set('booong:watcha-library:cart','broken JSON');
 assert.equal((await createFavoritePage()).getCart().length,0,'Damaged browser storage must not break the page');
 console.log('Watcha shelf/cart: same-response call numbers, branch isolation, deduplication, card clicks, persistence, removal and no extra requests passed.');
+
+// Whole-group ratings do not depend on the accounts used to select books.
+const featureBooks = [
+  genreBook('bBUNG01','많이 담은 책',['소설']),
+  genreBook('bBUNG02','높은 평점 책',['소설']),
+  genreBook('bBUNG03','평점 없는 책',['소설']),
+  genreBook('bBUNG04','서고와 일반 서가에 있는 책',['소설']),
+  genreBook('bBUNG05','보존서고에만 있는 책',['소설']),
+  genreBook('bBUNG06','위치 미확인 책',['소설'],'unknown'),
+];
+for (const book of featureBooks) book.result.libraries[0].copies = [{branch:'경기도서관',location:'일반자료실',status:book.result.libraries[0].status,callNo:'100-가1'}];
+featureBooks[3].result.libraries[0].copies = [
+  {branch:'경기도서관',location:'보존 서고(지하)',status:'available'},
+  {branch:'경기도서관',location:'일반자료실',status:'unavailable',label:'대출중'},
+];
+featureBooks[4].result.libraries[0].copies = [{branch:'경기도서관',location:'제2보존서고',status:'available'}];
+featureBooks[5].result.libraries[0].copies = [{branch:'경기도서관',location:'',status:'unknown'}];
+cache.set(WATCHA_PROFILES[0].id,{version:1,storage:'firebase',total:featureBooks.length,books:featureBooks});
+cache.set(WATCHA_PROFILES[1].id,{version:1,storage:'firebase',total:1,books:[structuredClone(featureBooks[0])]});
+for (const [index, profile] of WATCHA_PROFILES.entries()) {
+  const rated = index === 0 ? [{...featureBooks[0],rating:5},{...featureBooks[1],rating:1}]
+    : index >= 2 ? [{...featureBooks[0],rating:1},{...featureBooks[1],rating:5}] : [];
+  cache.set('ratings:'+profile.id,{version:1,storage:'firebase',kind:'ratings',total:rated.length,books:rated});
+}
+controls.get('[data-genres]').listeners.change({target:{dataset:{},hasAttribute:name=>name==='data-genres-all'}});
+controls.get('[data-search]').value='';controls.get('[data-available]').checked=false;
+bulk.setLibraries(['gyeonggi']);
+await bulk.setKind('wishes');
+await bulk.selectProfiles(WATCHA_PROFILES.slice(0,2).map(profile=>profile.id));
+assert.match(uiRoot.innerHTML,/data-sort="rating"[^>]*>붕 평균 평점순<\/button>/);
+assert.match(uiRoot.innerHTML,/data-exclude-storage> 보존서고 제외/,'Storage exclusion starts off');
+chooseSort('popular');
+assert.equal(visibleIds()[0],'bBUNG01','Interest sorting still favors the shared wishlist');
+const beforeFeatureFilters = bulkQueries.length;
+chooseSort('rating');
+assert.deepEqual(visibleIds().slice(0,2),['bBUNG02','bBUNG01'],'Average rating overrides wishlist counts and includes unselected members');
+assert.deepEqual(new Set(visibleIds().slice(2)),new Set(['bBUNG03','bBUNG04','bBUNG05','bBUNG06']),'Unrated books remain after all rated books');
+const featureCombined = bulk.getCombined();
+assert.match(bulk.bookMarkup(featureCombined.find(book=>book.id==='bBUNG01')),/붕 ★ 2\.3 · 3명/);
+assert.match(bulk.bookInfoMarkup(featureCombined.find(book=>book.id==='bBUNG02')),/붕 ★ 3\.7 · 3명/,'The detail shows the same whole-group average');
+assert.doesNotMatch(bulk.bookMarkup(featureCombined.find(book=>book.id==='bBUNG03')),/붕 ★/,'An absent rating is never rendered as zero stars');
+bulk.renderBooks({id:'bBUNG01'});
+assert.deepEqual(visibleIds().slice(0,2),['bBUNG02','bBUNG01'],'Live availability updates preserve the rating order');
+await bulk.selectProfiles([WATCHA_PROFILES[0].id]);
+assert.deepEqual(visibleIds().slice(0,2),['bBUNG02','bBUNG01'],'Changing the selected members does not change the group average');
+await bulk.setKind('ratings');
+assert.deepEqual(visibleIds(),['bBUNG02','bBUNG01'],'Read books also sort using every group member');
+assert.equal(bulk.getCombined().find(book=>book.id==='bBUNG01').ratings[WATCHA_PROFILES[0].id],5,'Keep the selected person’s own stars alongside the group average');
+await bulk.setKind('wishes');
+assert.equal(bulkQueries.length,beforeFeatureFilters,'Sorting and joining saved ratings need no book or loan requests');
+const originalFeatureBooks = structuredClone(bulk.getBooks());
+
+// Exclusion is a view of selected-library copies; original results remain intact.
+const storageToggle = checked => {
+  const input = controls.get('[data-exclude-storage]'); input.checked=checked;
+  input.listeners.change({target:input});
+};
+const mixedStorage = bulk.getCombined().find(book=>book.id==='bBUNG04');
+assert.equal(selectedAvailability(mixedStorage,['gyeonggi']),'available');
+assert.equal(selectedAvailability(mixedStorage,['gyeonggi'],true),'unavailable','An available storage copy must not make the loaned general copy available');
+const mixedAvailable = structuredClone(mixedStorage);
+mixedAvailable.result.libraries[0].copies[1].status='available';
+assert.equal(selectedAvailability(mixedAvailable,['gyeonggi'],true),'available','Keep an available general copy even when storage copies also exist');
+assert.equal(selectedLibraryResults(mixedAvailable,['gyeonggi'],true)[0].copies.length,1,'Only remove the storage copy');
+const onlyStorage = bulk.getCombined().find(book=>book.id==='bBUNG05');
+assert.equal(selectedLibraryResults(onlyStorage,['gyeonggi'],true)[0].storageOnly,true);
+assert.equal(selectedLibraryResults(onlyStorage,['gyeonggi'],true)[0].status,'not_held');
+const branchStorage = {result:{isbn:'9788937448805',libraries:[{id:'suwon',status:'available',copies:[
+  {branchCode:'141025',location:'보존서고',status:'available'},
+  {branchCode:'141092',location:'일반자료실',status:'available'},
+]}]}};
+assert.equal(selectedAvailability(branchStorage,['suwon:141025'],true),'unavailable','A different branch’s general copy cannot rescue the selected storage-only branch');
+assert.equal(selectedAvailability(branchStorage,['suwon:141092'],true),'available');
+assert.equal(selectedAvailability(branchStorage,['suwon:141025','suwon:141092'],true),'available');
+for (const status of ['error','unknown']) {
+  const uncertain = {result:{isbn:'9788937448805',libraries:[{id:'gyeonggi',status,copies:[{location:'보존서고',status:'unknown'}]}]}};
+  assert.equal(selectedAvailability(uncertain,['gyeonggi'],true),'unknown','Filtering uncertain copies must not turn a failed lookup into confirmed absence');
+}
+storageToggle(true);
+assert.ok(!visibleIds().includes('bBUNG05'),'Hide confirmed storage-only books even without the available-only condition');
+assert.ok(visibleIds().includes('bBUNG04'),'Keep books with a general-shelf copy');
+assert.ok(visibleIds().includes('bBUNG06'),'Keep books whose location or status is unknown');
+assert.doesNotMatch(bulk.bookInfoMarkup(mixedStorage),/보존 서고|제2보존서고/,'Loan details follow the same copy exclusion');
+controls.get('[data-available]').checked=true;bulk.renderBooks();
+assert.ok(!visibleIds().includes('bBUNG04'),'Available-only applies to the remaining general copies');
+assert.match(controls.get('[data-count]').textContent,/빌릴 수 있는 책 3권/,'Available counts use the same copy exclusion');
+assert.ok(visibleIds().includes('bBUNG06'),'Uncertain books stay visible for verification');
+controls.get('[data-search]').value='높은';bulk.renderBooks();
+assert.deepEqual(visibleIds(),['bBUNG02'],'Search composes with rating sort and both conditions');
+controls.get('[data-search]').value='';controls.get('[data-available]').checked=false;
+storageToggle(false);
+assert.ok(visibleIds().includes('bBUNG05'),'Turning exclusion off restores the original copies');
+assert.deepEqual(bulk.getBooks(),originalFeatureBooks,'View filters never mutate original copies, ratings or cached books');
+assert.equal(bulkQueries.length,beforeFeatureFilters,'Copy filters make no API requests');
+console.log('Watcha group averages and storage exclusion: unselected members, both lists, absent ratings, stable sorting, mixed copies, branch isolation, uncertainty, counts and preserved raw results passed.');

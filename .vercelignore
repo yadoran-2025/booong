@@ -4,3 +4,8 @@ supabase/
 .git/
 .playwright-cli/
 node_modules/
+/bungmo/
+/public/
+bungmo-app/node_modules/
+bungmo-app/.next/
+bungmo-app/out/

@@ -152,15 +152,19 @@ try {
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
   const render = new AsyncFunction("document", "getAuth", "firebaseApp", "fetch", "escapeHtml", "location", source);
   const fakeAuth = { currentUser: { uid: "google-user", email: "admin@example.com", getIdToken: async () => "signed-token" }, authStateReady: async () => {} };
-  const container = { innerHTML: "", dataset: {}, setAttribute() {}, removeAttribute() {}, querySelector: () => ({ addEventListener() {} }) };
+  const container = { innerHTML: "", dataset: {}, setAttribute() {}, removeAttribute() {}, querySelectorAll: () => [], querySelector: () => ({ addEventListener() {} }) };
   const document = { querySelector: () => container };
   await render(document, () => fakeAuth, {}, async () => new Response("{}"), String, { origin: "https://booong.vercel.app" });
   assert.match(container.innerHTML, /href="analytics.html"/);
   assert.match(container.innerHTML, /href="textbook-analysis.html"/);
   assert.match(container.innerHTML, /href="watcha-library.html"/);
   assert.match(container.innerHTML, /href="notice-admin.html"/);
+  assert.match(container.innerHTML, /href="bungmo\/"/);
+  const folderLink = /<a class="admin-tool" href="https:\/\/drive\.google\.com\/drive\/folders\/1DJk3fA986d_FmoRrOW0HFJc_cg7rMPcp" target="_blank" rel="noopener noreferrer">/;
+  assert.match(container.innerHTML, folderLink);
   await render(document, () => fakeAuth, {}, async () => new Response('{"reason":"access_denied"}', { status: 403 }), String, { origin: "https://booong.vercel.app" });
   assert.doesNotMatch(container.innerHTML, /admin-cards|href="analytics.html"/);
+  assert.doesNotMatch(container.innerHTML, folderLink);
   const fetchSource = source.replace("await renderAdmin();", "return adminFetch;");
   let fetched;
   const fetchFactory = new AsyncFunction("document", "getAuth", "firebaseApp", "fetch", "escapeHtml", "location", fetchSource);
@@ -219,6 +223,7 @@ try {
   await assert.rejects(adminFetch("/api/textbooks"), /Google/);
   await render(document, () => fakeAuth, {}, async () => { throw new Error("Anonymous users must not fetch protected content"); }, String, { origin: "https://booong.vercel.app" });
   assert.match(container.innerHTML, /Google로 로그인/);
+  assert.doesNotMatch(container.innerHTML, folderLink);
   console.log("Admin Google identity and member-sheet access checks passed.");
 } finally {
   globalThis.fetch = originalFetch;

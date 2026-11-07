@@ -1,0 +1,29 @@
+{
+  "name": "booong-bungmo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "npm run test:unit",
+    "test:unit": "node --experimental-test-module-mocks --test lib/**/*.test.js",
+    "test:build": "next build && node --test tests/routes.test.mjs",
+    "test:rules": "firebase emulators:exec --project demo-booong-bungmo --only firestore 'node --test tests/firestore.rules.test.mjs'"
+  },
+  "dependencies": {
+    "firebase": "12.16.0",
+    "next": "16.2.12",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "overrides": {
+    "postcss": "8.5.25",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase-tools": "^15.26.0"
+  }
+}

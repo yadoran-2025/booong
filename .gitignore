@@ -2,4 +2,8 @@ node_modules/
 .claude/
 .vercel
 .env*
+.data/
 supabase/.temp/
+
+/bungmo/
+/public/

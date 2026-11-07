@@ -4,6 +4,7 @@ import { escapeHtml as escape } from "./utils.js";
 import { getTextbookSection, textbooksForUnit } from "./textbook-library.js";
 import { mountTextbookPdfs, forgetTextbookPdf, resizeTextbookPdf, exportTextbookChapter } from "./textbook-pdf.js";
 import { currentResearchRange, openTextbookResearch, downloadTextbookFile } from "./textbook-export.js";
+import { loadCurriculum, addCurriculumCatalog, getCurriculumMiddleUnits } from "./ui/curriculum.js";
 
 const SAMPLE_UNIT = "사회2::III. 시장과 가격";
 const BOOKS = ["교과서 A", "교과서 B", "교과서 C"];
@@ -50,6 +51,16 @@ export function readTextbookLink(url, library) {
   const unit = book.units[Number(params.get("unit")) - 1];
   const chapter = params.has("chapter") ? /^[1-9]\d*$/.test(params.get("chapter")) ? Number(params.get("chapter")) - 1 : NaN : -1;
   return unit && getTextbookSection(library, book.id, unit.key, chapter) ? { book, unit, chapter } : null;
+}
+
+export function selectTextbookTarget(url, catalog, library) {
+  const linked = readTextbookLink(url, library);
+  const params = new URL(url).searchParams;
+  const unit = catalog.units.find(item => item.key === (linked?.unit.key || params.get("unitKey")));
+  if (!unit) return null;
+  const book = linked?.book || textbooksForUnit(library, unit.key)[0];
+  const middle = linked?.chapter >= 0 ? linked.unit.chapters[linked.chapter].title : params.get("middle");
+  return { unit, book, chapter: middle ? (unit.middleUnits || []).indexOf(middle) : -1 };
 }
 
 export const defaultTextbookColumns = (bookCount, mobile) => bookCount === 1 && !mobile ? 2 : 1;
@@ -132,7 +143,9 @@ async function start() {
   if (!libraryResponse.ok) throw new Error("Textbook catalog unavailable");
   const library = await libraryResponse.json();
   root.innerHTML = '<p class="analytics__empty" role="status">과목과 단원 목록을 불러오고 있습니다.</p>';
-  const { catalog } = await loadDashboardConfig();
+  const [config] = await Promise.all([loadDashboardConfig(), loadCurriculum().catch(error => console.warn("Curriculum unavailable:", error))]);
+  const { catalog } = addCurriculumCatalog(config);
+  for (const unit of catalog.units) unit.middleUnits = [...new Set([...(unit.middleUnits || []), ...getCurriculumMiddleUnits(unit)])];
   for (const book of library.books) for (const unit of book.units) {
     if (!catalog.units.some(item => item.key === unit.key)) catalog.units.push({ ...unit, school: book.school, subject: book.subject, middleUnits: unit.chapters.map(chapter => chapter.title) });
   }
@@ -140,16 +153,13 @@ async function start() {
   // ponytail: 분석 메모는 탭에만 보관. 영구 메모 저장은 별도 요구가 있을 때 추가한다.
   const notes = new Map();
   let capturing = false;
-  const linked = readTextbookLink(location.href, library);
-  const initialBook = linked?.book || library.books[0];
-  const state = { school: initialBook?.school || "중학교", subject: initialBook?.subject || "사회2", unit: linked?.unit.key || initialBook?.units[0]?.key || SAMPLE_UNIT, books: [0], query: "", chapter: -1, zooms: Array(Math.max(3, library.books.length)).fill(100), columns: Array(Math.max(3, library.books.length)).fill(null) };
+  const target = selectTextbookTarget(location.href, catalog, library);
+  const initialBook = target?.book || library.books[0];
+  const state = { school: target?.unit.school || initialBook?.school || "중학교", subject: target?.unit.subject || initialBook?.subject || "사회2", unit: target?.unit.key || initialBook?.units[0]?.key || SAMPLE_UNIT, books: [0], query: "", chapter: target?.chapter ?? -1, zooms: Array(Math.max(3, library.books.length)).fill(100), columns: Array(Math.max(3, library.books.length)).fill(null) };
   if (!catalog.units.some(unit => unit.key === state.unit)) {
     Object.assign(state, { school: catalog.units[0]?.school || "중학교", subject: catalog.units[0]?.subject || options["중학교"][0]?.value || "", unit: catalog.units[0]?.key });
   }
-  if (linked) {
-    state.books = [textbooksForUnit(library, state.unit).findIndex(book => book.id === linked.book.id)];
-    if (linked.chapter >= 0) state.chapter = catalog.units.find(unit => unit.key === state.unit).middleUnits.indexOf(linked.unit.chapters[linked.chapter].title);
-  }
+  if (target?.book) state.books = [textbooksForUnit(library, state.unit).findIndex(book => book.id === target.book.id)];
   const columnsForBook = book => state.columns[book] ?? defaultTextbookColumns(state.books.length, window.matchMedia("(max-width: 760px)").matches);
   const noteKey = book => `${state.unit}::${book}`;
   const selectedUnit = () => catalog.units.find(unit => unit.key === state.unit);
@@ -182,7 +192,12 @@ async function start() {
   function syncLink() {
     const link = shareLink(state.books[0]);
     const url = new URL(link || location.href);
-    if (!link) ["book", "unit", "chapter"].forEach(key => url.searchParams.delete(key));
+    if (!link) {
+      ["book", "unit", "chapter", "middle"].forEach(key => url.searchParams.delete(key));
+      url.searchParams.set("unitKey", state.unit);
+      const middle = middles(selectedUnit())[state.chapter];
+      if (middle) url.searchParams.set("middle", middle);
+    }
     history.replaceState(null, "", url.pathname + url.search);
   }
 
@@ -260,9 +275,10 @@ async function start() {
     const chapters = middles(unit);
     const pages = Math.max(chapters.length * 2, 2);
     root.classList.add("textbook");
+    root.classList.toggle("textbook--embedded", window.self !== window.top);
     root.innerHTML = `<div class="textbook__inner">
       <nav class="analytics__nav textbook__nav" aria-label="페이지 이동"><a class="analytics__brand" href="index.html">BOOONG <small>TEXTBOOK</small></a><div class="textbook__nav-right"><span class="chip chip--gray">${preview ? "로컬 미리보기" : "운영자 전용"}</span><a class="analytics__back" href="index.html">← 홈으로</a></div></nav>
-      <header class="textbook__hero"><div><p class="analytics__eyebrow">교과서로 시작하는 수업 준비</p><h1>교과서 분석<span>.</span></h1><p>소단원을 고르면, 교과서의 내용과 흐름이 한눈에.</p></div></header>
+      <header class="textbook__hero"><div><p class="analytics__eyebrow">교과서로 시작하는 수업 준비</p><h1>교과서 분석<span>.</span></h1><p>소단원을 고르면, 교과서의 내용과 흐름이 한눈에.</p></div><a class="btn btn--secondary" href="https://drive.google.com/drive/folders/1LA51lHH1bUPbCN7G22qIYI5Q4IRbp9TK" target="_blank" rel="noopener noreferrer" aria-label="교과서 PDF 다운로드 (Google Drive 폴더, 새 탭)">교과서 PDF 다운로드 ↗</a></header>
       <div class="textbook__notice"><span class="textbook__notice-dot" aria-hidden="true"></span><span><strong>${preview ? "로컬 미리보기" : "교과서 열람"}</strong> · 교과서 ${library.books.length}권이 연결되었습니다. 대단원을 고른 뒤 소단원을 선택하면 해당 부분이 열립니다.</span></div>
       <section class="textbook__filters" aria-label="과목 선택"><div class="textbook__school" role="group" aria-label="학교급">${SCHOOL_OPTIONS.map(({ value, label }) => `<button type="button" data-school="${value}" aria-pressed="${state.school === value}">${label}</button>`).join("")}</div><div class="textbook__subject"><span>과목</span><div class="textbook__subjects" role="group" aria-label="과목">${options[state.school].map(({ value, label }) => `<button type="button" class="btn ${value === state.subject ? "btn--primary" : "btn--secondary"}" data-subject="${escape(value)}" aria-pressed="${value === state.subject}">${escape(label)}</button>`).join("")}</div></div><span class="textbook__catalog-label">기존 교육과정 단원 기준</span></section>
       <div class="textbook__workspace">

@@ -15,10 +15,13 @@ const pages = [
   "analytics.html",
   "admin.html",
   "notice-admin.html",
+  "thumbnail-admin.html",
+  "research-erp.html",
   "textbook-analysis.html",
   "watcha-library.html",
   "login.html",
   "dorms-denied.html",
+  ...(existsSync("bungmo/.generated") ? ["bungmo/index.html", ...["members", "schedule", "settlement", "trip", "archive", "access"].map(page => `bungmo/${page}/index.html`)] : []),
 ];
 const legacyRefs = [
   "js/" + "author.js",

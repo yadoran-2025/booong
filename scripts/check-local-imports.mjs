@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, extname, join, relative, resolve } from "node:path";
 
-const roots = ["api", "js", "lib", "scripts"];
+const roots = ["api", "js", "lib", "scripts", "rice-basket"];
 const files = [];
 
 function walk(dir) {
@@ -53,7 +53,7 @@ for (const file of files) {
       errors.push(`${relative(process.cwd(), file)} imports missing ${specifier}`);
       continue;
     }
-    const available = exportsByFile.get(resolve(target)) || new Set();
+    const available = exportsByFile.get(resolve(target)) || exportedNames(readFileSync(target, "utf8"));
     for (const part of names.split(",")) {
       const name = part.trim().split(/\s+as\s+/)[0].trim();
       if (name && !available.has(name) && !available.has("*")) {

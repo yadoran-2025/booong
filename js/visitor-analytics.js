@@ -144,7 +144,7 @@ export async function setFavoriteState(resourceId, isFavorite) {
   }
 }
 
-export async function loadFavoriteStats() {
+export async function loadFavoriteStats(options = {}) {
   try {
     const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/favorites`));
     return Object.entries(snapshot.val() || {}).map(([resourceId, value]) => ({
@@ -152,6 +152,7 @@ export async function loadFavoriteStats() {
       count: Number(value?.count) || 0,
     }));
   } catch (err) {
+    if (options.throwOnError) throw err;
     console.warn("Favorite analytics load failed:", err);
     return [];
   }
@@ -253,7 +254,7 @@ export async function loadTodayPageStats() {
   }
 }
 
-export async function loadPageVisitStats() {
+export async function loadPageVisitStats(options = {}) {
   try {
     const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/pages`));
     const value = snapshot.val() || {};
@@ -270,12 +271,13 @@ export async function loadPageVisitStats() {
       }))
       .sort((a, b) => b.visitors - a.visitors || b.views - a.views || a.title.localeCompare(b.title, "ko"));
   } catch (err) {
+    if (options.throwOnError) throw err;
     console.warn("Visitor analytics load failed:", err);
     return [];
   }
 }
 
-export async function loadGroupClickStats() {
+export async function loadGroupClickStats(options = {}) {
   try {
     const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/groupClicks`));
     const value = snapshot.val() || {};
@@ -293,6 +295,7 @@ export async function loadGroupClickStats() {
       }))
       .sort((a, b) => b.views - a.views || b.visitorCount - a.visitorCount || a.title.localeCompare(b.title, "ko"));
   } catch (err) {
+    if (options.throwOnError) throw err;
     console.warn("Group click analytics load failed:", err);
     return [];
   }

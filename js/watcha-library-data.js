@@ -45,7 +45,7 @@ export const YONGIN_LIBRARIES = [
   ['MX','이동꿈틀'], ['ME','죽전'], ['MP','청덕'], ['MC','포곡'], ['MN','흥덕'],
 ].map(([code, branch]) => ({id:`yongin:${code}`, code, branch, name:branch+'도서관'}));
 
-export function selectedLibraryResults(book, selectedIds) {
+export function selectedLibraryResults(book, selectedIds, excludeStorage = false) {
   const libraries = book.result?.libraries || [];
   return selectedIds.map(id => {
     const branch = [...SUWON_LIBRARIES, ...YONGIN_LIBRARIES].find(library => library.id === id);
@@ -60,15 +60,24 @@ export function selectedLibraryResults(book, selectedIds) {
       : region.status === 'unknown' || copies.some(copy => copy.status === 'unknown') ? 'unknown'
       : copies.length ? 'unavailable' : 'not_held';
     return {...region, id, name:branch.name, status, copies};
+  }).map(source => {
+    if (!excludeStorage) return source;
+    const copies = (source.copies || []).filter(copy => !String(copy.location || '').replace(/\s/g, '').includes('보존서고'));
+    if (copies.length === source.copies?.length || !source.copies?.length) return source;
+    const status = source.status === 'error' ? 'error'
+      : copies.some(copy => copy.status === 'available') ? 'available'
+      : ['unknown','pending'].includes(source.status) || copies.some(copy => copy.status === 'unknown') ? 'unknown'
+      : copies.length ? 'unavailable' : 'not_held';
+    return {...source, copies, status, storageOnly: !copies.length};
   });
 }
 
-export function selectedAvailability(book, selectedIds) {
+export function selectedAvailability(book, selectedIds, excludeStorage = false) {
   if (!selectedIds.length) return 'unselected';
   if (book.loading && !book.result) return 'pending';
   if (book.error && !book.result || (book.result && !book.result.isbn)) return 'unknown';
   if (!book.result) return 'pending';
-  const selected = selectedLibraryResults(book, selectedIds);
+  const selected = selectedLibraryResults(book, selectedIds, excludeStorage);
   if (selected.some(library => library?.status === 'available')) return 'available';
   return selected.every(library => library && ['unavailable', 'not_held'].includes(library.status)) ? 'unavailable' : 'unknown';
 }

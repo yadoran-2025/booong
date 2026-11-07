@@ -1,0 +1,101 @@
+
+.standards-dialog { width: min(880px, calc(100% - var(--space-8))); max-height: min(800px, calc(100dvh - var(--space-12))); margin: auto; padding: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-xl); background: var(--color-surface); color: var(--color-text-primary); box-shadow: var(--shadow-xl); }
+.standards-dialog::backdrop { background: color-mix(in srgb, var(--color-text-primary) 42%, transparent); }
+.standards-frame { display: flex; flex-direction: column; max-height: inherit; }
+.standards-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding: var(--space-7) var(--space-8) var(--space-5); }
+.standards-head small { color: var(--color-primary-text); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
+.standards-head h2 { margin: var(--space-2) 0 0; font-size: var(--text-2xl); font-weight: var(--weight-bold); letter-spacing: -0.03em; }
+.standards-head p { margin: var(--space-2) 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); }
+.standards-head form { flex-shrink: 0; }
+.standards-tabs { display: flex; gap: var(--space-6); padding: 0 var(--space-8); border-bottom: 1px solid var(--color-border); }
+.standards-tabs button { min-height: var(--space-12); padding: var(--space-3) 0; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-semibold); white-space: nowrap; }
+.standards-tabs button[aria-selected="true"] { border-bottom-color: var(--color-primary); color: var(--color-primary-text); }
+.standards-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6) var(--space-8); }
+.standards-body h3 { margin: 0; font-size: var(--text-base); font-weight: var(--weight-bold); }
+.standards-intro { margin: var(--space-2) 0 var(--space-5); color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.7; }
+.standards-items { display: grid; gap: var(--space-3); list-style: none; padding: 0; margin: 0; }
+.standard-item { padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.standard-item h4 { margin: 0 0 var(--space-2); color: var(--color-primary-text); font-size: var(--text-sm); font-weight: var(--weight-bold); }
+.standard-item p, .considerations li { margin: 0; font-size: var(--text-base); line-height: var(--leading-relaxed); word-break: keep-all; overflow-wrap: anywhere; }
+.standard-item p { color: var(--color-text-primary); }
+.considerations { display: grid; gap: var(--space-4); padding-left: var(--space-5); margin: 0; }
+.considerations li::marker { color: var(--color-primary); }
+.standards-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-8); border-top: 1px solid var(--color-border); background: var(--color-surface-subtle); }
+.standards-foot p { margin: 0; color: var(--color-text-secondary); font-size: var(--text-xs); line-height: 1.6; }
+.standards-foot button { flex-shrink: 0; font-size: var(--text-sm); }
+@media (max-width: 760px) {
+  .standards-dialog { width: calc(100% - var(--space-4)); max-height: calc(100dvh - var(--space-8)); border-radius: var(--radius-lg); }
+  .standards-head { padding: var(--space-5) var(--space-5) var(--space-4); gap: var(--space-2); }
+  .standards-head h2 { font-size: var(--text-xl); }
+  .standards-tabs { gap: var(--space-4); padding-inline: var(--space-5); }
+  .standards-tabs button { font-size: var(--text-xs); }
+  .standards-body { padding: var(--space-5); }
+  .standard-item { padding: var(--space-4); }
+  .standards-foot { padding: var(--space-3) var(--space-5); }
+}
+  
+.standards-dialog { width: min(1100px, calc(100% - var(--space-8))); max-height: calc(100dvh - var(--space-8)); }
+.standards-tabs { gap: var(--space-6); }
+.standard-item + h3 { margin-top: var(--space-6); }
+.curriculum-action { color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-medium); padding-inline: var(--space-3); }
+.curriculum-action:hover { color: var(--color-primary-text); }
+.source-locator { color: var(--color-text-tertiary); font-size: var(--text-xs); margin: var(--space-3) 0 0; }
+.table-scroll { overflow-x: auto; border: 1px solid var(--color-border-strong); }
+.curriculum-table { width: 100%; min-width: 800px; border-collapse: collapse; table-layout: fixed; font-size: var(--text-sm); line-height: 1.75; }
+.curriculum-table caption { text-align: left; padding: var(--space-3); font-weight: var(--weight-bold); background: var(--color-surface-subtle); }
+.curriculum-table th, .curriculum-table td { border: 1px solid var(--color-border-strong); padding: var(--space-3); vertical-align: middle; color: var(--color-text-primary); word-break: keep-all; overflow-wrap: anywhere; }
+.curriculum-table th { background: var(--color-surface-sidebar); text-align: center; font-weight: var(--weight-semibold); }
+.curriculum-table ul { margin: 0; padding-left: var(--space-4); }
+.standards-foot a { font-size: var(--text-sm); }
+@media (max-width: 760px) {
+  .standards-dialog { width: calc(100% - var(--space-4)); max-height: calc(100dvh - var(--space-4)); }
+  .standards-tabs { gap: var(--space-3); }
+  .standards-head h2 { font-size: var(--text-lg); }
+  .standards-foot { flex-wrap: wrap; }
+  .curriculum-table { min-width: 780px; }
+}
+  
+.curriculum-document-links { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-block: var(--space-5); }
+.evaluation-dialog { width: min(640px, calc(100% - var(--space-8))); }
+.evaluation-dialog .standards-head { align-items: center; padding: var(--space-6) var(--space-7); border-bottom: 1px solid var(--color-border); }
+.evaluation-dialog .standards-head > div { min-width: 0; }
+.evaluation-dialog .standards-head small { color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.evaluation-dialog .standards-head h2 { color: var(--color-text-primary); line-height: var(--leading-tight); }
+.evaluation-dialog .standards-head button { width: var(--space-11); height: var(--space-11); padding: 0; border-radius: var(--radius-full); font-size: var(--text-2xl); }
+.evaluation-dialog .standards-body { padding: var(--space-7); }
+.evaluation-document h3 { margin: 0; font-size: var(--text-2xl); line-height: 1.5; letter-spacing: -0.03em; word-break: keep-all; overflow-wrap: anywhere; }
+.evaluation-document__description { margin: var(--space-3) 0 0; font-size: var(--text-base); line-height: var(--leading-relaxed); color: var(--color-text-secondary); word-break: keep-all; overflow-wrap: anywhere; }
+.evaluation-document .curriculum-document-links { align-items: center; margin: var(--space-6) 0 0; }
+@media (max-width: 760px) {
+  .evaluation-dialog { width: calc(100% - var(--space-6)); }
+  .evaluation-dialog .standards-head, .evaluation-dialog .standards-body { padding: var(--space-5); }
+  .evaluation-document .curriculum-document-links { flex-direction: column; align-items: stretch; gap: var(--space-2); }
+}
+.curation-section-head .curriculum-action, .curation-middle-head .curriculum-action { margin-left: 0; flex-shrink: 0; }
+.standards-body h3 { margin-bottom: var(--space-4); }
+.standards-body h3:not(:first-child) { margin-top: var(--space-6); }
+.standards-body [role="tabpanel"] > h4 { margin: var(--space-6) 0 var(--space-3); color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-semibold); line-height: var(--leading-normal); }
+.standards-body [role="tabpanel"] > h3 + h4 { margin-top: 0; }
+.standards-dialog [hidden] { display: none; }
+.curriculum-table--wide { min-width: 800px; }
+.curriculum-table:not(.curriculum-table--wide) { min-width: 520px; }
+.standards-tabs { overflow-x: auto; flex-shrink: 0; }
+.standards-tabs button { flex-shrink: 0; }
+.achievement-standard { margin-block: var(--space-5) var(--space-6); }
+.curriculum-table.achievement-table { min-width: 520px; }
+.achievement-table thead { border-top: 1px solid var(--color-primary-text); }
+.achievement-table th { background: var(--color-primary-subtle); }
+.achievement-table th, .achievement-table td { vertical-align: top; }
+.achievement-table [data-achievement-column="reference"], .achievement-table [data-achievement-column="level"] { vertical-align: middle; }
+.achievement-table tbody [data-achievement-column="level"] { font-weight: var(--weight-normal); }
+.achievement-table tbody [data-achievement-column="reference"] { text-align: left; }
+.achievement-note { margin: var(--space-3) 0 0; font-size: var(--text-xs); }
+.achievement-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
+.achievement-actions .source-locator { margin: 0; }
+.achievement-actions [role="status"] { flex-basis: 100%; }
+
+[data-textbook-unit][hidden] { display: none; }
+.textbook-dialog { width: min(1600px, calc(100% - var(--space-4))); height: calc(100dvh - var(--space-4)); max-height: calc(100dvh - var(--space-4)); }
+.textbook-dialog .standards-frame { height: 100%; }
+.textbook-dialog .standards-head { flex-shrink: 0; }
+.textbook-dialog iframe { flex: 1; width: 100%; min-height: 0; border: 0; }

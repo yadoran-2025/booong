@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import vm from "node:vm";
+import { escapeHtml } from "../js/utils.js";
+import { renderTextbookButton } from "../js/ui/textbooks.js";
 import { getTextbookSection, textbooksForUnit } from "../js/textbook-library.js";
-import { selectTextbookUnits, createTextbookSubjectOptions, isLocalTextbookPreview, createTextbookLink, readTextbookLink, toggleTextbookSelection, bindTextbookPinch, clampTextbookZoom, defaultTextbookColumns } from "../js/textbook-analysis.js";
+import { selectTextbookUnits, selectTextbookTarget, createTextbookSubjectOptions, isLocalTextbookPreview, createTextbookLink, readTextbookLink, toggleTextbookSelection, bindTextbookPinch, clampTextbookZoom, defaultTextbookColumns } from "../js/textbook-analysis.js";
 
 assert.equal(defaultTextbookColumns(1, true), 1, "One textbook starts with one page on mobile");
 assert.equal(defaultTextbookColumns(1, false), 2, "One textbook starts with two pages on desktop");
@@ -27,6 +30,27 @@ assert.deepEqual(toggleTextbookSelection([1], 1), [1]);
 assert.deepEqual(toggleTextbookSelection([1], 2), [1, 2]);
 const library = JSON.parse(await readFile(new URL("../data/textbooks.json", import.meta.url), "utf8"));
 const book = library.books[0];
+const targetCatalog = { units: library.books.flatMap(book => book.units.map(unit => ({ ...unit, school: book.school, subject: book.subject, middleUnits: unit.chapters.map(chapter => chapter.title) }))) };
+for (const book of library.books) for (const unit of book.units) {
+  const popup = new URL("https://booong.example/textbook-analysis.html");
+  popup.searchParams.set("unitKey", unit.key);
+  assert.equal(selectTextbookTarget(popup.href, targetCatalog, library).unit.key, unit.key);
+  assert.equal(selectTextbookTarget(popup.href, targetCatalog, library).chapter, -1);
+  for (const [index, chapter] of unit.chapters.entries()) {
+    popup.searchParams.set("middle", chapter.title);
+    assert.equal(selectTextbookTarget(popup.href, targetCatalog, library).chapter, index);
+    const shared = createTextbookLink(popup.href, library, book.id, unit.key, index);
+    assert.equal(selectTextbookTarget(shared, targetCatalog, library).book.id, book.id, "shared links preserve the publisher");
+  }
+}
+const emptyUnit = { key: "경제::시장", school: "고등학교", subject: "경제", title: "시장", middleUnits: ["1. 가격"] };
+const emptyTarget = selectTextbookTarget(`https://booong.example?${new URLSearchParams({ unitKey: emptyUnit.key, middle: emptyUnit.middleUnits[0] })}`, { units: [emptyUnit] }, library);
+assert.equal(emptyTarget.unit, emptyUnit, "units without textbooks retain their own context");
+assert.equal(emptyTarget.book, undefined);
+assert.equal(emptyTarget.chapter, 0);
+assert.equal(selectTextbookTarget("https://booong.example?unitKey=unknown", targetCatalog, library), null);
+assert.equal(selectTextbookTarget(`https://booong.example?${new URLSearchParams({ unitKey: book.units[0].key, middle: "unknown" })}`, targetCatalog, library).chapter, -1);
+assert.match(renderTextbookButton({ key: 'key"', title: '<단원>' }, '1. "시장"'), /class="btn btn--ghost curriculum-action"[\s\S]*data-textbook-unit="key&quot;"[\s\S]*data-textbook-middle="1\. &quot;시장&quot;"[\s\S]* hidden>/);
 assert.equal(book.subject, "사회2[15개정]", "2015 textbooks must not be linked to the 2022 curriculum");
 assert.equal(book.units.length, 12);
 assert.equal(book.units.reduce((count, unit) => count + unit.chapters.length, 0), 37);
@@ -165,3 +189,58 @@ const outside = touch(100); outside.touches[1].target = { closest: () => null };
 listeners.get("touchstart")(outside); listeners.get("touchmove")(outside);
 assert.equal(outside.prevented, undefined, "Touches outside or across viewers keep the browser's normal gesture");
 console.log("Mobile touch pinch, native scrolling, Safari deduplication, cancellation, and zoom bounds passed.");
+
+// The public dashboard never prompts for login and exposes actions only after a server check.
+const actionSource = (await readFile(new URL("../js/ui/textbooks.js", import.meta.url), "utf8"))
+  .replace(/^import .+;$/gm, "").replace(/^export /gm, "")
+  .replace('import("../admin.js")', "Promise.resolve(admin)");
+let uid = null, accountListener, reads = 0, unsubscribed = 0, response = { ok: true };
+const dialogs = [];
+const admin = {
+  adminAccountId: () => uid,
+  adminFetch: async url => { assert.equal(url, "/api/admin"); reads++; return response; },
+  onAdminAccountChange(listener) { accountListener = listener; return () => { unsubscribed++; }; },
+};
+const actionContext = vm.createContext({ escapeHtml, URL, Promise, console, admin, location: { href: "https://booong.example/index.html" }, document: {
+  createElement(tag) {
+    assert.equal(tag, "dialog");
+    const listeners = {}, frame = { addEventListener(type, handler) { this[type] = handler; }, contentDocument: { addEventListener(type, handler) { this[type] = handler; }, querySelector: () => null } };
+    const dialog = { setAttribute() {}, addEventListener(type, handler) { listeners[type] = handler; }, querySelector: () => frame, showModal() { this.open = true; }, close() { this.open = false; listeners.close?.(); }, remove() { this.removed = true; }, frame };
+    dialogs.push(dialog);
+    return dialog;
+  },
+} });
+vm.runInContext(`${actionSource}\nthis.bindTextbooks = bindTextbooks;`, actionContext);
+const action = { hidden: true, isConnected: true, dataset: { textbookUnit: emptyUnit.key, textbookMiddle: emptyUnit.middleUnits[0], textbookTitle: emptyUnit.title }, addEventListener(type, handler) { this[type] = handler; }, focus() { this.focused = true; } };
+const actionRoot = { isConnected: true, querySelectorAll: () => [action], appendChild() {} };
+await actionContext.bindTextbooks(actionRoot);
+await accountListener(null);
+assert.equal(reads, 0, "signed-out visitors never trigger a permission request");
+action.click();
+assert.equal(dialogs.length, 0);
+uid = "member"; response = { ok: false };
+await accountListener(uid);
+assert.equal(action.hidden, true, "signed-in non-admins do not see the action");
+uid = "operator"; response = { ok: true };
+await accountListener(uid);
+assert.equal(action.hidden, false);
+action.click();
+assert.equal(dialogs[0].open, true);
+assert.ok(dialogs[0].innerHTML.includes(escapeHtml(new URL(`/textbook-analysis.html?${new URLSearchParams({ unitKey: emptyUnit.key, middle: emptyUnit.middleUnits[0] })}`, "https://booong.example").href)));
+dialogs[0].frame.load();
+dialogs[0].frame.contentDocument.keydown({ key: "Escape" });
+assert.equal(dialogs[0].removed, true, "Escape inside the iframe closes the popup");
+assert.equal(action.focused, true);
+action.click();
+uid = null; await accountListener(uid);
+assert.equal(action.hidden, true);
+assert.equal(dialogs[1].removed, true, "sign-out closes an open popup");
+let resolveCheck;
+uid = "operator"; response = new Promise(resolve => { resolveCheck = resolve; });
+const pendingCheck = accountListener(uid);
+uid = null; await accountListener(uid);
+resolveCheck({ ok: true }); await pendingCheck;
+assert.equal(action.hidden, true, "a stale permission response cannot restore signed-out actions");
+await actionContext.bindTextbooks(actionRoot);
+assert.equal(unsubscribed, 1, "rerendering replaces the previous auth observer");
+console.log("Textbook popup: unit context, admin visibility, account changes, stale checks, dismissal, and focus passed.");

@@ -60,7 +60,7 @@ try {
 } catch { /* Optional browser preferences. */ }
 selectedLibraries = [selectedLibraries[0] || 'gyeonggi'];
 const collections = new Map();
-const wishlistRatings = new Map();
+const memberRatings = new Map();
 let activeLoaded = false;
 const corrections = new Map();
 const infoRequests = new Map();
@@ -68,6 +68,7 @@ let infoTimer;
 let selectedGenres = [], genreSignature = '';
 let randomBookOrder = new Map();
 let bookSort = 'popular';
+let excludeStorage = false;
 const shelfIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18M21 3v18M3 18h18M6 6h3v12H6zM11 5h3v13h-3zM16 8h3v10h-3z"/></svg>';
 const loanRequests = new Map();
 let librarySelection = 0, loanWarning = '';
@@ -194,7 +195,10 @@ function combinedBooks() {
       merged.set(book.id, {...preferred, profileIds:owners,ratings});
     }
   }
-  if (collectionKind === 'wishes') for (const book of merged.values()) book.ratings = {...wishlistRatings.get(book.id)};
+  for (const book of merged.values()) {
+    book.bungRatings = {...memberRatings.get(book.id)};
+    if (collectionKind === 'wishes') book.ratings = book.bungRatings;
+  }
   const averageRating = book => {
     const ratings = Object.values(book.ratings);
     return ratings.reduce((sum, rating) => sum + rating, 0) / (ratings.length || 1);
@@ -227,6 +231,7 @@ function renderGenreFilters(combined) {
 }
 
 function libraryMarkup(library) {
+  if (excludeStorage) library = selectedLibraryResults({result:{libraries:[library]}},[library.id],true)[0];
   const branches = new Map();
   for (const copy of library.copies || []) {
     if (copy.status !== 'available') continue;
@@ -437,7 +442,7 @@ function openCart() {
 }
 
 function bookLocationsMarkup(book, libraryIds = selectedLibraries, allCopies = false) {
-  const copies = selectedLibraryResults(book, libraryIds).flatMap(library => library.copies || [])
+  const copies = selectedLibraryResults(book, libraryIds, excludeStorage && !allCopies).flatMap(library => library.copies || [])
     .filter(copy => allCopies || copy.status === 'available');
   const details = [...new Set(copies.map(copy => [copy.branch, copy.location, copy.callNo, ...(allCopies ? [copy.label || labels[copy.status]] : [])].filter(Boolean).join(' · ')))];
   const locations = [...new Set(copies.map(copy => copy.location).filter(Boolean))];
@@ -476,7 +481,7 @@ function loanRetrySeconds(book, sourceIds = selectedLibraries.map(id => id.split
 }
 
 function loanRecoveryMarkup(book) {
-  const failure = selectedAvailability(book, selectedLibraries) !== 'available' && loanFailure(book);
+  const failure = selectedAvailability(book, selectedLibraries, excludeStorage) !== 'available' && loanFailure(book);
   if (!failure) return '<section class="watcha-book__recovery" hidden></section>';
   const source = loanFailureSource(book), seconds = loanRetrySeconds(book);
   const hint = source?.errorCode === 'access_denied' ? '자동 조회 접근이 거부되었습니다. 도서관 원문에서 직접 확인하거나 다른 도서관을 선택해주세요.'
@@ -488,19 +493,25 @@ function loanRecoveryMarkup(book) {
   return `<section class="watcha-book__recovery"><p>${esc(failure)}</p><p>${esc(hint)}</p><div><button class="btn btn--secondary" type="button" data-check="${esc(book.id)}" aria-label="${esc(book.title)} 다시 시도"${busy || book.loading ? ' disabled' : ''}>다시 시도</button><a class="btn btn--ghost" href="${esc(url)}" target="_blank" rel="noopener noreferrer">도서관에서 직접 확인 ↗</a></div></section>`;
 }
 
+function bungRatingSummary(book) {
+  const ratings = Object.values(book.bungRatings || book.ratings || {}).filter(Number.isFinite);
+  return {count:ratings.length, average:ratings.length ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length : null};
+}
+
 function bookOwnersMarkup(book) {
   if (!book.profileIds) return '';
   const people = WATCHA_PROFILES.filter(profile => book.profileIds.includes(profile.id) || Number.isFinite(book.ratings?.[profile.id]));
-  return `<div class="watcha-book__owners">${people.map(profile => `<span class="chip chip--gray">${esc(profile.name)}${Number.isFinite(book.ratings?.[profile.id]) ? ` <span class="watcha-personal-rating" title="읽은 책 평점" aria-label="${esc(profile.name)}의 읽은 책 평점: 5점 만점에 ${book.ratings[profile.id]}점">★ ${book.ratings[profile.id].toFixed(1)}</span>` : ''}</span>`).join('')}</div>`;
+  const {count, average} = bungRatingSummary(book);
+  return `<div class="watcha-book__owners">${count ? `<span class="watcha-bung-rating" title="붕 멤버 전체의 평균 평점 · 5점 만점">붕 ★ ${average.toFixed(1)} · ${count}명</span>` : ''}${people.map(profile => `<span class="chip chip--gray">${esc(profile.name)}${Number.isFinite(book.ratings?.[profile.id]) ? ` <span class="watcha-personal-rating" title="읽은 책 평점" aria-label="${esc(profile.name)}의 읽은 책 평점: 5점 만점에 ${book.ratings[profile.id]}점">★ ${book.ratings[profile.id].toFixed(1)}</span>` : ''}</span>`).join('')}</div>`;
 }
 
 function bookMarkup(book, {libraryIds = selectedLibraries, shelf = false} = {}) {
   const library = shelf ? cartLibraryResult(book,libraryIds[0]) : null;
   if (library) book = {...book,loading:false,error:'',result:{...book.result,libraries:[{...library,id:libraryIds[0].split(':')[0]}]}};
-  const state = selectedAvailability(book, libraryIds);
+  const state = selectedAvailability(book, libraryIds, excludeStorage && !shelf);
   const failure = state !== 'available' && (shelf ? library.status === 'error' && (library.message || '조회에 실패했습니다.') : loanFailure(book));
   const stateLabel = failure ? '조회 실패' : state === 'unavailable'
-    ? selectedLibraryResults(book,libraryIds).every(source => source.status === 'not_held') ? '미소장' : '소장 · 대출 불가'
+    ? selectedLibraryResults(book,libraryIds,excludeStorage && !shelf).every(source => source.status === 'not_held') ? '미소장' : '소장 · 대출 불가'
     : stateLabels[state];
   const copyLabels = shelf && state === 'unavailable' ? [...new Set((library.copies || []).map(copy => copy.label).filter(Boolean))].join(' · ') : '';
   const queriedAt = Date.parse(library?.checkedAt);
@@ -684,8 +695,10 @@ function renderBooks(changed) {
   const failures = combined.filter(loanFailure).length;
   const filtered = combined.filter(book => book.title.toLocaleLowerCase().includes(query)
     && (!selectedGenres.length || bookGenres(book).some(genre => selectedGenres.includes(genre)))
-    && (!only || ['available','pending','unknown'].includes(selectedAvailability(book, selectedLibraries))));
+    && (!excludeStorage || !selectedLibraries.length || !selectedLibraryResults(book, selectedLibraries, true).every(source => source.storageOnly && source.status === 'not_held'))
+    && (!only || ['available','pending','unknown'].includes(selectedAvailability(book, selectedLibraries, excludeStorage))));
   if (bookSort === 'alphabetical') filtered.sort((a,b) => a.title.localeCompare(b.title,'ko',{numeric:true,ignorePunctuation:true}));
+  else if (bookSort === 'rating') filtered.sort((a,b) => (bungRatingSummary(b).average ?? -1) - (bungRatingSummary(a).average ?? -1));
   else if (bookSort === 'random') filtered.sort((a, b) => (randomBookOrder.get(a.id) ?? Infinity) - (randomBookOrder.get(b.id) ?? Infinity));
   for (const button of root.querySelectorAll('[data-sort]')) button.setAttribute('aria-pressed',String(button.dataset.sort === bookSort));
   root.querySelector('[data-sort="random"]').disabled = filtered.length < 2;
@@ -705,7 +718,7 @@ function renderBooks(changed) {
     ? queryTimes.length ? `${libraryName} 조회 ${firstQuery === lastQuery ? lastQuery : firstQuery + ' ~ ' + lastQuery}` : `${libraryName} 조회 기록 없음`
     : '';
   const done = combined.filter(book => book.error || book.result && (!book.result.isbn || book.result.libraries?.some(library => library.id === sourceId))).length;
-  const available = filtered.filter(book => selectedAvailability(book, selectedLibraries) === 'available').length;
+  const available = filtered.filter(book => selectedAvailability(book, selectedLibraries, excludeStorage) === 'available').length;
   root.querySelector('[data-count]').textContent = selectedProfiles.length ? only ? `빌릴 수 있는 책 ${available.toLocaleString('ko-KR')}권` : `책 ${filtered.length.toLocaleString('ko-KR')}권` : '계정을 선택해주세요.';
   root.querySelector('[data-totals]').textContent = selectedProfiles.length ? [
     only && filtered.length > available ? `확인 필요 ${(filtered.length - available).toLocaleString('ko-KR')}권` : '',
@@ -906,7 +919,7 @@ async function init(forceRefresh = false, refreshStatuses = false, allProfiles =
   const allowed = localPreview || await requireAdmin(gate);
   if (run !== epoch) return;
   if (!allowed) { root.replaceChildren(gate); return; }
-  root.innerHTML = `<div class="admin-shell"><nav class="analytics__nav admin-nav" aria-label="운영자 페이지 이동"><a class="analytics__brand" href="index.html">BOOONG <small>OPERATIONS</small></a><a class="analytics__back" href="admin.html">← 운영자 공간</a></nav><header class="watcha-hero"><p class="analytics__eyebrow">왓챠–도서관${localPreview ? ' · 로컬 미리보기' : ''}</p><h1>우리가 돈이 없지 독서를 안 하냐</h1></header><section class="watcha-controls" aria-label="계정과 도서관 선택"><div class="watcha-account-row"><fieldset class="watcha-choice-group" data-accounts><legend>누구의 책을 볼까요?</legend>${WATCHA_PROFILES.map(profile => `<button type="button" class="watcha-choice" data-profile-id="${profile.id}" aria-pressed="${selectedProfiles.includes(profile.id)}">${esc(profile.name)}</button>`).join('')}</fieldset><div class="watcha-sync"><button class="btn btn--secondary" type="button" data-refresh aria-label="왓챠 목록 전체 동기화" aria-describedby="watcha-sync-help" title="모든 계정의 읽고 싶은 책·읽은 책과 새 책 정보를 갱신합니다. 실행 기록은 이용자 모두에게 공유됩니다."><span>목록 동기화</span><small class="watcha-sync-age" data-sync-age role="status">${syncDateLabel(lastFullSync)}</small></button><p id="watcha-sync-help" hidden>모든 계정의 읽고 싶은 책·읽은 책과 새 책 정보를 갱신합니다. 실행 기록은 이용자 모두에게 공유됩니다.</p></div></div><fieldset class="watcha-choice-group watcha-collections" data-collections><legend class="sr-only">책 목록</legend><button type="button" class="watcha-choice" data-collection-kind="wishes" aria-pressed="${collectionKind === 'wishes'}">읽고 싶은 책</button><button type="button" class="watcha-choice" data-collection-kind="ratings" aria-pressed="${collectionKind === 'ratings'}">읽은 책 <small>평점 기록</small></button></fieldset><div class="watcha-library-row"><fieldset class="watcha-choice-group" data-libraries><legend>어디에서 빌릴까요?</legend>${libraryPickerMarkup()}</fieldset><button class="btn btn--ghost watcha-cart-toggle" type="button" data-cart-open aria-haspopup="dialog" aria-label="서가 열기">${shelfIcon}</button></div><div class="watcha-filters"><label>책 검색<input type="search" data-search placeholder="책 제목"></label><label class="watcha-check"><input type="checkbox" data-available checked> 대출 가능한 책만</label><div class="watcha-list-options"><details class="watcha-genres-filter"><summary>장르 <span data-genres-summary>전체</span></summary><fieldset class="watcha-genres" data-genres></fieldset></details><fieldset class="watcha-sort" data-sort-options><legend>정렬</legend><div><button type="button" class="watcha-choice" data-sort="popular" aria-pressed="${bookSort === 'popular'}">${collectionKind === 'ratings' ? '읽은 사람 많은 순' : '많이 담은 순'}</button><button type="button" class="watcha-choice" data-sort="random" aria-pressed="${bookSort === 'random'}" title="다시 누르면 새로 섞습니다">랜덤</button><button type="button" class="watcha-choice" data-sort="alphabetical" aria-pressed="${bookSort === 'alphabetical'}">가나다순</button></div></fieldset></div></div></section><section class="watcha-progress" aria-label="도서관 조회 결과"><div class="watcha-progress__summary"><div class="watcha-results-heading"><p data-count></p><button class="btn btn--secondary watcha-recheck" type="button" data-batch aria-label="선택한 도서관 조회하기" aria-describedby="watcha-isbn-note">조회하기</button><button class="btn btn--secondary watcha-recheck" type="button" data-retry-failed hidden>실패·대기만 재조회</button></div></div><div class="watcha-progress__meta"><p data-totals></p><p data-status role="status" aria-live="polite"></p><p data-cache></p><p data-info-status role="status"></p><p data-cart-status role="status" aria-live="polite"></p><details class="watcha-query-help"><summary>조회 기준</summary><p class="watcha-isbn-note" id="watcha-isbn-note">ISBN이 같은 판본을 조회하고 결과를 이 브라우저에 15분간 보관합니다. 최신 상태는 ‘조회하기’ 또는 ‘다시 조회’로 확인해주세요. ‘미소장’으로 표시되어도 다른 판본이나 전자책은 있을 수 있습니다.</p></details></div></section><div class="watcha-books" data-books></div><footer class="admin-footer">사회교육공동체 BOOONG <span>왓챠–도서관</span></footer></div>`;
+  root.innerHTML = `<div class="admin-shell"><nav class="analytics__nav admin-nav" aria-label="운영자 페이지 이동"><a class="analytics__brand" href="index.html">BOOONG <small>OPERATIONS</small></a><a class="analytics__back" href="admin.html">← 운영자 공간</a></nav><header class="watcha-hero"><p class="analytics__eyebrow">왓챠–도서관${localPreview ? ' · 로컬 미리보기' : ''}</p><h1>우리가 돈이 없지 독서를 안 하냐</h1></header><section class="watcha-controls" aria-label="계정과 도서관 선택"><div class="watcha-account-row"><fieldset class="watcha-choice-group" data-accounts><legend>누구의 책을 볼까요?</legend>${WATCHA_PROFILES.map(profile => `<button type="button" class="watcha-choice" data-profile-id="${profile.id}" aria-pressed="${selectedProfiles.includes(profile.id)}">${esc(profile.name)}</button>`).join('')}</fieldset><div class="watcha-sync"><button class="btn btn--secondary" type="button" data-refresh aria-label="왓챠 목록 전체 동기화" aria-describedby="watcha-sync-help" title="모든 계정의 읽고 싶은 책·읽은 책과 새 책 정보를 갱신합니다. 실행 기록은 이용자 모두에게 공유됩니다."><span>목록 동기화</span><small class="watcha-sync-age" data-sync-age role="status">${syncDateLabel(lastFullSync)}</small></button><p id="watcha-sync-help" hidden>모든 계정의 읽고 싶은 책·읽은 책과 새 책 정보를 갱신합니다. 실행 기록은 이용자 모두에게 공유됩니다.</p></div></div><fieldset class="watcha-choice-group watcha-collections" data-collections><legend class="sr-only">책 목록</legend><button type="button" class="watcha-choice" data-collection-kind="wishes" aria-pressed="${collectionKind === 'wishes'}">읽고 싶은 책</button><button type="button" class="watcha-choice" data-collection-kind="ratings" aria-pressed="${collectionKind === 'ratings'}">읽은 책 <small>평점 기록</small></button></fieldset><div class="watcha-library-row"><fieldset class="watcha-choice-group" data-libraries><legend>어디에서 빌릴까요?</legend>${libraryPickerMarkup()}</fieldset><button class="btn btn--ghost watcha-cart-toggle" type="button" data-cart-open aria-haspopup="dialog" aria-label="서가 열기">${shelfIcon}</button></div><div class="watcha-filters"><label>책 검색<input type="search" data-search placeholder="책 제목"></label><div class="watcha-view-options" role="group" aria-label="보기"><span>보기</span><label class="watcha-check watcha-choice watcha-view-choice"><input type="checkbox" data-available checked> 대출 가능한 책만</label><label class="watcha-check watcha-choice watcha-view-choice"><input type="checkbox" data-exclude-storage${excludeStorage ? ' checked' : ''}> 보존서고 제외</label></div><div class="watcha-list-options"><details class="watcha-genres-filter"><summary>장르 <span data-genres-summary>전체</span></summary><fieldset class="watcha-genres" data-genres></fieldset></details><fieldset class="watcha-sort" data-sort-options><legend>정렬</legend><div><button type="button" class="watcha-choice" data-sort="popular" aria-pressed="${bookSort === 'popular'}">${collectionKind === 'ratings' ? '읽은 사람 많은 순' : '많이 담은 순'}</button><button type="button" class="watcha-choice" data-sort="rating" aria-pressed="${bookSort === 'rating'}" title="붕 멤버 전체의 평균 평점이 높은 순서">붕 평균 평점순</button><button type="button" class="watcha-choice" data-sort="random" aria-pressed="${bookSort === 'random'}" title="다시 누르면 새로 섞습니다">랜덤</button><button type="button" class="watcha-choice" data-sort="alphabetical" aria-pressed="${bookSort === 'alphabetical'}">가나다순</button></div></fieldset></div></div></section><section class="watcha-progress" aria-label="도서관 조회 결과"><div class="watcha-progress__summary"><div class="watcha-results-heading"><p data-count></p><button class="btn btn--secondary watcha-recheck" type="button" data-batch aria-label="선택한 도서관 조회하기" aria-describedby="watcha-isbn-note">조회하기</button><button class="btn btn--secondary watcha-recheck" type="button" data-retry-failed hidden>실패·대기만 재조회</button></div></div><div class="watcha-progress__meta"><p data-totals></p><p data-status role="status" aria-live="polite"></p><p data-cache></p><p data-info-status role="status"></p><p data-cart-status role="status" aria-live="polite"></p><details class="watcha-query-help"><summary>조회 기준</summary><p class="watcha-isbn-note" id="watcha-isbn-note">ISBN이 같은 판본을 조회하고 결과를 이 브라우저에 15분간 보관합니다. 최신 상태는 ‘조회하기’ 또는 ‘다시 조회’로 확인해주세요. ‘미소장’으로 표시되어도 다른 판본이나 전자책은 있을 수 있습니다.</p></details></div></section><div class="watcha-books" data-books></div><footer class="admin-footer">사회교육공동체 BOOONG <span>왓챠–도서관</span></footer></div>`;
   root.querySelector('[data-collections]').addEventListener('click', event => {
     const button = event.target.closest('[data-collection-kind]');
     if (!button || button.dataset.collectionKind === collectionKind) return;
@@ -916,6 +929,10 @@ async function init(forceRefresh = false, refreshStatuses = false, allProfiles =
   });
   root.querySelector('[data-search]').addEventListener('input', renderBooks);
   root.querySelector('[data-available]').addEventListener('change', renderBooks);
+  root.querySelector('[data-exclude-storage]').addEventListener('change', event => {
+    excludeStorage = event.target.checked;
+    renderBooks();
+  });
   root.querySelector('[data-genres]').addEventListener('change', event => {
     const genre = event.target.dataset.genre;
     if (genre !== undefined) selectedGenres = event.target.checked ? [...new Set([...selectedGenres, genre])] : selectedGenres.filter(value => value !== genre);
@@ -958,7 +975,7 @@ async function init(forceRefresh = false, refreshStatuses = false, allProfiles =
   root.querySelector('[data-refresh]').addEventListener('click', confirmFullSync);
   root.querySelector('[data-sort-options]').addEventListener('click', event => {
     const button = event.target.closest('[data-sort]');
-    if (!button || !['popular','random','alphabetical'].includes(button.dataset.sort)) return;
+    if (!button || !['popular','rating','random','alphabetical'].includes(button.dataset.sort)) return;
     bookSort = button.dataset.sort;
     if (bookSort === 'random') shuffleBooks();
     else renderBooks();
@@ -1000,7 +1017,7 @@ async function init(forceRefresh = false, refreshStatuses = false, allProfiles =
   }});
   if (epoch !== run) return;
   const otherKeys = [];
-  let ratedProfiles = [];
+  let ratedProfiles = collectionKind === 'ratings' ? [...cachedProfiles] : [];
   if (forceRefresh && allProfiles) {
     const otherKind = collectionKind === 'wishes' ? 'ratings' : 'wishes';
     const others = await loadProfiles(otherKind,{refresh:true,signal:controller.signal,onProgress:(id,message)=>{if(epoch===run)root.querySelector('[data-status]').textContent=message;}});
@@ -1011,14 +1028,15 @@ async function init(forceRefresh = false, refreshStatuses = false, allProfiles =
       otherKeys.push(key);
       if (cached?.version === 1 && cached.books?.length === cached.total) collections.set(key,{...cachedSnapshot(cached),kind:otherKind,complete:true});
     }
-  } else if (collectionKind === 'wishes' && selectedProfiles.length) {
-    ratedProfiles = await loadProfiles('ratings',{signal:controller.signal},WATCHA_PROFILES.map(profile => profile.id));
+  } else if (selectedProfiles.length) {
+    const ratingIds = WATCHA_PROFILES.map(profile => profile.id).filter(id => !ratedProfiles.some(([loadedId]) => loadedId === id));
+    ratedProfiles.push(...await loadProfiles('ratings',{signal:controller.signal},ratingIds));
     if (epoch !== run) return;
   }
-  wishlistRatings.clear();
+  memberRatings.clear();
   for (const [id, collection] of ratedProfiles) for (const book of collection?.books || []) {
     if (!Number.isFinite(book.rating)) continue;
-    wishlistRatings.set(book.id,{...wishlistRatings.get(book.id),[id]:book.rating});
+    memberRatings.set(book.id,{...memberRatings.get(book.id),[id]:book.rating});
   }
   for (const [id, cached] of cachedProfiles) {
     if (cached?.version === 1 && Array.isArray(cached.books) && cached.books.length === cached.total) {

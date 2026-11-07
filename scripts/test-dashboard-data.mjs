@@ -12,12 +12,12 @@ const unitRows = [
 ];
 const groupRows = [
   { published: "TRUE", group_title: "놀라운 수요일", kind: "game", discipline: "사회", school: "중학교, 고등학교", "단원_코드": "36, 90", teacher_link: "https://example.com/game" },
-  { published: "TRUE", group_title: "우리가 만드는 수요곡선", kind: "lesson", discipline: "경제", desc: "설명전용검색어", "단원_코드": "45", teacher_link: "https://example.com/teacher", blog_link: "https://example.com/blog", worksheet_link: "https://example.com/worksheet" },
+  { published: "TRUE", group_title: "우리가 만드는 수요곡선", kind: "lesson", discipline: "경제", desc: "설명전용검색어", "단원_코드": "45", teacher_link: "https://example.com/teacher", blog_link: "https://example.com/blog", dorms_link: "https://example.com/worksheet" },
   { published: "TRUE", group_title: "15개정 사회 자료", kind: "lesson", discipline: "사회", "단원_코드": "48", teacher_link: "https://example.com/15개정" },
-  { published: "TRUE", group_title: "상대 경로 자료", kind: "lesson", "단원_코드": "45", teacher_link: "lesson.html?mode=teacher", worksheet_link: "/worksheet.html" },
+  { published: "TRUE", group_title: "상대 경로 자료", kind: "lesson", "단원_코드": "45", teacher_link: "lesson.html?mode=teacher", dorms_link: "/worksheet.html" },
   { published: "TRUE", group_title: "HTTP 자료", kind: "lesson", "단원_코드": "45", teacher_link: "http://example.com/teacher" },
-  { published: "TRUE", group_title: "위험한 링크", kind: "lesson", "단원_코드": "45", teacher_link: "javascript:alert(1)", blog_link: "javascript:alert(2)", worksheet_link: "data:text/html,unsafe" },
-  { published: "TRUE", group_title: "프로토콜 상대 링크", kind: "lesson", "단원_코드": "45", teacher_link: "//evil.example/teacher", worksheet_link: "mailto:teacher@example.com" },
+  { published: "TRUE", group_title: "위험한 링크", kind: "lesson", "단원_코드": "45", teacher_link: "javascript:alert(1)", blog_link: "javascript:alert(2)", dorms_link: "data:text/html,unsafe" },
+  { published: "TRUE", group_title: "프로토콜 상대 링크", kind: "lesson", "단원_코드": "45", teacher_link: "//evil.example/teacher", dorms_link: "mailto:teacher@example.com" },
   { published: "TRUE", group_id: "stable-material-id", group_title: "고정 식별 자료", kind: "lesson", "단원_코드": "45", teacher_link: "https://example.com/stable" },
   { published: "", group_title: "숨긴 자료", kind: "lesson", "단원_코드": "46", teacher_link: "https://example.com/hidden" },
   { published: "TRUE", group_title: "잘못 연결된 자료", kind: "lesson", "단원_코드": "999", teacher_link: "https://example.com/unknown" },
@@ -33,14 +33,14 @@ assert.deepEqual(catalog.resources.find(({ title }) => title === "놀라운 수�
 assert.deepEqual(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").actions, [
   { key: "blog", label: "수업 소개", href: "https://example.com/blog", external: true },
   { key: "teacher", label: "교사용 자료", href: "https://example.com/teacher", external: true },
-  { key: "worksheet", label: "활동지", href: "https://example.com/worksheet", external: true },
+  { key: "worksheet", label: "도름스", href: "https://example.com/worksheet", external: true },
 ]);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").actions.every(({ external }) => external), true);
 assert.equal(catalog.resources.find(({ title }) => title === "우리가 만드는 수요곡선").searchText.includes("설명전용검색어"), true);
 assert.equal(catalog.resources.find(({ title }) => title === "고정 식별 자료").id, "stable-material-id");
 assert.deepEqual(catalog.resources.find(({ title }) => title === "상대 경로 자료").actions, [
   { key: "teacher", label: "교사용 자료", href: "lesson.html?mode=teacher", external: false },
-  { key: "worksheet", label: "활동지", href: "/worksheet.html", external: false },
+  { key: "worksheet", label: "도름스", href: "/worksheet.html", external: false },
 ]);
 assert.deepEqual(catalog.resources.find(({ title }) => title === "HTTP 자료").actions, [
   { key: "teacher", label: "교사용 자료", href: "http://example.com/teacher", external: true },
@@ -60,6 +60,15 @@ assert.deepEqual(catalog.units.find(({ key }) => key === "사회2::III. 시장�
 assert.deepEqual(catalog.diagnostics.unknownUnitCodes, [999]);
 
 const workMap = createWorkMap([], [], catalog.resources);
+const inquiryCatalog = buildDashboardCatalog(
+  [{ published: "TRUE", group_id: "inquiry-material", group_title: "사회문제 탐구 자료", "단원_코드": "185" }],
+  [{ "단원_코드": "185", 과목: "사회문제탐구", 대단원: "I. 사회문제의 이해와 탐구", 중단원: "1. 사회문제의 의미와 관점", 소단원: "1. 사회문제의 의미와 특징" }],
+);
+assert.deepEqual(inquiryCatalog.subjects.map(({ school, value, label }) => ({ school, value, label })), [
+  { school: "고등학교", value: "사회문제탐구", label: "사회문제 탐구" },
+]);
+assert.deepEqual(inquiryCatalog.resources[0].subjects, ["사회문제탐구"]);
+assert.deepEqual(inquiryCatalog.diagnostics.unknownUnitCodes, []);
 assert.deepEqual(workMap.get("game:resource-놀라운-수요일-36-90")?.units, ["XII. 세계화와 평화", "I. 인권 보장과 헌법"]);
 assert.deepEqual(workMap.get("lesson:resource-우리가-만드는-수요곡선-45")?.units, ["III. 시장과 가격"]);
 

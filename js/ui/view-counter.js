@@ -1,3 +1,4 @@
+import { packIcon } from "./lesson-packs.js";
 import { loadGroupClickStats, loadOverviewStats, loadPageVisitStats } from "../visitor-analytics.js";
 
 const EMPTY_MARK = "–";
@@ -11,7 +12,8 @@ export function renderViewCounter() {
   `;
 }
 
-export function renderResourceCount(viewKey, clickId) {
+export function renderResourceCount(viewKey, clickId, compact = false) {
+  if (compact) return `<span class="lesson-pack__stat" data-resource-count data-compact-count data-view-key="${viewKey}" data-click-id="${clickId}" aria-label="조회수 불러오는 중">${packIcon("view")}<span data-resource-count-value>–</span></span>`;
   return `<span class="bundle-card__count" data-resource-count data-view-key="${viewKey}" data-click-id="${clickId}">조회수 0</span>`;
 }
 
@@ -34,7 +36,8 @@ async function hydrateResources(root) {
   const slots = [...root.querySelectorAll("[data-resource-count]")];
   if (!slots.length) return;
 
-  const [pages, clicks] = await Promise.all([loadPageVisitStats(), loadGroupClickStats()]);
+  let pages, clicks;
+  try { [pages, clicks] = await Promise.all([loadPageVisitStats({ throwOnError: true }), loadGroupClickStats({ throwOnError: true })]); } catch { return; }
 
   const viewsByKey = new Map(pages.map(page => [page.key, page.views]));
   const clicksById = new Map(clicks.map(click => [click.groupId, click.views]));
@@ -43,13 +46,21 @@ async function hydrateResources(root) {
     if (!slot.isConnected) return;
     const viewKey = slot.dataset.viewKey;
     if (viewKey) {
-      slot.textContent = `조회수 ${formatNumber(viewsByKey.get(viewKey) || 0)}`;
+      updateResourceCount(slot, viewsByKey.get(viewKey) || 0);
       slot.title = "booong 안에서 이 수업을 연 횟수";
       return;
     }
-    slot.textContent = `조회수 ${formatNumber(clicksById.get(slot.dataset.clickId) || 0)}`;
+    updateResourceCount(slot, clicksById.get(slot.dataset.clickId) || 0);
     slot.title = "이 자료의 링크를 누른 횟수 (외부 사이트라 실제 조회수는 셀 수 없습니다)";
   });
+}
+
+function updateResourceCount(slot, value) {
+  slot.dataset.viewCount = Number(value || 0);
+  const label = `조회수 ${formatNumber(value)}`;
+  const number = slot.querySelector?.("[data-resource-count-value]");
+  if (number) { number.textContent = formatNumber(value); slot.setAttribute("aria-label", label); }
+  else slot.textContent = label;
 }
 
 function formatCount(value) {

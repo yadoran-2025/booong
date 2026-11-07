@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function teacher() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    function joinedClass(classId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/classes/$(classId)/studentSessions/$(request.auth.uid));
+    }
+
+    function ownsSeat(classId, seatNumber) {
+      return joinedClass(classId)
+        && get(/databases/$(database)/documents/classes/$(classId)/studentSessions/$(request.auth.uid)).data.seatNumber == seatNumber;
+    }
+
+    function joinedTermEndClass(classId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/classes/$(classId)/termEndSessions/$(request.auth.uid));
+    }
+
+    function ownsTermEndSeat(classId, seatNumber) {
+      return joinedTermEndClass(classId)
+        && get(/databases/$(database)/documents/classes/$(classId)/termEndSessions/$(request.auth.uid)).data.seatNumber == seatNumber;
+    }
+
+    function workflowEditor() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email in get(/databases/$(database)/documents/appConfig/editors).data.emails;
+    }
+
+    match /users/{userId} {
+      allow read: if teacher() || (signedIn() && request.auth.uid == userId);
+      allow write: if false;
+    }
+
+    match /teacherAccessRequests/{uid} {
+      allow read, write: if false;
+    }
+
+    match /characters/{characterId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /socialRewardCatalog/{catalogId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /socialSnackReceipts/{receiptId} {
+      allow read: if teacher();
+      allow write: if false;
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if teacher();
+      allow write: if false;
+    }
+
+    match /classes/{classId} {
+      allow read: if teacher() || joinedClass(classId);
+      allow write: if false;
+
+      match /students/{seatNumber} {
+        allow read: if teacher()
+          || ownsSeat(classId, seatNumber)
+          || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+
+        match /evolutions/{eventId} {
+          allow read: if teacher();
+          allow write: if false;
+        }
+      }
+
+      match /lessons/{lessonId} {
+        allow read: if teacher() || joinedClass(classId);
+        allow write: if false;
+      }
+
+      match /stoneEvents/{eventId} {
+        allow read: if teacher();
+        allow write: if false;
+      }
+
+      match /rewardProgress/{seatNumber} {
+        allow read: if teacher() || ownsSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /studentSessions/{uid} {
+        allow read: if teacher() || (signedIn() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      match /termEndSessions/{uid} {
+        allow read: if teacher() || (signedIn() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      match /programProgress/{seatNumber} {
+        allow read: if teacher() || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /programEvents/{eventId} {
+        allow read: if teacher();
+        allow write: if false;
+      }
+    }
+
+    match /termEndPrograms/{programId} {
+      allow read: if teacher() || signedIn();
+      allow write: if false;
+    }
+
+    match /termEndClasses/{classId} {
+      allow read: if teacher() || joinedTermEndClass(classId);
+      allow write: if false;
+
+      match /students/{seatNumber} {
+        allow read: if teacher()
+          || ownsSeat(classId, seatNumber)
+          || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /programProgress/{seatNumber} {
+        allow read: if teacher() || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /studentSessions/{uid} {
+        allow read: if teacher() || (signedIn() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      match /stoneEvents/{eventId} {
+        allow read: if teacher();
+        allow write: if false;
+      }
+    }
+
+    match /workflows/{workflowId} {
+      allow read: if true;
+      allow create, update, delete: if workflowEditor();
+    }
+
+    match /appConfig/editors {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

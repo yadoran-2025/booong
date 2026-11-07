@@ -1,3 +1,4 @@
+import { packIcon } from "./lesson-packs.js";
 import { escapeHtml } from "../utils.js";
 
 const MAX_COMMENTS = 100;
@@ -10,9 +11,9 @@ export async function readCardComments(resourceId, viewer = false) {
   return { ...body, count: Number.isSafeInteger(body.count) ? body.count : body.comments.length };
 }
 
-export function renderCardDiscussion(resourceId, title = "수업") {
+export function renderCardDiscussion(resourceId, title = "수업", compact = false) {
   return `<button class="bundle-action bundle-comment-trigger" type="button" data-comment-open aria-label="${escapeHtml(`${title} 댓글 보기`)}">
-    <strong>댓글</strong><span data-comment-count>0</span>
+    ${compact ? packIcon("comment") : "<strong>댓글</strong>"}<span data-comment-count>${compact ? "–" : "0"}</span>
   </button>
   <dialog class="bundle-discussion" data-card-discussion="${escapeHtml(resourceId)}" aria-label="${escapeHtml(`${title} 댓글`)}">
     <header class="bundle-discussion__header">
@@ -51,7 +52,16 @@ export function bindCardDiscussions(root) {
     let mode = { type: "new" };
     let opened = false;
 
-    const updateCount = value => { total = value; count.textContent = modalCount.textContent = String(value); };
+    const updateCount = value => {
+      total = value;
+      root.querySelectorAll("[data-card-discussion]").forEach(dialog => {
+        if (dialog.dataset.cardDiscussion !== resourceId) return;
+        dialog.querySelector("[data-discussion-count]").textContent = String(value);
+        const button = dialog.previousElementSibling;
+        button.querySelector("[data-comment-count]").textContent = String(value);
+        button.setAttribute("aria-label", `${section.getAttribute("aria-label")} ${value}개 보기`);
+      });
+    };
     fetch(`/api/comments?resourceId=${encodeURIComponent(resourceId)}&countOnly=1`, { cache: "no-store", credentials: "omit" })
       .then(async response => {
         const body = await response.json();

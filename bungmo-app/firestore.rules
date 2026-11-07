@@ -1,0 +1,421 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function teacher() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    function joinedClass(classId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/classes/$(classId)/studentSessions/$(request.auth.uid));
+    }
+
+    function ownsSeat(classId, seatNumber) {
+      return joinedClass(classId)
+        && get(/databases/$(database)/documents/classes/$(classId)/studentSessions/$(request.auth.uid)).data.seatNumber == seatNumber;
+    }
+
+    function joinedTermEndClass(classId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/classes/$(classId)/termEndSessions/$(request.auth.uid));
+    }
+
+    function ownsTermEndSeat(classId, seatNumber) {
+      return joinedTermEndClass(classId)
+        && get(/databases/$(database)/documents/classes/$(classId)/termEndSessions/$(request.auth.uid)).data.seatNumber == seatNumber;
+    }
+
+    function workflowEditor() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email in get(/databases/$(database)/documents/appConfig/editors).data.emails;
+    }
+
+    function bungmoOperator() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'custom'
+        && request.auth.token.bungmoOperator == true
+        && request.auth.token.bungmoEmail is string
+        && request.auth.token.bungmoUntil is int
+        && request.time.toMillis() < request.auth.token.bungmoUntil * 1000;
+    }
+
+    function bungmoAdmin() {
+      return bungmoOperator()
+        && (!exists(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid))
+          || !get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.keys().hasAny(['active'])
+          || get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.active == true);
+    }
+
+    function bungmoMember() {
+      return bungmoAdmin()
+        && exists(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid))
+        && (
+          !get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.keys().hasAny(['active'])
+          || get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.active == true
+        );
+    }
+
+    function activeMeetingMember(meetingId, memberId) {
+      return get(/databases/$(database)/documents/bungmoMeetings/$(meetingId)/members/$(memberId)).data.active == true;
+    }
+
+    function validMemberId(memberId) {
+      return memberId is string
+        && memberId.size() >= 1
+        && memberId.size() <= 128
+        && memberId.matches('.*\\S.*');
+    }
+
+    function validMeeting() {
+      return request.resource.data.keys().hasOnly([
+          'round', 'title', 'location', 'status', 'candidateDates',
+          'startHour', 'endHour', 'startDate', 'endDate', 'creatorId', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.round is int
+        && request.resource.data.round >= 1
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 1
+        && request.resource.data.title.size() <= 40
+        && request.resource.data.location is string
+        && request.resource.data.status in ['planning', 'upcoming', 'completed']
+        && request.resource.data.candidateDates is list
+        && request.resource.data.startHour is int
+        && request.resource.data.endHour is int
+        && request.resource.data.endHour > request.resource.data.startHour;
+    }
+
+    function validMeetingCreator(meetingId) {
+      let creatorId = request.resource.data.creatorId;
+      let creatorPath = /databases/$(database)/documents/bungmoMeetings/$(meetingId)/members/$(creatorId);
+      return validMemberId(creatorId)
+        && creatorId == request.auth.uid
+        && !exists(creatorPath)
+        && existsAfter(creatorPath)
+        && getAfter(creatorPath).data.keys().hasOnly(['kind', 'userId', 'active', 'createdAt', 'updatedAt'])
+        && getAfter(creatorPath).data.kind == 'registered'
+        && getAfter(creatorPath).data.userId == creatorId
+        && getAfter(creatorPath).data.active == true
+        && getAfter(creatorPath).data.createdAt is timestamp
+        && getAfter(creatorPath).data.updatedAt is timestamp;
+    }
+
+    function validExpense() {
+      return request.resource.data.keys().hasOnly([
+          'title', 'payerId', 'participantIds', 'amount', 'settled', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 1
+        && request.resource.data.title.size() <= 40
+        && validMemberId(request.resource.data.payerId)
+        && request.resource.data.participantIds is list
+        && request.resource.data.participantIds.size() >= 1
+        && request.resource.data.participantIds.toSet().size() == request.resource.data.participantIds.size()
+        && request.resource.data.amount is int
+        && request.resource.data.amount >= 1
+        && request.resource.data.amount <= 9007199254740991
+        && request.resource.data.settled is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validTransferSettlement(meetingId) {
+      return request.resource.data.keys().hasOnly(['fromId', 'toId', 'amount', 'revision', 'settled', 'updatedAt'])
+        && validMemberId(request.resource.data.fromId)
+        && validMemberId(request.resource.data.toId)
+        && request.resource.data.fromId != request.resource.data.toId
+        && exists(/databases/$(database)/documents/bungmoMeetings/$(meetingId)/members/$(request.resource.data.fromId))
+        && exists(/databases/$(database)/documents/bungmoMeetings/$(meetingId)/members/$(request.resource.data.toId))
+        && request.resource.data.amount is int
+        && request.resource.data.amount >= 1
+        && request.resource.data.amount <= 9007199254740991
+        && request.resource.data.revision is string
+        && request.resource.data.revision.matches('^[0-9a-f]{16}$')
+        && request.resource.data.settled is bool
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    function validNewExpenseMember(meetingId, memberId) {
+      return validMemberId(memberId)
+        && activeMeetingMember(meetingId, memberId);
+    }
+
+    function validUpdatedExpenseMember(meetingId, memberId) {
+      return validMemberId(memberId)
+        && (
+          memberId == resource.data.payerId
+          || memberId in resource.data.participantIds
+          || activeMeetingMember(meetingId, memberId)
+        );
+    }
+
+    function editableResponseMember(meetingId, memberId) {
+      return bungmoAdmin() && activeMeetingMember(meetingId, memberId);
+    }
+
+    function validMeetingMember(memberId) {
+      return request.resource.data.active is bool
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && (
+          (
+            request.resource.data.keys().hasOnly(['kind', 'userId', 'active', 'createdAt', 'updatedAt'])
+            && request.resource.data.kind == 'registered'
+            && request.resource.data.userId is string
+            && request.resource.data.userId == memberId
+            && exists(/databases/$(database)/documents/bungmoUsers/$(memberId))
+          )
+          || (
+            request.resource.data.keys().hasOnly(['kind', 'displayName', 'active', 'createdAt', 'updatedAt'])
+            && request.resource.data.kind == 'guest'
+            && request.resource.data.displayName is string
+            && request.resource.data.displayName.size() >= 1
+            && request.resource.data.displayName.size() <= 16
+            && request.resource.data.displayName.matches('.*\\S.*')
+            && !exists(/databases/$(database)/documents/bungmoUsers/$(memberId))
+          )
+        );
+    }
+
+    match /users/{userId} {
+      allow read: if teacher() || (signedIn() && request.auth.uid == userId);
+      allow write: if false;
+    }
+
+    match /teacherAccessRequests/{uid} {
+      allow read, write: if false;
+    }
+
+    match /characters/{characterId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /socialRewardCatalog/{catalogId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /socialSnackReceipts/{receiptId} {
+      allow read: if teacher();
+      allow write: if false;
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if teacher();
+      allow write: if false;
+    }
+
+    match /classes/{classId} {
+      allow read: if teacher() || joinedClass(classId);
+      allow write: if false;
+
+      match /students/{seatNumber} {
+        allow read: if teacher()
+          || ownsSeat(classId, seatNumber)
+          || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+
+        match /evolutions/{eventId} {
+          allow read: if teacher();
+          allow write: if false;
+        }
+      }
+
+      match /lessons/{lessonId} {
+        allow read: if teacher() || joinedClass(classId);
+        allow write: if false;
+      }
+
+      match /stoneEvents/{eventId} {
+        allow read: if teacher();
+        allow write: if false;
+      }
+
+      match /rewardProgress/{seatNumber} {
+        allow read: if teacher() || ownsSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /studentSessions/{uid} {
+        allow read: if teacher() || (signedIn() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      match /termEndSessions/{uid} {
+        allow read: if teacher() || (signedIn() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      match /programProgress/{seatNumber} {
+        allow read: if teacher() || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /programEvents/{eventId} {
+        allow read: if teacher();
+        allow write: if false;
+      }
+    }
+
+    match /termEndPrograms/{programId} {
+      allow read: if teacher() || signedIn();
+      allow write: if false;
+    }
+
+    match /termEndClasses/{classId} {
+      allow read: if teacher() || joinedTermEndClass(classId);
+      allow write: if false;
+
+      match /students/{seatNumber} {
+        allow read: if teacher()
+          || ownsSeat(classId, seatNumber)
+          || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /programProgress/{seatNumber} {
+        allow read: if teacher() || ownsTermEndSeat(classId, seatNumber);
+        allow write: if false;
+      }
+
+      match /studentSessions/{uid} {
+        allow read: if teacher() || (signedIn() && request.auth.uid == uid);
+        allow write: if false;
+      }
+
+      match /stoneEvents/{eventId} {
+        allow read: if teacher();
+        allow write: if false;
+      }
+    }
+
+    match /workflows/{workflowId} {
+      allow read: if true;
+      allow create, update, delete: if workflowEditor();
+    }
+
+    match /appConfig/editors {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /bungmoUsers/{uid} {
+      allow read: if bungmoAdmin() || (bungmoOperator() && request.auth.uid == uid);
+      allow create: if bungmoAdmin()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nickname', 'email', 'photoURL', 'createdAt', 'updatedAt'])
+        && request.resource.data.nickname is string
+        && request.resource.data.nickname.size() >= 1
+        && request.resource.data.nickname.size() <= 16
+        && request.resource.data.email == request.auth.token.bungmoEmail
+        && request.resource.data.photoURL is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+      allow update: if (
+          bungmoMember()
+          && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nickname', 'photoURL', 'updatedAt'])
+          && request.resource.data.nickname is string
+          && request.resource.data.nickname.size() >= 1
+          && request.resource.data.nickname.size() <= 16
+        ) || (
+          bungmoAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt'])
+          && request.resource.data.active is bool
+          && (request.auth.uid != uid || request.resource.data.active == true)
+        );
+      allow delete: if false;
+    }
+
+    match /bungmoMeetings/{meetingId} {
+      allow read: if bungmoMember();
+      allow create: if bungmoMember()
+        && validMeeting()
+        && request.resource.data.keys().hasAll(['creatorId'])
+        && validMeetingCreator(meetingId);
+      allow update: if bungmoMember()
+        && validMeeting()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['creatorId']);
+      allow delete: if bungmoMember();
+
+      match /members/{memberId} {
+        allow read: if bungmoMember();
+        allow create: if bungmoMember() && validMeetingMember(memberId);
+        allow update: if bungmoMember()
+          && validMeetingMember(memberId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'active', 'updatedAt']);
+        allow delete: if false;
+      }
+
+      match /responses/{uid} {
+        allow read: if bungmoMember();
+        allow create, update: if bungmoMember()
+          && editableResponseMember(meetingId, uid)
+          && request.resource.data.keys().hasOnly(['displayName', 'availability', 'updatedAt'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 1
+          && request.resource.data.displayName.size() <= 16
+          && request.resource.data.availability is map;
+        allow delete: if bungmoMember() && editableResponseMember(meetingId, uid);
+      }
+
+      match /expenseReadiness/{memberId} {
+        allow read: if bungmoMember();
+        allow create, update: if bungmoMember()
+          && activeMeetingMember(meetingId, memberId)
+          && request.resource.data.keys().hasOnly(['ready', 'revision', 'updatedAt'])
+          && request.resource.data.ready is bool
+          && request.resource.data.revision is string
+          && request.resource.data.revision.matches('^[0-9a-f]{16}$')
+          && request.resource.data.updatedAt is timestamp;
+        allow delete: if false;
+      }
+
+      match /expenses/{expenseId} {
+        allow read: if bungmoMember();
+        // ponytail: Rules cannot iterate unbounded lists; the app validates every participant.
+        // Move participants to child documents if hostile-client integrity becomes necessary.
+        allow create: if bungmoMember()
+          && validExpense()
+          && validNewExpenseMember(meetingId, request.resource.data.payerId);
+        allow update: if bungmoMember()
+          && validExpense()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'title', 'payerId', 'participantIds', 'amount', 'settled', 'updatedAt'
+          ])
+          && validUpdatedExpenseMember(meetingId, request.resource.data.payerId);
+        allow delete: if bungmoMember();
+      }
+
+      match /transferSettlements/{transferId} {
+        allow read: if bungmoMember();
+        allow create, update: if bungmoMember() && validTransferSettlement(meetingId);
+        allow delete: if false;
+      }
+
+      match /itinerary/{eventId} {
+        allow read: if bungmoMember();
+        allow create, update: if bungmoMember()
+          && request.resource.data.keys().hasOnly([
+            'day', 'startMinutes', 'endMinutes', 'title', 'placeName', 'createdAt', 'updatedAt'
+          ])
+          && request.resource.data.day is string
+          && request.resource.data.startMinutes is int
+          && request.resource.data.endMinutes is int
+          && request.resource.data.endMinutes > request.resource.data.startMinutes
+          && request.resource.data.title is string
+          && request.resource.data.title.size() >= 1
+          && request.resource.data.title.size() <= 40
+          && request.resource.data.placeName is string
+          && request.resource.data.placeName.size() >= 1
+          && request.resource.data.placeName.size() <= 100;
+        allow delete: if bungmoMember();
+      }
+    }
+  }
+}

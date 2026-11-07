@@ -3,15 +3,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "serve": "node scripts/serve.mjs",
-    "test": "node scripts/test-lesson-markup.mjs && node scripts/test-dashboard-data.mjs && node scripts/test-dashboard-library.mjs && node scripts/test-teacher-profile.mjs && node scripts/test-member-data.mjs && node scripts/test-favorites.mjs && node scripts/test-visitor-journeys.mjs && node scripts/test-card-discussions.mjs && node scripts/test-dorms-auth.mjs && node scripts/test-admin.mjs && node scripts/test-notices.mjs && node scripts/test-watcha-library.mjs && node scripts/test-watcha-shared.mjs && node scripts/test-textbook-analysis.mjs && node scripts/test-textbook-pdf.mjs && node scripts/test-textbook-export.mjs",
+    "serve": "node --env-file-if-exists=.env.local scripts/serve.mjs",
+    "test": "node scripts/test-lesson-markup.mjs && node scripts/test-dashboard-data.mjs && node scripts/test-dashboard-library.mjs && node scripts/test-curriculum.mjs && node scripts/test-teacher-profile.mjs && node scripts/test-member-data.mjs && node scripts/test-favorites.mjs && node scripts/test-visitor-journeys.mjs && node scripts/test-card-discussions.mjs && node scripts/test-dorms-auth.mjs && node scripts/test-admin.mjs && node scripts/test-notices.mjs && node scripts/test-research-erp.mjs && node scripts/test-research-erp-sheets.mjs && node scripts/test-watcha-library.mjs && node scripts/test-watcha-shared.mjs && node scripts/test-textbook-analysis.mjs && node scripts/test-textbook-pdf.mjs && node scripts/test-textbook-export.mjs && node scripts/test-bungmo-session.mjs && node scripts/test-bungmo-export.mjs && node scripts/test-site-export.mjs && node scripts/test-thumbnails.mjs",
     "check": "node scripts/check-js.mjs && node scripts/check-local-imports.mjs",
     "smoke": "node scripts/smoke-pages.mjs",
-    "vendor:intro": "node scripts/vendor-intro-three.mjs"
+    "vendor:intro": "node scripts/vendor-intro-three.mjs",
+    "build:bungmo": "npm ci --prefix bungmo-app --no-audit --no-fund && npm run build --prefix bungmo-app && node scripts/export-bungmo.mjs",
+    "test:bungmo": "npm run test:unit --prefix bungmo-app && node --test bungmo-app/tests/routes.test.mjs",
+    "test:rice-basket": "node scripts/test-rice-basket.mjs && node scripts/test-rice-basket-tabs.mjs && node scripts/test-rice-basket-client.mjs && node --test test/rice-basket/*.test.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "@yadoran-2025/booong-design-system": "^2.0.0",
     "jose": "^6.2.12",
+    "qrcode": "^1.5.4",
     "three": "0.186.1"
+  },
+  "overrides": {
+    "zod": "^4.6.7"
   }
 }

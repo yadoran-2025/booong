@@ -1,4 +1,7 @@
 .textbook { padding: var(--space-6) var(--space-8) var(--space-10); }
+.textbook--embedded { padding: var(--space-4); }
+.textbook--embedded :is(.textbook__nav, .textbook__hero, .textbook__notice, .textbook__filters) { display: none; }
+.textbook--embedded .textbook__viewer-heading > strong { flex-shrink: 0; }
 .textbook__inner { max-width: 1600px; margin: auto; }
 .textbook__nav { margin-bottom: var(--space-8); }
 .textbook__nav-right { display: flex; align-items: center; gap: var(--space-6); }

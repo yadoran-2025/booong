@@ -20,6 +20,7 @@ const SCHOOL_BY_SUBJECT = {
   경제: "고등학교",
   국제관계의이해: "고등학교",
   금융과경제생활: "고등학교",
+  사회문제탐구: "고등학교",
 };
 
 const SUBJECT_LABELS = {
@@ -27,6 +28,7 @@ const SUBJECT_LABELS = {
   법과사회: "법과 사회",
   국제관계의이해: "국제 관계의 이해",
   금융과경제생활: "금융과 경제생활",
+  사회문제탐구: "사회문제 탐구",
 };
 
 export async function loadDashboardConfig(options = {}) {
@@ -331,7 +333,7 @@ export function buildDashboardCatalog(groupRows = [], unitRows = []) {
     const actions = [
       createResourceAction("blog", "수업 소개", row.blog_link),
       createResourceAction("teacher", "교사용 자료", row.teacher_link),
-      createResourceAction("worksheet", "활동지", row.worksheet_link),
+      createResourceAction("worksheet", "도름스", row.dorms_link),
     ].filter(Boolean);
     const sourceUnitName = String(row["단원명"] || "").trim();
     resources.push({
@@ -402,7 +404,7 @@ export function buildLegacyDashboardCatalog(groups = [], games = []) {
     const kind = normalizeKind(item.kind);
     const actions = [
       createResourceAction("teacher", kind === "game" ? "게임 열기" : "교사용 자료", kind === "game" ? getGameWorkHref(item) : getGroupWorkHref(item)),
-      createResourceAction("worksheet", "활동지", item.worksheet),
+      createResourceAction("worksheet", "도름스", item.worksheet),
     ].filter(Boolean);
     const makers = normalizeMakers(item.makers || item.maker);
     resources.push({

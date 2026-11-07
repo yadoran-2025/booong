@@ -2,6 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import { parseCSV } from "../js/api.js";
 import { MEMBER_PROFILE_SHEET_URL } from "../js/member-data.js";
 import { sendJson } from "../lib/dorms-auth.js";
+import { localAdminAccess } from "../lib/local-admin.js";
 
 const PROJECT_ID = "yadoran-2025";
 const keys = createRemoteJWKSet(new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"));
@@ -39,6 +40,8 @@ async function adminEmails() {
 }
 
 export async function adminAccess(req) {
+  const local = localAdminAccess(req);
+  if (local) return local;
   const token = /^Bearer ([^\s]+)$/.exec(req.headers.authorization || "")?.[1];
   if (!token || token.length > 16000) return { status: 401, body: { reason: "authentication_required" } };
   let email;
@@ -53,7 +56,16 @@ export async function adminAccess(req) {
 }
 
 export default async function handler(req, res) {
+  const url = new URL(req.url || "/api/admin", "https://booong.invalid");
+  if (url.pathname === "/api/lesson-thumbnails" || url.searchParams.has("thumbnail") || req.query?.thumbnail === "1") {
+    if (url.searchParams.getAll("thumbnail").length > 1 || (url.searchParams.has("thumbnail") && url.searchParams.get("thumbnail") !== "1")) return sendJson(res, 400, { error: "요청 주소를 확인해주세요." });
+    url.searchParams.delete("thumbnail");
+    req.url = `/api/lesson-thumbnails${url.search}`;
+    return (await import("../lib/thumbnail-api.js")).default(req, res);
+  }
   if (req.method !== "GET") return sendJson(res, 405, { reason: "method_not_allowed" });
   const { status, body } = await adminAccess(req);
   return sendJson(res, status, body);
 }
+
+export const config = { api: { bodyParser: false } };

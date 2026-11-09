@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { generateKeyPair, exportJWK, exportPKCS8, SignJWT, jwtVerify } from "jose";
 import { sheetLedger, ERP_SPREADSHEET_ID, ERP_SERVICE_ACCOUNT, ERP_LOCK_ID } from "../lib/research-erp-sheets.js";
-import { MEMBER_PROFILE_SHEET_URL } from "../js/member-data.js";
 
 // All Google/OAuth requests are mocked. Generated signing keys live only in this process.
 const columns = ["id", "date", "category", "amount", "title", "counterparty", "memo", "voided", "revision", "created_at", "updated_at", "updated_by"];
@@ -11,8 +10,9 @@ const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: 
 const jwk = { ...await exportJWK(publicKey), kid: "sheets-test", alg: "RS256", use: "sig" };
 const credentials = { type: "service_account", project_id: "yadoran-2025", client_email: ERP_SERVICE_ACCOUNT, private_key: await exportPKCS8(privateKey) };
 const originalFetch = globalThis.fetch;
-const envKeys = ["RESEARCH_ERP_STORAGE", "FIREBASE_BUNGMO_SERVER", "DORMS_SITE_URL"];
+const envKeys = ["BOOONG_ADMIN_EMAILS", "RESEARCH_ERP_STORAGE", "FIREBASE_BUNGMO_SERVER", "DORMS_SITE_URL"];
 const previousEnv = Object.fromEntries(envKeys.map(key => [key, process.env[key]]));
+process.env.BOOONG_ADMIN_EMAILS = "admin@example.com";
 process.env.RESEARCH_ERP_STORAGE = "google_sheets";
 process.env.FIREBASE_BUNGMO_SERVER = Buffer.from(JSON.stringify(credentials)).toString("base64");
 process.env.DORMS_SITE_URL = "https://booong.vercel.app";
@@ -24,7 +24,6 @@ reset();
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(input);
   if (url.hostname === "www.googleapis.com") return Response.json({ keys: [jwk] });
-  if (url.origin === new URL(MEMBER_PROFILE_SHEET_URL).origin) return new Response("id,name,admin\nDo,운영자,admin@example.com\n");
   assert.equal(options.cache, "no-store"); assert.equal(options.redirect, "error");
   if (url.origin === "https://oauth2.googleapis.com") {
     oauthCalls++;

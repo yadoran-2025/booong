@@ -1,16 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as model from "./model.js";
-import { explicitMeeting, meetingHours, meetingSelection, normalizeMeeting, selectedMeetingDate, slotId, validateItineraryDraft, validateMeetingDraft, validateNickname } from "./model.js";
+import { explicitMeeting, meetingHours, meetingSelection, normalizeMeeting, selectedMeetingDate, slotId, validateItineraryDraft, validateMeetingDraft } from "./model.js";
 
 test("날짜와 시간을 안정적인 슬롯 ID로 만든다", () => {
   assert.equal(slotId("2026-08-14", 9), "2026-08-14-09");
-});
-
-test("닉네임의 공백을 정리하고 16자로 제한한다", () => {
-  assert.equal(validateNickname("  재영  "), "재영");
-  assert.throws(() => validateNickname(""), /닉네임/);
-  assert.throws(() => validateNickname("12345678901234567"), /16자/);
 });
 
 test("모임 문서를 화면에서 쓰는 형태로 정규화한다", () => {

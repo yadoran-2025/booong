@@ -40,6 +40,7 @@
 .lesson-pack .bundle-comment-trigger { display: inline-flex; flex: initial; align-items: center; justify-content: center; gap: var(--space-1); min-width: var(--space-11); min-height: var(--space-11); padding: 0 var(--space-1); color: var(--text-muted); }
 .lesson-pack .bundle-favorite__icon { display: inline-flex; }
 .pack-icon { width: var(--space-5); height: var(--space-5); flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bundle-favorite[aria-pressed="true"] .pack-icon { fill: currentColor; }
 .lesson-pack__stats [data-resource-count] { display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--space-11); font-size: var(--text-sm); color: var(--text-muted); }
 .lesson-detail { position: fixed; inset: 0; margin: auto; width: min(980px,calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--bg); color: var(--text); box-shadow: var(--shadow-xl); overflow: auto; }
 .lesson-detail[open] { display: grid; grid-template-columns: 1fr 1fr; }

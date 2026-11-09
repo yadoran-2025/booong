@@ -146,7 +146,8 @@ try {
 console.log('Watcha library: ISBN, pagination, linked ISBN, copy states, source schema failures and bounded reads passed.');
 
 const { exportJWK, generateKeyPair, SignJWT } = await import('jose');
-const { MEMBER_PROFILE_SHEET_URL } = await import('../js/member-data.js');
+const originalAdminEmails = process.env.BOOONG_ADMIN_EMAILS;
+process.env.BOOONG_ADMIN_EMAILS = 'admin@example.com';
 const { publicKey, privateKey } = await generateKeyPair('RS256');
 const key = { ...await exportJWK(publicKey), kid:'watcha-test', alg:'RS256', use:'sig' };
 const token = email => new SignJWT({ email, email_verified:true, auth_time:Math.floor(Date.now()/1000), firebase:{sign_in_provider:'google.com'} }).setProtectedHeader({alg:'RS256',kid:key.kid}).setSubject('test').setAudience('yadoran-2025').setIssuer('https://securetoken.google.com/yadoran-2025').setIssuedAt().setExpirationTime('5m').sign(privateKey);
@@ -154,8 +155,6 @@ let sourceCalls = 0;
 globalThis.fetch = async input => {
   const url = new URL(input);
   if (url.hostname === 'www.googleapis.com') return Response.json({keys:[key]});
-  const sheet = new URL(url); sheet.searchParams.delete('_');
-  if (sheet.href === MEMBER_PROFILE_SHEET_URL) return new Response('id,admin\nDo,admin@example.com\n');
   sourceCalls++;
   if (url.pathname === '/ko/contents/boTEST1') return new Response(html+metadataHtml);
   return Response.json({...wish, result:{...wish.result,next_uri: wish.result.next_uri.replace('WwRqoyDgkV5lz',url.pathname.split('/')[3]),result:Array.from({length:20},(_,i)=>({content:{...wish.result.result[0].content,code:'b'+String(i).padStart(6,'0')}}))}});
@@ -215,7 +214,10 @@ try {
     if(savedNodeEnv===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=savedNodeEnv;
     if(savedPreview===undefined)delete process.env.BOOONG_WATCHA_PREVIEW;else process.env.BOOONG_WATCHA_PREVIEW=savedPreview;
   }
-} finally { globalThis.fetch=originalFetch; }
+} finally {
+  globalThis.fetch=originalFetch;
+  if(originalAdminEmails===undefined)delete process.env.BOOONG_ADMIN_EMAILS;else process.env.BOOONG_ADMIN_EMAILS=originalAdminEmails;
+}
 console.log('Watcha API: trusted admin, fixed sources, validation, unauthenticated denial and no-store passed.');
 
 // Run the real page controller against a tiny DOM stub to exercise asynchronous account changes.

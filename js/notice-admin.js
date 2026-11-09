@@ -76,7 +76,7 @@ async function start() {
       renderList();
       if (fromForm) resetEditor();
       else if (editing?.id === existing?.id) editing = result.notice;
-      status.textContent = result.notice.published ? "저장했습니다. 수업 목록에서 공지를 확인할 수 있습니다." : "공지를 내렸습니다. 다시 게시할 수 있습니다.";
+      status.textContent = result.warning || (result.notice.published ? "저장했습니다. 수업 목록에서 공지를 확인할 수 있습니다." : "공지를 내렸습니다. 다시 게시할 수 있습니다.");
     } catch (error) { status.textContent = error.message; }
     finally { setBusy(false); }
   }

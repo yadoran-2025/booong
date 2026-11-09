@@ -267,6 +267,12 @@ const selectedMiddle = renderUnitNavigator(units, units[0], [resource], { ...sta
 assert.match(selectedMiddle, /data-textbook-unit="u1" data-textbook-middle="1\. 첫 단원"/);
 assert.match(grouped, /data-unit="" aria-pressed="true"/);
 assert.match(grouped, /data-middle-unit="1\. 첫 단원"/);
+assert.equal((grouped.match(/aria-expanded="false"/g) || []).length, units.length, "all major units start collapsed");
+assert.equal((grouped.match(/class="unit-picker__middle"[^>]* hidden>/g) || []).length, units.length);
+const expandedFirst = renderUnitNavigator(units, units[0], [resource], { ...state, unit: "u1", expandedUnit: "u1" }, "통합사회2");
+assert.match(expandedFirst, /data-unit="u1"[^>]*aria-expanded="true" aria-controls="unit-middle-u1"/);
+assert.match(expandedFirst, /id="unit-middle-u1"[^>]*중단원">/);
+assert.equal((expandedFirst.match(/class="unit-picker__middle"[^>]* hidden>/g) || []).length, 1);
 assert.match(grouped, /<span>1\. 첫 단원<\/span><\/button>/);
 assert.doesNotMatch(grouped.match(/<div class="unit-axis__track"[\s\S]*?<\/aside>/)[0], /unit-tab__meta|unit-tab__curriculum/);
 assert.match(grouped, /<strong>I\. 첫 단원<\/strong>\s*<small>수업 1개<\/small>/);
@@ -299,7 +305,8 @@ for (const subject of ["사회1", "사회2", "사회2[15개정]"]) {
     const buttons = [...picker.matchAll(/data-unit-group="([^"]+)" aria-pressed="(true|false)" aria-controls="unit-group-(\d+)"/g)];
     assert.deepEqual(buttons.map(match => match[1]), ["일반사회", "지리"]);
     assert.deepEqual(buttons.map(match => match[2]), ["true", "false"], "general social studies is visible initially");
-    assert.doesNotMatch(picker, /aria-expanded|펼치기|접기/, "the two areas use visible selection buttons");
+    assert.doesNotMatch(picker, /data-unit-group="[^"]+"[^>]*aria-expanded/, "the two areas use visible selection buttons");
+    assert.equal((picker.match(/aria-expanded="false"/g) || []).length, middleUnits.length, "middle-school major units also start collapsed");
     const panels = [...picker.matchAll(/<div class="unit-picker__group-units" id="unit-group-(\d+)"( hidden)?>/g)];
     assert.equal(panels.length, 2);
     assert.equal(panels.filter(match => !match[2]).length, 1, "only one area is visible");
@@ -356,6 +363,24 @@ for (const index of [1, 1, 0]) {
     assert.equal(groupPanels[`#${button.getAttribute("aria-controls")}`].hidden, buttonIndex !== index);
   }
 }
+const renderHome = context.renderCurationHome;
+context.renderCurationHome = () => {};
+const unitButtons = ["u1", "u2", ""].map(unit => ({
+  dataset: { unit },
+  addEventListener: (_, handler) => { unitButtons.find(button => button.dataset.unit === unit).click = handler; },
+}));
+const unitState = { ...state };
+context.library.bindCurationEvents({
+  querySelectorAll: selector => selector === "[data-unit]" ? unitButtons : [],
+  querySelector: () => null,
+}, { catalog: { resources: [] } }, unitState);
+for (const [index, expanded] of [[0, "u1"], [0, ""], [0, "u1"], [1, "u2"], [2, ""]]) {
+  unitButtons[index].click();
+  assert.equal(unitState.expandedUnit, expanded, "chapter buttons expand, collapse, switch and reset");
+  assert.equal(unitState.unit, unitButtons[index].dataset.unit, "collapsing keeps the selected lesson filter");
+  assert.equal(unitState.middleUnit, "");
+}
+context.renderCurationHome = renderHome;
 context.hydrateFavoriteCounts = hydrateFavorites;
 
 const shared = { ...resource, middleUnitsByKey: { u1: ["1. 첫 단원", "2. 자료 없는 중단원", "1. 첫 단원"] } };
@@ -438,6 +463,9 @@ let savedFavorites = ["missing-from-catalog", "r1"];
 context.loadFavoriteIds = () => savedFavorites;
 context.saveFavoriteIds = ids => (savedFavorites = ids);
 context.toggleFavoriteId = toggleFavoriteId;
+const savedCard = context.library.renderResourceCard(resource);
+assert.match(savedCard, /aria-pressed="true"/);
+assert.match(savedCard.match(/<span class="bundle-favorite__icon"[^>]*>(.*?)<\/span>/s)[1], /M6 3h12v18l-6-4-6 4z/);
 context.renderViewCounter = () => "";
 vm.runInContext("bindCurationEvents = () => {};", context);
 const favoriteRoot = {};
@@ -471,3 +499,32 @@ context.library.renderFavoritesView(favoriteRoot, { catalog: { resources: [resou
 assert.match(favoriteRoot.innerHTML, /data-favorite-count>0<\/b>/);
 assert.equal((favoriteRoot.innerHTML.match(/data-resource-id=/g) || []).length, 0);
 console.log("Favorite counts: catalog parity, preserved missing IDs and immediate removal passed.");
+
+// A slow statistics request must never block saving or removing a lesson locally.
+savedFavorites = ["missing-from-catalog"];
+removed = false;
+favoriteButton.disabled = false;
+const pendingFavoriteStats = [];
+context.setFavoriteState = (id, value) => new Promise(resolve => pendingFavoriteStats.push({ id, value, resolve }));
+const favoriteStat = { dataset: { favoriteCountFor: "r1" }, hasAttribute: () => true, closest: () => null };
+const libraryRoot = {
+  querySelectorAll: selector => selector === "[data-favorite-id]" ? [favoriteButton] : selector === "[data-favorite-count]" ? [badge] : selector === "[data-favorite-count-for]" ? [favoriteStat] : [],
+  querySelector: () => null,
+};
+const addFirst = context.library.toggleFavorite(libraryRoot, favoriteButton, [resource]);
+assert.equal(favoriteButton.disabled, false, "Statistics must not disable the favorite button");
+const removeAgain = context.library.toggleFavorite(libraryRoot, favoriteButton, [resource]);
+const addAgain = context.library.toggleFavorite(libraryRoot, favoriteButton, [resource]);
+assert.deepEqual(savedFavorites, ["missing-from-catalog", "r1"], "The last click is saved before any statistics request finishes");
+assert.equal(badge.textContent, 1);
+assert.deepEqual(pendingFavoriteStats.map(({ value }) => value), [true, false, true]);
+pendingFavoriteStats[0].resolve(5);
+await addFirst;
+assert.equal(favoriteStat.textContent, "5");
+pendingFavoriteStats[1].resolve(4);
+await removeAgain;
+assert.equal(favoriteStat.textContent, "5", "An old removal response must not overwrite the latest saved state");
+pendingFavoriteStats[2].resolve(5);
+await addAgain;
+assert.equal(favoriteButton.disabled, false);
+console.log("Favorites remain interactive through add/remove/add while statistics are pending.");

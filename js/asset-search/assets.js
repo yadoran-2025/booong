@@ -1,3 +1,5 @@
+import { extractYouTubeId as extractYoutubeId } from "../utils.js";
+export { extractYoutubeId };
 import { ASSET_SHEET_URLS, normalizeAssetColumns, parseCSV } from "../api.js";
 import { state } from "./state.js";
 import { render, renderMain, renderStatus } from "./render.js";
@@ -126,16 +128,6 @@ export function getPreviewImageUrl(url) {
   return "";
 }
 
-export function extractYoutubeId(url) {
-  try {
-    const parsed = new URL(url);
-    if (parsed.searchParams.has("v")) return parsed.searchParams.get("v");
-    if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1);
-    const match = parsed.pathname.match(/^\/embed\/([^/?]+)/);
-    if (match) return match[1];
-  } catch {}
-  return "";
-}
 
 export async function copyText(value, message) {
   const text = String(value || "");

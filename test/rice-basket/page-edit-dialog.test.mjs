@@ -19,7 +19,7 @@ function setup(){
     document:{querySelector:selector=>nodes[selector.slice(1)],querySelectorAll:()=>[edit]},
     pages:[{id:'page-1',title:'원래 제목',content:'원래 내용'},{id:'page-2',title:'다른 자료'}],
     async api(path,method,body){context.requests.push({path,method,body});return {id:'page-1',...body};},
-    requests:[],draw(){context.draws++;},draws:0,toast(){},location:{href:''},hrefPage:id=>'/rice-basket/?p='+id,
+    requests:[],draw(){context.draws++;},draws:0,toast(){},location:{href:''},hrefPage:id=>'/studies/?p='+id,
   });
   const start=source.indexOf('  const addButton=');
   vm.runInContext(source.slice(start,source.indexOf('\n  draw();\n}',start)),context);
@@ -88,5 +88,5 @@ test('빈 내용은 저장하지 않으며 추가도 같은 폼으로 새 자료
   await view.save();
   assert.equal(view.context.requests[0].path,'/api/pages');
   assert.equal(view.context.requests[0].method,'POST');
-  assert.equal(view.context.location.href,'/rice-basket/?p=page-1');
+  assert.equal(view.context.location.href,'/studies/?p=page-1');
 });

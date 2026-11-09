@@ -1,0 +1,13 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "content": {
+      "$record": {
+        ".read": "auth != null && auth.uid === 'booong-content-server' && auth.token.booongContent === true && ($record === 'catalog' || $record === 'members' || $record === 'thumbnails' || $record === 'workshop')",
+        ".write": "auth != null && auth.uid === 'booong-content-server' && auth.token.booongContent === true && ($record === 'catalog' || $record === 'members' || $record === 'thumbnails' || $record === 'workshop') && newData.exists()",
+        ".validate": "newData.isString() && newData.val().length <= 8388608"
+      }
+    }
+  }
+}

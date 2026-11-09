@@ -46,19 +46,12 @@ service cloud.firestore {
     }
 
     function bungmoAdmin() {
-      return bungmoOperator()
-        && (!exists(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid))
-          || !get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.keys().hasAny(['active'])
-          || get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.active == true);
+      return bungmoOperator();
     }
 
     function bungmoMember() {
       return bungmoAdmin()
-        && exists(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid))
-        && (
-          !get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.keys().hasAny(['active'])
-          || get(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid)).data.active == true
-        );
+        && exists(/databases/$(database)/documents/bungmoUsers/$(request.auth.uid));
     }
 
     function activeMeetingMember(meetingId, memberId) {
@@ -92,17 +85,8 @@ service cloud.firestore {
 
     function validMeetingCreator(meetingId) {
       let creatorId = request.resource.data.creatorId;
-      let creatorPath = /databases/$(database)/documents/bungmoMeetings/$(meetingId)/members/$(creatorId);
       return validMemberId(creatorId)
-        && creatorId == request.auth.uid
-        && !exists(creatorPath)
-        && existsAfter(creatorPath)
-        && getAfter(creatorPath).data.keys().hasOnly(['kind', 'userId', 'active', 'createdAt', 'updatedAt'])
-        && getAfter(creatorPath).data.kind == 'registered'
-        && getAfter(creatorPath).data.userId == creatorId
-        && getAfter(creatorPath).data.active == true
-        && getAfter(creatorPath).data.createdAt is timestamp
-        && getAfter(creatorPath).data.updatedAt is timestamp;
+        && creatorId == request.auth.uid;
     }
 
     function validExpense() {
@@ -164,6 +148,19 @@ service cloud.firestore {
         && request.resource.data.updatedAt is timestamp
         && (
           (
+            request.resource.data.keys().hasOnly(['kind', 'profileId', 'displayName', 'active', 'createdAt', 'updatedAt'])
+            && request.resource.data.kind == 'profile'
+            && request.resource.data.profileId is string
+            && request.resource.data.profileId.size() >= 1
+            && request.resource.data.profileId.size() <= 80
+            && memberId == 'booong:' + request.resource.data.profileId
+            && request.resource.data.displayName is string
+            && request.resource.data.displayName.size() >= 1
+            && request.resource.data.displayName.size() <= 120
+            && request.resource.data.displayName.matches('.*\\S.*')
+          )
+          ||
+          (
             request.resource.data.keys().hasOnly(['kind', 'userId', 'active', 'createdAt', 'updatedAt'])
             && request.resource.data.kind == 'registered'
             && request.resource.data.userId is string
@@ -173,6 +170,7 @@ service cloud.firestore {
           || (
             request.resource.data.keys().hasOnly(['kind', 'displayName', 'active', 'createdAt', 'updatedAt'])
             && request.resource.data.kind == 'guest'
+            && !memberId.matches('booong:.*')
             && request.resource.data.displayName is string
             && request.resource.data.displayName.size() >= 1
             && request.resource.data.displayName.size() <= 16
@@ -323,11 +321,6 @@ service cloud.firestore {
           && request.resource.data.nickname is string
           && request.resource.data.nickname.size() >= 1
           && request.resource.data.nickname.size() <= 16
-        ) || (
-          bungmoAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt'])
-          && request.resource.data.active is bool
-          && (request.auth.uid != uid || request.resource.data.active == true)
         );
       allow delete: if false;
     }
@@ -359,7 +352,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['displayName', 'availability', 'updatedAt'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() >= 1
-          && request.resource.data.displayName.size() <= 16
+          && request.resource.data.displayName.size() <= 120
           && request.resource.data.availability is map;
         allow delete: if bungmoMember() && editableResponseMember(meetingId, uid);
       }

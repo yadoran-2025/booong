@@ -5,17 +5,17 @@ import { once } from 'node:events';
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { createHandler } from '../lib/rice-basket/server.mjs';
 import { createRiceBasketHandler } from '../api/rice-basket.js';
-import { MEMBER_PROFILE_SHEET_URL } from '../js/member-data.js';
 
 const originalFetch=globalThis.fetch, originalNow=Date.now;
 const {publicKey,privateKey}=await generateKeyPair('RS256',{extractable:true});
 const jwk={...await exportJWK(publicKey),kid:'rice-basket-test',alg:'RS256',use:'sig'};
-let allowed=true,available=true,now=originalNow(),loads=0;
+const originalAdminEmails=process.env.BOOONG_ADMIN_EMAILS;
+process.env.BOOONG_ADMIN_EMAILS='operator@example.com';
+let now=originalNow(),loads=0;
 Date.now=()=>now;
 globalThis.fetch=async (input,options)=>{
  const url=String(input);
  if(url==='https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')return new Response(JSON.stringify({keys:[jwk]}));
- if(url.startsWith(MEMBER_PROFILE_SHEET_URL))return new Response(`id,admin\nuser,${allowed?'operator@example.com':''}\n`,{status:available?200:503});
  return originalFetch(input,options);
 };
 const pageId='page-4a2b86a58156';
@@ -48,7 +48,7 @@ try{
  const qr=await originalFetch(base+'/api/rice-basket?route=/api/sessions/training/qr');
  assert.equal(qr.status,200);
  assert.match(qr.headers.get('content-type'),/image\/svg/);
- assert.equal(await qr.text(),await QRCode.toString(`${base}/rice-basket/?s=training`,{type:'svg',errorCorrectionLevel:'M',margin:4,width:220}));
+ assert.equal(await qr.text(),await QRCode.toString(`${base}/studies/?s=training`,{type:'svg',errorCorrectionLevel:'M',margin:4,width:220}));
  const publicSession=await request('/api/sessions/training',null);
  assert.equal(publicSession.data.recordsVisible,false);
  assert.ok(!JSON.stringify(publicSession.data).includes('PRIVATE_'));
@@ -93,9 +93,10 @@ try{
  const definition={title:'운영자가 작성한 설문',description:'',questions:[{id:'q1',title:'질문',type:'choice',required:true,options:['첫째','둘째']}]};
  const created=await request('/api/surveys?session=training',operator,'POST',definition);assert.equal(created.status,201);
  const id=created.data.id;
- assert.equal((await request(`/api/surveys/${id}/results?session=training`,null)).status,404,'작성 중인 설문 집계는 공개하지 않는다');
- assert.deepEqual((await request('/api/surveys?session=training',null)).data.surveys,[]);
- assert.equal((await request(`/api/surveys/${id}?session=training`,null)).status,404);
+ data.surveys[0].open=false;data.surveys[0].published=false; // Legacy saved surveys remain answerable.
+ assert.equal((await request(`/api/surveys/${id}/results?session=training`,null)).status,200,'저장된 설문은 시작 설정 없이 사용할 수 있다');
+ assert.deepEqual((await request('/api/surveys?session=training',null)).data.surveys.map(survey=>survey.id),[id]);
+ assert.equal((await request(`/api/surveys/${id}?session=training`,null)).status,200);
  assert.equal((await request(`/api/surveys/${id}?session=training`,operator,'PATCH',{open:true})).status,200);
  assert.equal((await request(`/api/surveys/${id}/responses?session=training`,null,'POST',{token:'b'.repeat(32),version:1,answers:{q1:'둘째'}})).status,201);
  assert.deepEqual((await request(`/api/surveys/${id}/my-response?session=training`,null,'POST',{token:'b'.repeat(32)})).data,{answers:{q1:'둘째'}});
@@ -114,9 +115,34 @@ try{
  assert.equal((await request(`/api/surveys/${id}/results?session=training`,null)).status,403,'공개를 끄면 참가자 집계 조회를 차단한다');
  assert.equal((await request(`/api/surveys/${id}?session=training`,null)).data.total,0);
  assert.equal((await request(`/api/surveys/${id}/results?session=training`,operator)).data.total,2);
- allowed=false;now+=31000;
+ const responsesPath=`/api/surveys/${id}/responses?session=training`;
+ const privateLoads=loads;
+ for(const identity of [null,'forged',await token({email:'member@example.com'})]) assert.ok([401,403].includes((await request(responsesPath,identity)).status));
+ assert.equal(loads,privateLoads,'개별 응답은 운영자 확인 전 저장소를 읽지 않는다');
+ const individual=await request(responsesPath,operator);
+ assert.equal(individual.status,200);
+ assert.deepEqual(individual.data.responses,[{answers:{q1:'둘째'}},{answers:{q1:'첫째'}}]);
+ assert.ok(!JSON.stringify(individual.data).includes('tokenHash'));
+ assert.equal((await request(responsesPath+`&revision=${individual.data.revision}`,operator)).data.unchanged,true);
+ assert.equal((await request(`/api/surveys/${id}/responses?session=${otherSession.data.id}`,operator)).status,404);
+ assert.equal((await request(`/api/surveys/${id}?session=training`,operator,'PATCH',{open:false})).status,200);
+ assert.equal((await request(responsesPath,null,'POST',{token:'c'.repeat(32),version:1,answers:{q1:'둘째'}})).status,201,'예전 시작·마감 값과 관계없이 새 응답을 받는다');
+ const beforeInvalid=structuredClone(data);
+ for(const body of [{token:'bad',version:1,answers:{q1:'첫째'}},{token:'b'.repeat(32),version:1,answers:{q1:'없는 선택지'}},{token:'b'.repeat(32),version:0,answers:{q1:'첫째'}}]) {
+  assert.ok([400,409].includes((await request(responsesPath,null,'POST',body)).status));
+  assert.deepEqual(data,beforeInvalid,'잘못된 수정은 기존 응답을 보존한다');
+ }
+ assert.equal((await request(responsesPath,null,'POST',{token:'b'.repeat(32),version:1,answers:{q1:'첫째'}})).status,200,'마감 후에도 본인의 응답은 수정한다');
+ assert.deepEqual((await request(`/api/surveys/${id}/my-response?session=training`,null,'POST',{token:'b'.repeat(32)})).data,{answers:{q1:'첫째'}});
+ assert.deepEqual((await request(`/api/surveys/${id}/my-response?session=training`,null,'POST',{token:'a'.repeat(32)})).data,{answers:{q1:'첫째'}},'다른 응답은 그대로 유지한다');
+ const revised=await request(responsesPath+`&revision=${individual.data.revision}`,operator);
+ assert.equal(revised.data.responses.length,3,'기존 응답 수정은 새 응답을 추가하지 않는다');
+ assert.deepEqual(revised.data.responses[0].answers,{q1:'첫째'});
+ assert.equal(revised.data.open,true);assert.equal(revised.data.published,true);assert.equal(revised.data.shareResults,false,'개별 답변 갱신에도 현재 접수·공개 상태를 반영한다');
+ assert.ok(!JSON.stringify(data).includes('b'.repeat(32)),'수정 비밀값 원문은 저장하지 않는다');
+ process.env.BOOONG_ADMIN_EMAILS='second@example.com';
  assert.equal((await request(`/api/surveys/${id}/results?session=training`,operator)).status,403,'명단에서 제외하면 기존 토큰도 차단한다');
- available=false;now+=31000;
- assert.equal((await request('/api/admin',operator)).status,503,'명단 확인 장애 시 이전 권한을 사용하지 않는다');
+ delete process.env.BOOONG_ADMIN_EMAILS;
+ assert.equal((await request('/api/admin',operator)).status,503,'환경변수 미설정 시 이전 권한을 사용하지 않는다');
  console.log('Rice basket: Google 운영자 인증·비운영자 차단·기존 비밀번호 무효·자료/설문 저장·권한 회수 검사 통과');
-}finally{server.close();globalThis.fetch=originalFetch;Date.now=originalNow;}
+}finally{if(originalAdminEmails===undefined)delete process.env.BOOONG_ADMIN_EMAILS;else process.env.BOOONG_ADMIN_EMAILS=originalAdminEmails;server.close();globalThis.fetch=originalFetch;Date.now=originalNow;}

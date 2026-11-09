@@ -10,6 +10,7 @@ const firestore = {
   doc: (...args) => ({ doc: args }),
   getDoc: async () => ({ exists: () => false }),
   onSnapshot: (...args) => { calls.snapshot.push(args); return () => {}; },
+  runTransaction: async () => {},
   serverTimestamp: () => timestamp,
   setDoc: async (...args) => { calls.set.push(args); },
   updateDoc: async () => {},

@@ -49,7 +49,7 @@
 .textbook__toolbar > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .textbook__toolbar > div { display: flex; align-items: center; flex-shrink: 0; }
 .textbook__toolbar button { padding: 0 var(--space-3); }
-.textbook__canvas { height: clamp(800px, 90dvh, 1040px); padding: var(--space-4); overflow: auto; background: var(--color-surface-subtle); }
+.textbook__canvas { padding: var(--space-4); overflow-x: auto; background: var(--color-surface-subtle); }
 .textbook__paper { min-width: 0; padding: var(--space-5); margin: auto; background: var(--color-surface); border: 1px solid var(--border); box-shadow: var(--shadow-md); }
 .textbook__paper-top { display: flex; justify-content: space-between; gap: var(--space-2); padding-bottom: var(--space-3); border-bottom: 2px solid var(--brand-deep); font-size: var(--text-xs); color: var(--color-text-secondary); }
 .textbook__paper-kicker { margin: var(--space-6) 0 var(--space-2); font-size: var(--text-xs); color: var(--brand-deep); font-weight: 700; }
@@ -118,7 +118,7 @@
   .textbook__workspace { display: block; }
   .textbook__units { grid-template-columns: 1fr; padding: var(--space-3); }
   .textbook__reading { padding: var(--space-4) var(--space-3); }
-  .textbook__canvas { padding: var(--space-3); height: max(640px, 85dvh); }
+  .textbook__canvas { padding: var(--space-3); }
   .textbook__paper { min-width: 0; padding: var(--space-4); }
   .textbook__paper h3 { font-size: var(--text-xl); }
   .textbook__empty { min-height: 410px; }

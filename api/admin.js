@@ -1,6 +1,4 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
-import { parseCSV } from "../js/api.js";
-import { MEMBER_PROFILE_SHEET_URL } from "../js/member-data.js";
 import { sendJson } from "../lib/dorms-auth.js";
 import { localAdminAccess } from "../lib/local-admin.js";
 
@@ -20,23 +18,10 @@ export async function verifiedGoogleEmail(token) {
   return payload.email.trim().toLowerCase();
 }
 
-// ponytail: a per-instance 30-second allowlist cache; expired data is never used after a failed refresh.
-let allowlist, pendingAllowlist;
-async function adminEmails() {
-  if (allowlist?.expires > Date.now()) return allowlist.emails;
-  pendingAllowlist ||= (async () => {
-    const response = await fetch(`${MEMBER_PROFILE_SHEET_URL}&_=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
-    if (!response.ok) throw new Error("Member sheet unavailable");
-    const rows = parseCSV(await response.text());
-    const headers = (rows.shift() || []).map(value => value.replace(/^\uFEFF/, "").trim().toLowerCase());
-    const column = headers.indexOf("admin");
-    if (column < 0) throw new Error("admin_not_configured");
-    const emails = new Set(rows.map(row => row[column]?.trim().toLowerCase()).filter(Boolean));
-    allowlist = { emails, expires: Date.now() + 30_000 };
-    return emails;
-  })();
-  try { return await pendingAllowlist; }
-  finally { pendingAllowlist = null; }
+function adminEmails() {
+  const emails = (process.env.BOOONG_ADMIN_EMAILS || "").split(",").map(email => email.trim().toLowerCase()).filter(Boolean);
+  if (!emails.length || emails.some(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) throw new Error("admin_not_configured");
+  return new Set(emails);
 }
 
 export async function adminAccess(req) {
@@ -48,7 +33,7 @@ export async function adminAccess(req) {
   try { email = await verifiedGoogleEmail(token); }
   catch { return { status: 401, body: { reason: "authentication_required" } }; }
   try {
-    const allowed = (await adminEmails()).has(email);
+    const allowed = adminEmails().has(email);
     return { status: allowed ? 200 : 403, body: allowed ? { email } : { reason: "access_denied" } };
   } catch (error) {
     return { status: 503, body: { reason: error.message === "admin_not_configured" ? "admin_not_configured" : "temporarily_unavailable" } };
@@ -57,6 +42,18 @@ export async function adminAccess(req) {
 
 export default async function handler(req, res) {
   const url = new URL(req.url || "/api/admin", "https://booong.invalid");
+  if (url.pathname === "/api/analytics" || url.searchParams.has("analytics") || req.query?.analytics === "1") {
+    if (url.searchParams.getAll("analytics").length > 1 || (url.searchParams.has("analytics") && url.searchParams.get("analytics") !== "1")) return sendJson(res, 400, { error: "요청 주소를 확인해주세요." });
+    url.searchParams.delete("analytics");
+    req.url = `/api/analytics${url.search}`;
+    return (await import("../lib/analytics-api.js")).default(req, res);
+  }
+  if (url.pathname === "/api/members" || url.searchParams.has("members") || req.query?.members === "1") {
+    if (url.searchParams.getAll("members").length > 1 || (url.searchParams.has("members") && url.searchParams.get("members") !== "1")) return sendJson(res, 400, { error: "요청 주소를 확인해주세요." });
+    url.searchParams.delete("members");
+    req.url = `/api/members${url.search}`;
+    return (await import("../lib/member-profile-api.js")).default(req, res);
+  }
   if (url.pathname === "/api/lesson-catalog" || url.searchParams.has("catalog") || req.query?.catalog === "1") {
     if (url.searchParams.getAll("catalog").length > 1 || (url.searchParams.has("catalog") && url.searchParams.get("catalog") !== "1")) return sendJson(res, 400, { error: "요청 주소를 확인해주세요." });
     url.searchParams.delete("catalog");

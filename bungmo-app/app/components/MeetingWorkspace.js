@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { canManageBungmo } from "../../lib/bungmo/access.js";
 import { explicitMeeting } from "../../lib/bungmo/model.js";
 import { saveMeeting, subscribeMeetings } from "../../lib/bungmo/repository.js";
 import AppShell from "./AppShell.js";
@@ -31,10 +30,14 @@ export default function MeetingWorkspace({ user, profile, children }) {
 
   const meeting = explicitMeeting(meetings, activeId);
 
+  function selectMeeting(id) {
+    if (!explicitMeeting(meetings, id)) return;
+    window.localStorage.setItem(storageKey, id);
+    setActiveId(id);
+  }
+
   function enter() {
-    if (!explicitMeeting(meetings, draftId)) return;
-    window.localStorage.setItem(storageKey, draftId);
-    setActiveId(draftId);
+    selectMeeting(draftId);
   }
 
   function changeMeeting() {
@@ -50,6 +53,6 @@ export default function MeetingWorkspace({ user, profile, children }) {
   }
 
   if (!loaded || activeId && !meeting) return <main className="auth-screen" aria-busy="true">모임을 불러오는 중…</main>;
-  if (!meeting) return <><MeetingGate meetings={meetings} selectedId={draftId} onSelect={setDraftId} onEnter={enter} onCreate={() => setCreating(true)} canManageAccess={canManageBungmo(user)} error={error} onRetry={() => setRetry((value) => value + 1)} />{creating && <MeetingDialog onClose={() => setCreating(false)} onSave={create} />}</>;
-  return <AppShell profile={profile} meeting={meeting} onChangeMeeting={changeMeeting}>{children(meeting)}</AppShell>;
+  if (!meeting) return <><MeetingGate meetings={meetings} selectedId={draftId} onSelect={setDraftId} onEnter={enter} onCreate={() => setCreating(true)} error={error} onRetry={() => setRetry((value) => value + 1)} />{creating && <MeetingDialog onClose={() => setCreating(false)} onSave={create} />}</>;
+  return <AppShell user={user} meeting={meeting} onChangeMeeting={changeMeeting}>{children(meeting, selectMeeting)}</AppShell>;
 }

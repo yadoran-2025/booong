@@ -2,6 +2,24 @@ import { packIcon } from "./lesson-packs.js";
 import { escapeHtml } from "../utils.js";
 
 const MAX_COMMENTS = 100;
+const countRequests = new Map();
+const countObservers = new WeakMap();
+
+function readCommentCount(resourceId) {
+  const cached = countRequests.get(resourceId);
+  if (cached && Date.now() < cached.until) return cached.request;
+  const request = fetch(`/api/comments?resourceId=${encodeURIComponent(resourceId)}&countOnly=1`, { cache: "no-store", credentials: "omit" })
+    .then(async response => {
+      const body = await response.json();
+      if (!response.ok || !Number.isSafeInteger(body.count) || body.count < 0) throw new Error("Count unavailable");
+      return body.count;
+    }).catch(error => {
+      if (countRequests.get(resourceId)?.request === request) countRequests.delete(resourceId);
+      throw error;
+    });
+  countRequests.set(resourceId, { request, until: Date.now() + 30000 });
+  return request;
+}
 
 export async function readCardComments(resourceId, viewer = false) {
   const url = `/api/comments?resourceId=${encodeURIComponent(resourceId)}${viewer ? "&viewer=1" : ""}`;
@@ -34,6 +52,17 @@ export function renderCardDiscussion(resourceId, title = "수업", compact = fal
 }
 
 export function bindCardDiscussions(root) {
+  countObservers.get(root)?.disconnect();
+  const pending = new Map();
+  const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
+    if (!root.isConnected) return observer.disconnect();
+    for (const entry of entries) if (entry.isIntersecting) {
+      pending.get(entry.target)?.();
+      pending.delete(entry.target);
+      observer.unobserve(entry.target);
+    }
+  });
+  if (observer) countObservers.set(root, observer);
   root.querySelectorAll("[data-card-discussion]").forEach(section => {
     const resourceId = section.dataset.cardDiscussion;
     const trigger = section.previousElementSibling;
@@ -52,8 +81,9 @@ export function bindCardDiscussions(root) {
     let mode = { type: "new" };
     let opened = false;
 
-    const updateCount = value => {
+    const updateCount = (value, remember = true) => {
       total = value;
+      if (remember) countRequests.set(resourceId, { request: Promise.resolve(value), until: Date.now() + 30000 });
       root.querySelectorAll("[data-card-discussion]").forEach(dialog => {
         if (dialog.dataset.cardDiscussion !== resourceId) return;
         dialog.querySelector("[data-discussion-count]").textContent = String(value);
@@ -62,12 +92,14 @@ export function bindCardDiscussions(root) {
         button.setAttribute("aria-label", `${section.getAttribute("aria-label")} ${value}개 보기`);
       });
     };
-    fetch(`/api/comments?resourceId=${encodeURIComponent(resourceId)}&countOnly=1`, { cache: "no-store", credentials: "omit" })
-      .then(async response => {
-        const body = await response.json();
-        if (!response.ok || !Number.isSafeInteger(body.count)) throw new Error("Count unavailable");
-        if (section.isConnected && !opened) updateCount(body.count);
+    const loadCount = () => {
+      if (opened) return;
+      readCommentCount(resourceId).then(value => {
+        if (section.isConnected && !opened) updateCount(value, false);
       }).catch(() => { if (section.isConnected && !opened) count.textContent = modalCount.textContent = "–"; });
+    };
+    if (observer) { pending.set(trigger, loadCount); observer.observe(trigger); }
+    else loadCount();
 
     const resetComposer = () => {
       mode = { type: "new" };
@@ -135,7 +167,7 @@ export function bindCardDiscussions(root) {
       }
     };
 
-    trigger.addEventListener("click", () => { if (!section.open) { opened = true; section.showModal(); refresh(); } });
+    trigger.addEventListener("click", () => { if (!section.open) { opened = true; observer?.unobserve(trigger); pending.delete(trigger); section.showModal(); refresh(); } });
     section.querySelector("[data-comment-close]").addEventListener("click", () => section.close());
     cancel.addEventListener("click", resetComposer);
     list.addEventListener("click", async event => {

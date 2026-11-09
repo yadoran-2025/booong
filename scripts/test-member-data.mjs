@@ -4,6 +4,7 @@ import vm from "node:vm";
 import { normalizeMemberRow, parseMemberProfileCsv } from "../js/member-data.js";
 import { escapeHtml } from "../js/utils.js";
 import { memberTrainingCareer, normalizeTrainingMembers } from "../js/member-training.js";
+import { thumbnailUrl } from "../js/thumbnail-data.js";
 
 const members = parseMemberProfileCsv("id,name,aliases,career,making\nDo,이도빈,doh|dobby,학교(2025)|부대(2026-),수업 A|game-1\n");
 assert.deepEqual(members[0].aliases, ["doh", "dobby"]);
@@ -19,7 +20,7 @@ assert.deepEqual(normalizeMemberRow({ id: "Do", "세부 연수경력": "  " }).t
 const source = readFileSync(new URL("../js/about.js", import.meta.url), "utf8")
   .replace(/^import .*;$/gm, "")
   .replace(/^init\(\);$/m, "");
-const root = { querySelector: () => null };
+const root = { querySelector: () => null, querySelectorAll: () => [] };
 const trainings = [
   { name: '수업 만들기', school: '잠원중학교', lectureDate: '2026-09-28', memberCodes: ['DOH', 'CHOI'] },
   { name: '다른 연수', school: '학교', lectureDate: '2026-10-01', memberCodes: ['HOON'] },
@@ -31,7 +32,7 @@ assert.deepEqual(memberTrainingCareer({ id: 'HOON' }, trainings), ['2026.10.01 �
 assert.deepEqual(memberTrainingCareer({ id: 'Han' }, trainings), []);
 assert.deepEqual(memberTrainingCareer({ id: 'Do', aliases: ['doh'], trainingCareer: ['2026.09.28 · 수업 만들기 · 잠원중학교'] }, trainings), ['2026.09.28 · 수업 만들기 · 잠원중학교']);
 const context = vm.createContext({
-  document: { getElementById: () => root }, escapeHtml, URL, memberTrainingCareer, normalizeTrainingMembers,
+  document: { getElementById: () => root }, escapeHtml, URL, memberTrainingCareer, normalizeTrainingMembers, thumbnailUrl,
   getLessonPageKey: id => `view:${id}`,
   loadPageVisitStats: async () => [{ key: "view:수업 A", views: 73 }],
   loadGroupClickStats: async () => [{ groupId: "external-work", views: 9999 }],
@@ -79,12 +80,18 @@ const works = [
 ];
 const workHtml = context.renderMemberCard(member, works);
 assert.match(workHtml, /만든 자료 <span>4<\/span>/);
-assert.match(workHtml, /수업 2 · 게임 2/);
+assert.doesNotMatch(workHtml, /수업 2 · 게임 2|member-lessons__type|member-card__avatar/);
+assert.equal((workHtml.match(/class="member-lessons__image"/g)||[]).length,4,'상세 프로필의 만든 자료는 분류 없이 썸네일로 표시한다');
+const statement=context.renderMemberStatement({bio:'공통 소개',interests:'첫 관심사, 두 번째'});
+assert.ok(context.renderMemberPreview({id:'Do',bio:'공통 소개',interests:'첫 관심사, 두 번째'},1).includes(statement));
+assert.ok(context.renderMemberCard({id:'Do',bio:'공통 소개',interests:'첫 관심사, 두 번째'},[]).includes(statement),'카드와 상세 프로필의 캐치프레이즈·관심사 표현을 공유한다');
 assert.match(workHtml, /시장 &lt;수업&gt;/);
 assert.match(workHtml, /<strong>1,234<\/strong>/);
 assert.match(workHtml, /data-metric-type="조회수" data-metric-key="view:수업 A"/);
 assert.equal(context.getWorkMetric(works[0]).label, "링크 클릭");
 assert.equal(context.getWorkMetric(works[1]).value, 52);
+assert.equal(context.getWorkMeta({groupTitle:'게임'}),'');
+assert.equal(context.getWorkMeta({groupTitle:'수업'}),'');
 assert.match(context.renderWorkLinks([works[2]]), /<strong>0<\/strong>/);
 assert.match(context.renderWorkLinks([works[3]]), /<strong>—<\/strong>/);
 const metricSlots = works.map(work => {

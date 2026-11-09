@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import { validateEntry, validDate, summarize, entriesCsv, monthBounds, seoulDate } from "../js/research-erp-data.js";
-import { MEMBER_PROFILE_SHEET_URL } from "../js/member-data.js";
 
 const example = { date: "2026-11-04", category: "coffee", amount: "4500", title: " 커피 ", counterparty: " 카페 ", memo: "" };
 assert.deepEqual(validateEntry(example), { ...example, amount: 4500, title: "커피", counterparty: "카페" });
@@ -23,15 +22,14 @@ assert.ok(csv.startsWith("\uFEFF")); assert.match(csv, /'=HYPERLINK/); assert.ma
 const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: true });
 const key = { ...await exportJWK(publicKey), kid: "erp-test", alg: "RS256", use: "sig" };
 const originalFetch = globalThis.fetch;
-const previousEnv = { RESEARCH_ERP_STORAGE: process.env.RESEARCH_ERP_STORAGE, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY, DORMS_SITE_URL: process.env.DORMS_SITE_URL };
+const previousEnv = { BOOONG_ADMIN_EMAILS: process.env.BOOONG_ADMIN_EMAILS, RESEARCH_ERP_STORAGE: process.env.RESEARCH_ERP_STORAGE, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY, DORMS_SITE_URL: process.env.DORMS_SITE_URL };
+process.env.BOOONG_ADMIN_EMAILS = "admin@example.com";
 process.env.RESEARCH_ERP_STORAGE = "supabase";
 process.env.SUPABASE_URL = "https://erp-test.invalid"; process.env.SUPABASE_SECRET_KEY = "test-secret"; process.env.DORMS_SITE_URL = "https://booong.vercel.app";
 let rows = [], calls = 0, unavailable = false, injectedPage = null, offsets = [], expectedCount = 2005;
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(input);
   if (url.hostname === "www.googleapis.com") return Response.json({ keys: [key] });
-  const sheet = new URL(MEMBER_PROFILE_SHEET_URL);
-  if (url.origin === sheet.origin) return new Response("id,name,admin\nDo,운영자,admin@example.com\n");
   assert.equal(url.origin, "https://erp-test.invalid");
   assert.equal(url.pathname, "/rest/v1/booong_research_entries");
   assert.equal(options.headers.apikey, "test-secret");

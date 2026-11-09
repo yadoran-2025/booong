@@ -121,9 +121,11 @@ export async function researchZip(files) {
 export function currentResearchRange(viewer, source, columns = 1) {
   const scroller = viewer?.closest(".textbook__canvas");
   const bounds = scroller?.getBoundingClientRect();
+  const top = bounds && Math.max(0, bounds.top);
+  const bottom = bounds && Math.min(viewer.ownerDocument.documentElement.clientHeight, bounds.bottom);
   const first = bounds && [...viewer.querySelectorAll("[data-pdf-sheet]")].find(sheet => {
     const rect = sheet.getBoundingClientRect();
-    return rect.bottom > bounds.top + 16 && rect.top < bounds.bottom && rect.right > bounds.left && rect.left < bounds.right;
+    return rect.bottom > top + 16 && rect.top < bottom && rect.right > bounds.left && rect.left < bounds.right;
   });
   const index = Number(first?.dataset.pdfSheet || 1) - 1;
   const start = source.printedStart + (columns === 2 ? Math.floor(index / 2) * 2 : index);

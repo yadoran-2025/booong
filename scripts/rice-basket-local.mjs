@@ -1,7 +1,3 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { createHash } from 'node:crypto';
-import { BlobPreconditionFailedError } from '@vercel/blob';
 import { createHandler } from '../lib/rice-basket/server.mjs';
 
 export const localAuthSource = `
@@ -15,33 +11,8 @@ export function adminFetch(url, options = {}) {
 }
 `;
 
-export function createLocalStore(path) {
-  function read() {
-    let body;
-    try { body = readFileSync(path, 'utf8'); }
-    catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      throw new Error('기존 쌀바구니 자료를 .data/rice-basket.json에 복사해 주세요. 빈 저장소로 시작하지 않습니다.');
-    }
-    const data = JSON.parse(body);
-    if (data.schemaVersion !== 3 || !Array.isArray(data.pages) || !Array.isArray(data.sessions)) throw new Error('로컬 쌀바구니 저장소 형식이 올바르지 않습니다.');
-    return { data, etag: createHash('sha256').update(body).digest('hex') };
-  }
-  return {
-    load: async () => read(),
-    async save(state) {
-      if (state.etag !== read().etag) throw new BlobPreconditionFailedError();
-      mkdirSync(dirname(path), { recursive: true });
-      // Synchronous compare/write keeps local requests from overwriting concurrent edits.
-      writeFileSync(path + '.tmp', JSON.stringify(state.data), { mode: 0o600 });
-      renameSync(path + '.tmp', path);
-      state.etag = read().etag;
-    },
-  };
-}
-
-export function createLocalRiceBasket(path) {
-  const run = createHandler(createLocalStore(path));
+export function createLocalRiceBasket(storage) {
+  const run = createHandler(storage);
   return (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const route = url.searchParams.get('route');

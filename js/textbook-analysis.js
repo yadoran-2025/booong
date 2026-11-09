@@ -234,8 +234,7 @@ async function start() {
     template.content.querySelector("details").open = open;
     container.replaceWith(template.content.firstElementChild);
     mountTextbookPdfs(root);
-    const scroller = root.querySelector(`[data-book-viewer="${book}"] .textbook__canvas`);
-    if (hasSample(unit) && state.chapter >= 0) scroller.scrollTop = scroller.querySelector(`[data-sample-page="${state.chapter * 2}"]`)?.offsetTop - scroller.firstElementChild.offsetTop || 0;
+    if (hasSample(unit) && state.chapter >= 0) root.querySelector(`[data-book-viewer="${book}"] [data-sample-page="${state.chapter * 2}"]`)?.scrollIntoView({ block: "start" });
   }
 
   function refreshBookSelection() {

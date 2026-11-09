@@ -1,6 +1,10 @@
 const localUser = { uid: "local-preview-user", email: "noamchomsky1571@gmail.com", emailVerified: true, photoURL: "", bungmoOperator: true };
 const localProfile = { id: localUser.uid, nickname: "재영", email: localUser.email, photoURL: "" };
 
+export function isLocalOperator({ hostname = typeof window === 'undefined' ? '' : window.location.hostname, enabled = typeof window !== 'undefined' && window.__BOOONG_LOCAL_ADMIN__ === true } = {}) {
+  return enabled && ['localhost', '127.0.0.1', '[::1]'].includes(hostname);
+}
+
 export function isLocalPreview({ nodeEnv = typeof process === "undefined" ? "" : process.env.NODE_ENV, hostname = typeof window === "undefined" ? "" : window.location.hostname } = {}) {
   return nodeEnv === "development" && ["localhost", "127.0.0.1"].includes(hostname);
 }

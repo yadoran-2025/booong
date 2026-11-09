@@ -1,0 +1,8 @@
+{
+  "database": [
+    {
+      "instance": "yadoran-2025-booong-content",
+      "rules": "booong-content.database.rules.json"
+    }
+  ]
+}

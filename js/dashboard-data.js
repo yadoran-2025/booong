@@ -35,11 +35,13 @@ const SUBJECT_LABELS = {
 export async function loadDashboardConfig(options = {}) {
   const useCache = options.cache !== false;
   const cached = useCache ? loadCachedDashboardConfig() : null;
-  const local = await loadLocalDashboardConfig();
+  const [local, response] = await Promise.all([
+    loadLocalDashboardConfig(),
+    fetch("/api/lesson-catalog", { signal: AbortSignal.timeout(8000) }).catch(() => null),
+  ]);
 
   try {
-    const response = await fetch("/api/lesson-catalog", { signal: AbortSignal.timeout(8000) });
-    if (!response.ok) throw new Error("Managed catalog unavailable");
+    if (!response?.ok) throw new Error("Managed catalog unavailable");
     const managed = await response.json();
     if (managed.active === true && Array.isArray(managed.catalog?.resources) && Array.isArray(managed.catalog?.units) && Array.isArray(managed.catalog?.subjects)) {
       const config = { ...mergeDashboardCatalog(local, managed.catalog), catalogSource: "managed" };
@@ -245,21 +247,6 @@ export function createMakerWorkMap(workMap, members = []) {
       if (!memberId) return;
       if (!makerMap.has(memberId)) makerMap.set(memberId, []);
       makerMap.get(memberId).push(work);
-    });
-  });
-
-  const worksByLookup = new Map();
-  workMap.forEach(work => {
-    [work.id, work.title].map(normalizeMakerKey).filter(Boolean).forEach(key => worksByLookup.set(key, work));
-  });
-  members.forEach(member => {
-    const memberId = normalizeMakerKey(member?.id);
-    if (!memberId) return;
-    (member.making || []).map(normalizeMakerKey).filter(Boolean).forEach(key => {
-      const work = worksByLookup.get(key);
-      if (!work) return;
-      if (!makerMap.has(memberId)) makerMap.set(memberId, []);
-      if (!makerMap.get(memberId).some(item => item.type === work.type && item.id === work.id)) makerMap.get(memberId).push(work);
     });
   });
 

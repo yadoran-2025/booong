@@ -6,7 +6,7 @@ export function renderHomeIntro() {
       <div class="home-intro__stage">
         <div class="home-intro__art" aria-hidden="true">
           <img class="home-intro__landscape" src="assets/intro-city.jpg" width="1586" height="992" alt="" fetchpriority="high">
-          <img class="home-intro__scooter" src="assets/intro-scooter.png" width="1374" height="1145" alt="">
+          <img class="home-intro__scooter" data-src="assets/intro-scooter.png" width="1374" height="1145" alt="">
         </div>
         <header class="home-intro__header">
           <a class="curation-brand" href="index.html" aria-label="BOOONG 홈"><img src="assets/favicon.svg" width="44" height="44" alt=""><b>BOOONG</b></a>
@@ -15,8 +15,8 @@ export function renderHomeIntro() {
         <div class="home-intro__copy">
           <span class="home-intro__eyebrow">사회교육공동체 booong</span>
           <h1 id="home-intro-title">함께 가면,<br>더 멀리 간다</h1>
-          <p>“많은 개인적 곤경은 개인의 문제로만 해결할 수 없으며,<br>공적 쟁점으로 이해해야 한다.”<br>
-            <small>— C. 라이트 밀스, 『사회학적 상상력』 (발췌·번역)</small></p>
+          <blockquote class="home-intro__quote"><p>“타자를 돕고, 타자로서 돕고, 타자를 돕는 일을 도우며,<br>미래-타자의 출현에 열린 지식과 기술은 어떤 얼굴일까.”</p>
+            <cite>— 김원영·김초엽, 『사이보그가 되다』, 사계절, 2021</cite></blockquote>
           <div class="home-intro__actions">
             <a class="btn btn--primary home-intro__start" href="#lesson-library" data-intro-skip>수업 둘러보기 ↓</a>
             <a class="btn btn--secondary home-intro__start" href="index.html?view=favorites">내 수업함</a>
@@ -41,6 +41,7 @@ export function bindHomeIntro(root) {
   let progress = 0;
   let previousTime = 0;
   let rider;
+  let riderLoading = false;
 
   function update(time) {
     frame = 0;
@@ -50,9 +51,12 @@ export function bindHomeIntro(root) {
     const target = motion.matches ? 0 : Math.max(0, Math.min(1, -bounds.top / Math.max(1, distance)));
     const dt = previousTime ? Math.min(.1, (time - previousTime) / 1000) : 1 / 60;
     previousTime = time;
-    progress = motion.matches ? 0 : target + (progress - target) * Math.exp(-6 * dt);
+    progress = motion.matches ? 0 : target + (progress - target) * Math.exp(-10 * dt);
     if (Math.abs(progress - target) < .0001) progress = target;
-    if (!document.hidden && bounds.bottom > 0 && bounds.top < window.innerHeight) rider?.render(progress);
+    if (!document.hidden && bounds.bottom > 0 && bounds.top < window.innerHeight) {
+      loadRider();
+      rider?.render(progress);
+    }
     section.dataset.rideProgress = progress.toFixed(3);
     if (!document.hidden && bounds.bottom > 0 && progress !== target) frame = requestAnimationFrame(update);
   }
@@ -72,15 +76,21 @@ export function bindHomeIntro(root) {
   }, { signal: controller.signal }));
   disposeIntro = () => { controller.abort(); cancelAnimationFrame(frame); };
   document.addEventListener("visibilitychange", schedule, { signal: controller.signal });
-  import("./intro-scooter.js").then(module => module.createIntroScooter(art, controller.signal)).then(value => {
-    if (controller.signal.aborted) return;
-    rider = value;
-    schedule();
-  }).catch(error => {
-    if (controller.signal.aborted) return;
-    art.dataset.renderer = "fallback";
-    console.warn("BOOONG intro: 3D unavailable; keeping the parked scooter.", error);
-  });
+  function loadRider() {
+    if (riderLoading) return;
+    riderLoading = true;
+    import("./intro-scooter.js").then(module => module.createIntroScooter(art, controller.signal)).then(value => {
+      if (controller.signal.aborted) return;
+      rider = value;
+      schedule();
+    }).catch(error => {
+      if (controller.signal.aborted) return;
+      const fallback = art.querySelector(".home-intro__scooter");
+      fallback.src = fallback.dataset.src;
+      art.dataset.renderer = "fallback";
+      console.warn("BOOONG intro: 3D unavailable; keeping the parked scooter.", error);
+    });
+  }
   schedule();
   if (location.hash === "#lesson-library") library.scrollIntoView({ block: "start" });
 }

@@ -7,6 +7,37 @@ import { thumbnailCrop, thumbnailUrl, encodeThumbnail, THUMBNAIL_MAX_BYTES } fro
 import { createThumbnailStore, validThumbnailId, validateThumbnailWebp } from "../lib/thumbnail-store.js";
 import { withLocalAdmin } from "../lib/local-admin.js";
 import { createThumbnailReadCache, createThumbnailRequestGuard, thumbnailClientIp, THUMBNAIL_CACHE_SECONDS, THUMBNAIL_REQUESTS_PER_MINUTE } from "../lib/thumbnail-reads.js";
+import { cachePublicList, refreshPublicList, PUBLIC_LIST_CACHE_SECONDS, CATALOG_CACHE_TAG, THUMBNAIL_LIST_CACHE_TAG } from "../lib/public-list-cache.js";
+
+const cacheHeaders = {};
+const cacheResponse = { setHeader(name, value) { cacheHeaders[name.toLowerCase()] = value; } };
+cachePublicList(cacheResponse, CATALOG_CACHE_TAG, false);
+assert.equal(cacheHeaders["vercel-cdn-cache-control"], `max-age=${PUBLIC_LIST_CACHE_SECONDS}`);
+assert.equal(PUBLIC_LIST_CACHE_SECONDS, 3600);
+assert.equal(cacheHeaders["cache-control"], "public, max-age=0, must-revalidate", "Browsers revalidate against the CDN after an administrator saves");
+assert.equal(cacheHeaders["vercel-cache-tag"], CATALOG_CACHE_TAG);
+cachePublicList(cacheResponse, THUMBNAIL_LIST_CACHE_TAG, false);
+assert.equal(cacheHeaders["vercel-cache-tag"], THUMBNAIL_LIST_CACHE_TAG);
+assert.notEqual(CATALOG_CACHE_TAG, THUMBNAIL_LIST_CACHE_TAG, "Saving one list leaves the other list cached");
+cachePublicList(cacheResponse, CATALOG_CACHE_TAG, true);
+assert.equal(cacheHeaders["vercel-cdn-cache-control"], "max-age=30");
+const contextSymbol = Symbol.for("@vercel/request-context"), originalContext = globalThis[contextSymbol];
+const originalConsoleError = console.error;
+try {
+  const purges = [];
+  globalThis[contextSymbol] = { get: () => ({ purge: { async dangerouslyDeleteByTag(...args) { purges.push(args); } } }) };
+  assert.equal(await refreshPublicList(CATALOG_CACHE_TAG, true), undefined);
+  assert.equal(purges.length, 0, "Local writes never purge the deployed site");
+  assert.equal(await refreshPublicList(CATALOG_CACHE_TAG, false), undefined);
+  assert.equal(await refreshPublicList(THUMBNAIL_LIST_CACHE_TAG, false), undefined);
+  assert.deepEqual(purges, [[CATALOG_CACHE_TAG, { revalidationDeadlineSeconds: 0 }], [THUMBNAIL_LIST_CACHE_TAG, { revalidationDeadlineSeconds: 0 }]]);
+  globalThis[contextSymbol] = { get: () => ({ purge: { async dangerouslyDeleteByTag() { throw new Error("offline"); } } }) };
+  console.error = () => {};
+  assert.match(await refreshPublicList(CATALOG_CACHE_TAG, false), /저장은 완료.*최대 1시간/, "A purge failure reports delay without claiming that persisted data was lost");
+} finally {
+  if (originalContext === undefined) delete globalThis[contextSymbol]; else globalThis[contextSymbol] = originalContext;
+  console.error = originalConsoleError;
+}
 
 let time = 1000, manifestReads = 0, imageReads = 0;
 const imageName = "11111111-1111-4111-8111-111111111111.webp";
@@ -31,6 +62,8 @@ assert.equal(imageReads, 1, "Guessed image IDs never reach storage");
 time += THUMBNAIL_CACHE_SECONDS * 1000 + 1;
 const expiredList = cachedReads.list(); assert.equal(manifestReads, 2); release(); await expiredList;
 stored = { lesson: { url: null, previousUrl: imageUrl, revision: "new-revision" } };
+const freshList = cachedReads.list(true); release();
+assert.equal((await freshList).lesson.url, null, "A CDN miss sees an update made on another instance before the local TTL expires");
 cachedReads.clear();
 const updatedList = cachedReads.list(); release(); assert.equal((await updatedList).lesson.url, null);
 await cachedReads.image(imageName); assert.equal(imageReads, 1, "A previous image remains readable for existing cards");
@@ -72,8 +105,14 @@ try {
 
 assert.deepEqual(thumbnailCrop(1600, 1000), { sx: 0, sy: 0, sw: 1600, sh: 1000 });
 assert.deepEqual(thumbnailCrop(1000, 1000), { sx: 0, sy: 187.5, sw: 1000, sh: 625 });
-assert.deepEqual(thumbnailCrop(1600, 1000, 2, 0, 1), { sx: 0, sy: 500, sw: 800, sh: 500 });
-assert.deepEqual(thumbnailCrop(1600, 1000, 9, -1, 2), thumbnailCrop(1600, 1000, 4, 0, 1));
+assert.deepEqual(thumbnailCrop(1600, 1000, 2, 0, 1), { sx: -400, sy: 750, sw: 800, sh: 500 });
+assert.deepEqual(thumbnailCrop(1600, 1000, 9, -1, 2), thumbnailCrop(1600, 1000, 6, 0, 1));
+assert.deepEqual(thumbnailCrop(1600, 1000, 0.5), { sx: -800, sy: -500, sw: 3200, sh: 2000 }, "Zooming out allows space around the image");
+assert.deepEqual(thumbnailCrop(1600, 1000, 1, 0.25, 0.5), { sx: -400, sy: 0, sw: 1600, sh: 1000 }, "Matching image/frame ratios can still move");
+const portraitFit = thumbnailCrop(1000, 2000, 0.3125);
+assert.deepEqual(portraitFit, { sx: -1100, sy: 0, sw: 3200, sh: 2000 }, "Whole-image fit preserves the full portrait");
+assert.throws(() => thumbnailCrop(100, 100, 0));
+assert.throws(() => thumbnailCrop(100, 100, -1));
 assert.throws(() => thumbnailCrop(0, 10));
 assert.throws(() => thumbnailCrop(10, NaN));
 assert.equal(thumbnailUrl({ id: "group-2", thumbnailUrl: "/sheet.jpg" }, { url: "/managed.webp" }), "/managed.webp");

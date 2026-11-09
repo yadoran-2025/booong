@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>강연 미리보기</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/favicon.svg">
   <style>
-    @font-face{font-family:SUIT;src:url('/rice-basket/fonts/SUIT-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
+    @font-face{font-family:SUIT;src:url('/studies/fonts/SUIT-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
     *{box-sizing:border-box}body{margin:0;padding-bottom:84px;background:#f3f6f4;color:#24332c;font-family:"Apple SD Gothic Neo",-apple-system,sans-serif;line-height:1.5;word-break:keep-all}
     button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.35}button:focus-visible,a:focus-visible{outline:3px solid #548f6c;outline-offset:3px}[hidden]{display:none!important}
     .masthead{max-width:1600px;margin:auto;padding:22px 32px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
@@ -22,7 +24,7 @@
   </style>
 </head>
 <body>
-  <header class="masthead"><h1 id="lecture-name">강연 미리보기</h1><a id="original" href="/rice-basket/">원래 목차 ↗</a></header>
+  <header class="masthead"><h1 id="lecture-name">강연 미리보기</h1><a id="original" href="/studies/">원래 목차 ↗</a></header>
   <main>
     <nav class="chapter-nav" aria-label="강연 목차"><ol id="chapters" class="chapters"></ol></nav>
     <p id="status" role="status">강연을 불러오는 중입니다.</p>
@@ -48,7 +50,7 @@
 
     try {
       if (!sessionId) throw new Error('연수 주소에 포함된 수업 ID가 필요합니다.');
-      document.querySelector('#original').href = `/rice-basket/?s=${encodeURIComponent(sessionId)}`;
+      document.querySelector('#original').href = `/studies/?s=${encodeURIComponent(sessionId)}`;
       const response = await publicFetch(`/api/sessions/${encodeURIComponent(sessionId)}`);
       const session = await response.json();
       if (!response.ok) throw new Error(session.error || '강연을 불러오지 못했습니다.');
@@ -108,7 +110,7 @@
           if (i === current) buttons[i].setAttribute('aria-current', 'step');
           else buttons[i].removeAttribute('aria-current');
         });
-        if (!frames[index].getAttribute('src')) frames[index].src = `/rice-basket/?p=${encodeURIComponent(session.pages[index].id)}&s=${encodeURIComponent(sessionId)}`;
+        if (!frames[index].getAttribute('src')) frames[index].src = `/studies/?p=${encodeURIComponent(session.pages[index].id)}&s=${encodeURIComponent(sessionId)}`;
         position.textContent = `${String(index + 1).padStart(2, '0')} / ${String(panels.length).padStart(2, '0')}`;
         previous.disabled = index === 0;
         next.disabled = index === panels.length - 1;

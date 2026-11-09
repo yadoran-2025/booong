@@ -1,4 +1,5 @@
 import { escapeHtml } from "./utils.js";
+import { adminReturnPath } from "./admin-return.js";
 import { firebaseApp } from "./firebase-config.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -91,8 +92,10 @@ export async function requireAdmin(container, url = "/api/admin") {
 
 async function renderAdmin() {
   if (!await requireAdmin(root)) return;
+  const returnPath = adminReturnPath(location.search);
+  if (returnPath) { location.replace(returnPath); return; }
   if (new URLSearchParams(location.search).get('tab') === 'rice-basket') {
-    location.replace('/rice-basket/?admin=1&tab=classes');
+    location.replace('/studies/?admin=1&tab=classes');
     return;
   }
   const email = auth.currentUser?.email || "";
@@ -100,13 +103,14 @@ async function renderAdmin() {
     <div class="admin-home__tools">
       <section class="admin-tool-group" aria-labelledby="admin-erp-title">
         <header class="admin-tool-group__heading"><h2 id="admin-erp-title">연구소 운영</h2><p>장부와 연수 자료를<br> 한곳에서 관리해요.</p></header>
-        <ul class="admin-tool-group__list" role="list"><li><a class="admin-tool" href="research-erp.html"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3m3 0h2m-8 4h3m3 0h2M8 18h8"/></svg></span><div><h3>연구소 ERP</h3><p>매출, 커피·사료(밥)·임차료를 기록하고 월별 수입과 비용을 확인합니다.</p></div><span class="admin-tool__action">장부 열기 <span aria-hidden="true">→</span></span></a></li><li><a class="admin-tool" href="/rice-basket/?admin=1&amp;tab=classes"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-2 12H5L3 9Zm4 0 5-7 5 7M9 13v4m6-4v4"/></svg></span><div><h3>쌀바구니</h3><p>연수 자료를 구성하고 참가자에게 공유합니다.</p></div><span class="admin-tool__action">쌀바구니 열기 <span aria-hidden="true">→</span></span></a></li></ul>
+        <ul class="admin-tool-group__list" role="list"><li><a class="admin-tool" href="research-erp.html"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h3m3 0h2m-8 4h3m3 0h2M8 18h8"/></svg></span><div><h3>연구소 ERP</h3><p>매출, 커피·사료(밥)·임차료를 기록하고 월별 수입과 비용을 확인합니다.</p></div><span class="admin-tool__action">장부 열기 <span aria-hidden="true">→</span></span></a></li><li><a class="admin-tool" href="/studies/?admin=1&amp;tab=classes"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-2 12H5L3 9Zm4 0 5-7 5 7M9 13v4m6-4v4"/></svg></span><div><h3>쌀바구니</h3><p>연수 자료를 구성하고 참가자에게 공유합니다.</p></div><span class="admin-tool__action">쌀바구니 열기 <span aria-hidden="true">→</span></span></a></li></ul>
       </section>
       <section class="admin-tool-group" aria-labelledby="admin-site-title">
         <header class="admin-tool-group__heading"><h2 id="admin-site-title">사이트 운영</h2><p>새 소식을 전하고,<br> 이용 흐름을 살펴요.</p></header>
         <ul class="admin-tool-group__list" role="list">
           <li><a class="admin-tool" href="notice-admin.html"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h4l12-5v14L8 14H4zM8 14l2 7H6l-2-7M20 9a4 4 0 0 1 0 6"/></svg></span><div><h3>공지 관리</h3><p>공지 제목과 내용, 관련 링크를 등록하고 수정합니다.</p></div><span class="admin-tool__action">공지 관리 <span aria-hidden="true">→</span></span></a></li>
           <li><a class="admin-tool" href="lesson-admin.html"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18H4zM8 7h8M8 12h8M8 17h5"/></svg></span><div><h3>수업 관리</h3><p>수업 정보와 썸네일, 공개 여부를 관리합니다.</p></div><span class="admin-tool__action">수업 관리 <span aria-hidden="true">→</span></span></a></li>
+          <li><a class="admin-tool" href="member-admin.html"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span><div><h3>프로필 관리</h3><p>구성원의 소개와 경력, 제작 자료를 수정합니다.</p></div><span class="admin-tool__action">프로필 관리 <span aria-hidden="true">→</span></span></a></li>
           <li><a class="admin-tool" href="analytics.html"><span class="admin-tool__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M6 15l5-5 4 3 6-8M16 5h5v5"/></svg></span><div><h3>방문 통계</h3><p>방문 기록과 자료 이용 흐름을 확인합니다.</p></div><span class="admin-tool__action">통계 보기 <span aria-hidden="true">→</span></span></a></li>
         </ul>
       </section>

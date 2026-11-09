@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import { safeNoticeLink, validateNoticeInput } from "../js/notices.js";
 import { renderNoticeArticle } from "../js/ui/notices.js";
-import { MEMBER_PROFILE_SHEET_URL } from "../js/member-data.js";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
@@ -123,8 +122,8 @@ assert.match(html, /&lt;script&gt;/);
 assert.match(renderNoticeArticle({ title: "제목", body: "내용", link: "https://example.com", created_at: "2026-10-08T00:00:00Z" }), /rel="noopener noreferrer"/);
 
 const savedFetch = globalThis.fetch;
-const savedEnv = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY, DORMS_SITE_URL: process.env.DORMS_SITE_URL, NODE_ENV: process.env.NODE_ENV };
-Object.assign(process.env, { SUPABASE_URL: "https://notices-test.supabase.co", SUPABASE_SECRET_KEY: "test-secret", DORMS_SITE_URL: "https://booong.vercel.app", NODE_ENV: "production" });
+const savedEnv = { BOOONG_ADMIN_EMAILS: process.env.BOOONG_ADMIN_EMAILS, SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY, DORMS_SITE_URL: process.env.DORMS_SITE_URL, NODE_ENV: process.env.NODE_ENV };
+Object.assign(process.env, { BOOONG_ADMIN_EMAILS: "admin@example.com", SUPABASE_URL: "https://notices-test.supabase.co", SUPABASE_SECRET_KEY: "test-secret", DORMS_SITE_URL: "https://booong.vercel.app", NODE_ENV: "production" });
 const { publicKey, privateKey } = await generateKeyPair("RS256");
 const key = { ...await exportJWK(publicKey), kid: "notices-test", alg: "RS256", use: "sig" };
 const rows = [];
@@ -132,10 +131,6 @@ let reads = 0, writes = 0, available = true;
 globalThis.fetch = async (input, options = {}) => {
   const url = new URL(input);
   if (url.hostname === "www.googleapis.com") return Response.json({ keys: [key] });
-  if (url.hostname === "docs.google.com") {
-    assert.equal(url.searchParams.get("gid"), new URL(MEMBER_PROFILE_SHEET_URL).searchParams.get("gid"));
-    return new Response("id,admin\nDo,admin@example.com\n");
-  }
   assert.equal(url.origin, "https://notices-test.supabase.co");
   assert.equal(url.pathname, "/rest/v1/booong_notices");
   assert.equal(options.headers.apikey, "test-secret");
@@ -173,10 +168,14 @@ try {
     const headers = new Map();
     const res = { setHeader(name, value) { headers.set(name, value); }, end(body) { this.body = JSON.parse(body); } };
     await handler({ method, body, url, headers: { host: "booong.vercel.app", origin, ...(identity ? { authorization: `Bearer ${identity}` } : {}) } }, res);
-    assert.equal(headers.get("Cache-Control"), "no-store");
+    const publicRead = method === "GET" && url === "/api/notices" && res.statusCode === 200;
+    assert.equal(headers.get("Cache-Control"), publicRead ? "public, max-age=0, must-revalidate" : "no-store");
+    assert.equal(headers.get("Vercel-CDN-Cache-Control"), publicRead ? "max-age=3600" : "no-store");
+    assert.equal(headers.get("Vercel-Cache-Tag"), publicRead ? "booong-notice-list" : undefined);
     return res;
   }
   assert.deepEqual((await request()).body.notices, []);
+  for (const query of ["?nonce=1", "?admin=0", "?admin=1&admin=1"]) assert.equal((await request("GET", undefined, undefined, `/api/notices${query}`)).statusCode, 400);
   assert.equal((await request("GET", undefined, undefined, "/api/notices?admin=1")).statusCode, 401);
   const value = { title: "첫 공지", body: "내용\n둘째 줄", link: "https://example.com" };
   for (const identity of [undefined, "forged", await token("other@example.com"), await token("admin@example.com", "password")]) {

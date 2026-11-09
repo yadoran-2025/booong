@@ -9,6 +9,7 @@ import { createCatalogReadCache } from "../lib/lesson-catalog-api.js";
 import handler from "../api/admin.js";
 import { withLocalAdmin } from "../lib/local-admin.js";
 import { getLessonContributors } from "../js/lesson-contributors.js";
+import { ContentConflictError } from "../lib/booong-content-storage.js";
 
 const unitRows = [{ "단원_코드": "1", 과목: "사회1", 대단원: "I. 세계", 중단원: "1. 세계의 이해" }, { "단원_코드": "2", 과목: "통합사회2", 대단원: "I. 인권", 중단원: "1. 인권 보장" }];
 const rows = [{ group_id: "group-2", group_title: "기존 수업", published: "TRUE", "단원_코드": "1", kind: "lesson", rubric: "보존할 내용" }, { group_title: "비공개 자료", published: "FALSE", "단원_코드": "2" }];
@@ -22,6 +23,11 @@ assert.throws(() => importCatalogRows([rows[0], rows[0]], unitRows), /중복/);
 assert.throws(() => importCatalogRows(rows, [...unitRows, unitRows[0]]), /단원 코드/);
 assert.throws(() => importCatalogRows([{ ...rows[0], "단원_코드": "999" }], unitRows), /단원 코드/);
 const lesson = { ...imported.rows[0], desc: "소개", maker: "제작자", discipline: "사회", school: "", "단원명": "", blog_link: "https://example.com/intro", teacher_link: "/lesson.html", dorms_link: "", thumbnail_url: "", thumbnail_alt: "", new: "FALSE", "단원_코드": "1,2" };
+const { discipline, ...editorLesson } = lesson;
+assert.equal(updateLesson(imported, editorLesson).rows[0].group_title, lesson.group_title, "The editor can save without an obsolete hidden discipline field");
+assert.doesNotThrow(() => updateLesson(imported, { ...editorLesson, resource_id: "", published: "FALSE" }), "New lessons also do not require hidden metadata");
+const legacyDiscipline = { ...imported, rows: [{ ...imported.rows[0], discipline: "기존 분야" }, imported.rows[1]] };
+assert.equal(updateLesson(legacyDiscipline, editorLesson).rows[0].discipline, "기존 분야", "Editing visible fields preserves legacy metadata");
 const changed = updateLesson(imported, lesson);
 const hidden = updateLessonFlags(changed, { id: "group-2", field: "published", value: false });
 assert.equal(hidden.rows[0].published, "FALSE");
@@ -65,6 +71,28 @@ assert.equal(updateLesson(imported, { ...lesson, published: "FALSE", "단원_코
 const newState = updateLesson(imported, { ...lesson, resource_id: "", published: "FALSE" });
 assert.match(newState.rows.at(-1).resource_id, /^lesson-[0-9a-f-]{36}$/);
 
+let firebaseState = { ...structuredClone(imported), revision: "first" }, firebaseEtag = '"first"', race = false;
+const firebaseStore = createLessonCatalogStore({ storage: {
+  async read(name) { assert.equal(name, "catalog"); return { data: structuredClone(firebaseState), etag: firebaseEtag }; },
+  async write(name, data, expected) {
+    assert.equal(name, "catalog");
+    if (race || expected !== firebaseEtag) throw new ContentConflictError();
+    firebaseState = structuredClone(data); firebaseEtag = '"saved"';
+  },
+} });
+const cloudSaved = await firebaseStore.mutate({ action: "flags", revision: "first", id: "group-2", field: "new", value: true });
+assert.equal(cloudSaved.rows[0].new, "TRUE");
+assert.equal((await firebaseStore.load()).state.rows[0].rubric, "보존할 내용");
+race = true;
+await assert.rejects(firebaseStore.mutate({ action: "flags", revision: cloudSaved.revision, id: "group-2", field: "published", value: false }), { status: 409 });
+assert.equal(firebaseState.rows[0].published, "TRUE");
+await assert.rejects(firebaseStore.mutate({ action: "delete", revision: cloudSaved.revision, id: "group-2" }), { status: 409 });
+assert.equal(firebaseState.rows.length, 2);
+race = false;
+const cloudDeleted = await firebaseStore.mutate({ action: "delete", revision: cloudSaved.revision, id: "group-2" });
+assert.equal(cloudDeleted.rows.length, 1);assert.equal(firebaseState.rows.length, 1);
+for (const data of [null, {}, { rows: [] }]) await assert.rejects(createLessonCatalogStore({ storage: { read: async () => ({ data, etag: "missing" }) } }).load(), /unavailable/);
+
 const directory = await mkdtemp(join(tmpdir(), "booong-catalog-"));
 try {
   const store = createLessonCatalogStore({ directory, readSheets: async () => ({ rows, unitRows }) });
@@ -89,6 +117,19 @@ try {
   assert.deepEqual(flaggedState.rows[0].contributors, persisted.rows[0].contributors);
   await assert.rejects(store.mutate({ action: "flags", revision: persisted.revision, id: "group-2", field: "published", value: false }), error => error.status === 409);
   assert.equal((await createLessonCatalogStore({ directory }).load()).state.rows[0].new, "TRUE");
+  const deleted = await store.mutate({ action: "delete", revision: flaggedState.revision, id: "group-2" });
+  assert.notEqual(deleted.revision, flaggedState.revision);
+  assert.equal(deleted.rows.length, 1);assert.equal(deleted.rows[0].resource_id, persisted.rows[1].resource_id);
+  assert.deepEqual(deleted.unitRows, persisted.unitRows, "Deleting a lesson preserves the curriculum and other lessons");
+  assert.equal(flaggedState.rows.length, 2, "Delete does not mutate the previous snapshot");
+  assert.equal(buildDashboardCatalog(deleted.rows, deleted.unitRows).resources.length, 0, "The deleted public lesson disappears from the public catalog");
+  await assert.rejects(store.mutate({ action: "delete", revision: flaggedState.revision, id: deleted.rows[0].resource_id }), { status: 409 });
+  for (const id of ["group-2", "missing", "__proto__", null]) await assert.rejects(store.mutate({ action: "delete", revision: deleted.revision, id }), { status: 404 });
+  await assert.rejects(store.mutate({ action: "save", revision: deleted.revision, lesson }), /수업 ID/);
+  const empty = await store.mutate({ action: "delete", revision: deleted.revision, id: deleted.rows[0].resource_id });
+  assert.equal(empty.rows.length, 0);
+  assert.equal((await createLessonCatalogStore({ directory }).load()).state.rows.length, 0, "Deleting the last lesson persists an empty managed catalog");
+  await assert.rejects(store.mutate({ action: "import", revision: empty.revision }), { status: 409 });
   const publicCatalog = buildDashboardCatalog(persisted.rows, persisted.unitRows);
   assert.equal(publicCatalog.resources.length, 1);
   assert.equal(publicCatalog.resources.some(x => x.title === "비공개 자료"), false);
@@ -96,12 +137,20 @@ try {
 
 let reads = 0, time = 0;
 const cache = createCatalogReadCache({ load: async () => { reads++; return { state: { ...imported } }; } }, () => time);
-const results = await Promise.all([cache.read(), cache.read(), cache.read()]);
+const results = await Promise.all(Array.from({ length: 100 }, () => cache.read(true)));
 assert.equal(reads, 1);
 assert.equal(results[0].catalog.resources.length, 1);
 assert.equal(JSON.stringify(results[0]).includes("비공개 자료"), false);
 time = 30001; await cache.read(); assert.equal(reads, 2);
 cache.clear(); await cache.read(); assert.equal(reads, 3);
+await cache.read(true); assert.equal(reads, 4, "A CDN miss bypasses an instance's previous successful snapshot");
+const waitingReads = [];
+const racingCache = createCatalogReadCache({ load: () => new Promise(resolve => waitingReads.push(resolve)) }, () => time);
+const beforeWrite = racingCache.read(true); racingCache.clear(); const afterWrite = racingCache.read(true);
+waitingReads[0]({ state: imported });
+waitingReads[1]({ state: { ...imported, rows: [] } });
+assert.equal((await beforeWrite).catalog.resources.length, 0);
+assert.equal((await afterWrite).catalog.resources.length, 0, "An in-flight pre-save read cannot return an obsolete published lesson");
 let failedReads = 0;
 const failureCache = createCatalogReadCache({ load: async () => { failedReads++; throw new Error("offline"); } }, () => time);
 await assert.rejects(failureCache.read());
@@ -118,6 +167,7 @@ async function request(url, method = "GET", body = "", headers = {}) {
 assert.equal((await request("/api/lesson-catalog?admin=1")).status, 401);
 assert.equal((await request("/api/admin?catalog=1&admin=1")).status, 401);
 assert.equal((await request("/api/lesson-catalog", "POST", "{}")).status, 401);
+assert.equal((await request("/api/lesson-catalog", "POST", JSON.stringify({ action: "delete", id: "group-2", revision: null }))).status, 401);
 assert.equal((await request("/api/lesson-catalog", "POST", JSON.stringify({ action: "flags", id: "group-2", field: "published", value: true, revision: null }))).status, 401);
 for (const url of ["/api/lesson-catalog?nonce=1", "/api/lesson-catalog?admin=1&admin=1", "/api/admin?catalog=0", "/api/admin?catalog=1&catalog=1", "/api/lesson-catalog?admin=no"]) assert.equal((await request(url)).status, 400);
 assert.equal((await request("/api/lesson-catalog", "PUT")).status, 405);

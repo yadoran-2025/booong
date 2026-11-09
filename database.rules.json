@@ -2,90 +2,116 @@
   "rules": {
     ".read": false,
     ".write": false,
-
     "analytics": {
-      ".read": true,
-
+      ".read": "auth != null && auth.uid === 'booong-analytics-reader' && auth.token.booongAnalyticsRead === true",
       "pages": {
         "$page": {
           ".write": "newData.exists()",
-          "views": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
-          "visitors": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
-          "key": { ".validate": "newData.isString() && newData.val().length <= 96" },
-          "title": { ".validate": "newData.isString() && newData.val().length <= 200" },
-          "path": { ".validate": "newData.isString() && newData.val().length <= 200" },
-          "type": { ".validate": "newData.isString() && newData.val().length <= 40" },
-          "updatedAt": { ".validate": "newData.isNumber()" }
-        }
-      },
-
-      "pageVisitors": {
-        "$page": {
-          "$visitor": {
-            ".write": "!data.exists() && newData.exists()"
+          "views": {
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
+          },
+          "visitors": {
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
+          },
+          "key": {
+            ".validate": "newData.isString() && newData.val().length <= 96"
+          },
+          "title": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "path": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "type": {
+            ".validate": "newData.isString() && newData.val().length <= 40"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber()"
           }
         }
       },
-
+      "pageVisitors": {
+        "$page": {
+          "$visitor": {
+            ".write": "!data.exists() && newData.exists()",
+            ".read": true
+          }
+        }
+      },
       "daily": {
         "$date": {
           "views": {
             ".write": true,
-            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
           },
           "pages": {
             "$page": {
               ".write": true,
-              ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+              ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+              ".read": true
             }
           },
           "groupClicks": {
             "$group": {
               ".write": true,
-              ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+              ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+              ".read": true
             }
           }
         }
       },
-
       "totals": {
         "views": {
           ".write": true,
-          ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+          ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+          ".read": true
         }
       },
-
       "groupClicks": {
         "$group": {
           ".write": "newData.exists()",
-          "views": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
-          "totalClicks": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" },
-          "visitorCount": { ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)" }
-        }
-      },
-
-      "groupClickVisitors": {
-        "$group": {
-          "$visitor": {
-            ".write": "newData.exists()"
+          "views": {
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
+          },
+          "totalClicks": {
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
+          },
+          "visitorCount": {
+            ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
           }
         }
       },
-
+      "groupClickVisitors": {
+        "$group": {
+          "$visitor": {
+            ".write": "newData.exists()",
+            ".read": true
+          }
+        }
+      },
       "favorites": {
         "$resource": {
           ".write": "newData.exists()",
           "count": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() >= (data.exists() ? data.val() - 1 : 0) && newData.val() <= (data.exists() ? data.val() + 1 : 1)"
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() >= (data.exists() ? data.val() - 1 : 0) && newData.val() <= (data.exists() ? data.val() + 1 : 1)",
+            ".read": true
           },
-          "updatedAt": { ".validate": "newData.isNumber()" }
+          "updatedAt": {
+            ".validate": "newData.isNumber()"
+          }
         }
       },
-
       "favoriteVisitors": {
         "$resource": {
           "$visitor": {
-            ".write": "(!data.exists() && newData.exists()) || (data.exists() && !newData.exists())"
+            ".write": "(!data.exists() && newData.exists()) || (data.exists() && !newData.exists())",
+            ".read": true
           }
         }
       }

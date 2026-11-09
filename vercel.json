@@ -3,7 +3,41 @@
   "buildCommand": "npm run build:bungmo && node scripts/export-site.mjs",
   "outputDirectory": "public",
   "rewrites": [
-    { "source": "/api/lesson-catalog", "destination": "/api/admin?catalog=1" },
-    { "source": "/api/lesson-thumbnails", "destination": "/api/admin?thumbnail=1" }
+    {
+      "source": "/studies/",
+      "destination": "/rice-basket/index.html"
+    },
+    {
+      "source": "/api/analytics",
+      "destination": "/api/admin?analytics=1"
+    },
+    {
+      "source": "/api/members",
+      "destination": "/api/admin?members=1"
+    },
+    {
+      "source": "/api/lesson-catalog",
+      "destination": "/api/admin?catalog=1"
+    },
+    {
+      "source": "/api/lesson-thumbnails",
+      "destination": "/api/admin?thumbnail=1"
+    },
+    {
+      "source": "/studies/:path*",
+      "destination": "/rice-basket/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/rice-basket/",
+      "destination": "/studies/",
+      "permanent": true
+    },
+    {
+      "source": "/rice-basket/:path*",
+      "destination": "/studies/:path*",
+      "permanent": true
+    }
   ]
 }

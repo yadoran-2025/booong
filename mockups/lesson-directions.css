@@ -1,0 +1,173 @@
+.direction-switch { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding-top: var(--space-4); }
+.direction-switch a { display: inline-flex; align-items: center; min-height: var(--space-11); padding: var(--space-2) var(--space-4); font-size: var(--text-sm); border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--bg); color: var(--text-muted); }
+.direction-switch a[aria-current] { background: var(--brand); border-color: var(--brand); color: var(--color-on-primary); font-weight: 750; }
+.direction-switch a:hover { border-color: var(--brand); }
+
+/* A: a chapter atlas, with a separate window for the ride. */
+[data-layout="atlas"] .welcome { height: 140svh; }
+[data-layout="atlas"] .home-intro__stage { display: grid; grid-template-columns: 44% minmax(0,1fr); align-items: center; gap: var(--space-8); height: auto; min-height: 0; padding: var(--space-10); background: var(--brand-soft); border: 0; }
+[data-layout="atlas"] .home-intro__copy { position: relative; inset: auto; width: auto; grid-column: 1; grid-row: 1; }
+[data-layout="atlas"] .home-intro__copy h1 { font-size: var(--text-5xl); margin-top: 0; }
+[data-layout="atlas"] .home-intro__copy p { font-size: var(--text-base); }
+[data-layout="atlas"] .home-intro__art { position: relative; inset: auto; width: 100%; height: auto; aspect-ratio: 1586/992; max-height: none; grid-column: 2; grid-row: 1; border: 1px solid var(--border); border-radius: var(--radius-xl); }
+[data-layout="atlas"] .home-intro__art::before { display: none; }
+[data-layout="atlas"] .subjects button { font-size: var(--text-xl); }
+[data-layout="atlas"] .workspace { grid-template-columns: minmax(0,1fr); gap: var(--space-8); }
+[data-layout="atlas"] .units { position: static; padding: 0; min-width: 0; }
+[data-layout="atlas"] .units h2 { display: none; }
+[data-layout="atlas"] #units { display: flex; overflow-x: auto; gap: var(--space-3); padding-bottom: var(--space-2); }
+[data-layout="atlas"] .unit { flex: 0 0 220px; min-height: 88px; align-items: center; border: 1px solid var(--border); background: var(--bg); font-size: var(--text-base); padding: var(--space-4); }
+[data-layout="atlas"] .unit i { flex-basis: auto; color: var(--brand); font-size: var(--text-2xl); font-weight: 750; }
+[data-layout="atlas"] .unit[aria-pressed="true"] { background: var(--brand); color: var(--color-on-primary); border-color: var(--brand); }
+[data-layout="atlas"] .unit[aria-pressed="true"] i { color: inherit; }
+[data-layout="atlas"] .cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--space-6); }
+.chapter { min-width: 0; }
+[data-layout="atlas"] .chapter { padding: var(--space-6); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xl); }
+.chapter-heading { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.chapter-number { color: var(--brand); font-size: var(--text-4xl); font-weight: 850; line-height: 1; letter-spacing: var(--tracking-tight); }
+.chapter-heading h3 { flex: 1; font-size: var(--text-xl); min-width: 120px; }
+.chapter-count { color: var(--text-muted); font-size: var(--text-sm); }
+.chapter-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--space-3); }
+[data-layout="atlas"] .lesson-card { border: 0; border-radius: var(--radius-md); background: var(--color-surface-sidebar); }
+[data-layout="atlas"] .card-image { aspect-ratio: 16/9; }
+[data-layout="atlas"] .chapter-cards > .lesson-card:only-child { grid-column: 1/-1; }
+[data-layout="atlas"] .chapter-cards > .lesson-card:only-child .card-image { aspect-ratio: 3.6/1; }
+[data-layout="atlas"] .card-unit { display: none; }
+[data-layout="atlas"] .card-content { padding: var(--space-4); }
+[data-layout="atlas"] .card-title { font-size: var(--text-lg); }
+
+/* B: screenshots become posters; subjects become a visible vertical index. */
+[data-layout="poster"] { background: var(--bg); }
+[data-layout="poster"] .welcome .home-intro__stage { border: 0; border-radius: 0; }
+[data-layout="poster"] #lesson-library { display: grid; grid-template-columns: 170px minmax(0,1fr); column-gap: var(--space-8); padding-top: var(--space-8); }
+[data-layout="poster"] .subjects { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: var(--space-6); align-self: start; position: sticky; top: var(--space-6); padding: 0; border: 0; overflow: visible; }
+[data-layout="poster"] .subject-group { flex-direction: column; align-items: stretch; gap: var(--space-1); }
+[data-layout="poster"] .subject-group > span { padding: 0 var(--space-3); }
+[data-layout="poster"] .subjects button { text-align: left; font-size: var(--text-lg); border: 0; border-radius: var(--radius-md); min-height: var(--space-12); }
+[data-layout="poster"] .subjects button[aria-pressed="true"] { background: var(--brand); color: var(--color-on-primary); }
+[data-layout="poster"] .subject-heading { grid-column: 2; grid-row: 1; padding-top: 0; }
+[data-layout="poster"] .subject-heading h2 { font-size: var(--text-5xl); }
+[data-layout="poster"] .workspace { grid-column: 2; grid-row: 2; grid-template-columns: minmax(0,1fr); gap: var(--space-6); }
+[data-layout="poster"] .units { position: static; min-width: 0; padding: 0; }
+[data-layout="poster"] .units h2 { display: none; }
+[data-layout="poster"] #units { display: flex; gap: var(--space-2); overflow-x: auto; padding-bottom: var(--space-2); }
+[data-layout="poster"] .unit { flex-shrink: 0; border: 1px solid var(--border); border-radius: var(--radius-full); }
+[data-layout="poster"] .unit i { flex-basis: auto; }
+[data-layout="poster"] .cards { grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-4); }
+[data-layout="poster"] .lesson-card { position: relative; aspect-ratio: 4/5; border: 0; border-radius: var(--radius-lg); }
+[data-layout="poster"] .lesson-card::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(transparent 10%, var(--color-surface-overlay) 100%); }
+[data-layout="poster"] .card-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; }
+[data-layout="poster"] .card-content { position: relative; z-index: 2; justify-content: flex-end; padding: var(--space-6); }
+[data-layout="poster"] .card-unit { color: var(--color-on-primary); margin-top: auto; }
+[data-layout="poster"] .card-title { color: var(--color-on-primary); font-size: var(--text-2xl); line-height: 1.3; text-wrap: initial; word-break: keep-all; overflow-wrap: anywhere; }
+[data-layout="poster"] .card-foot { color: var(--color-on-primary); margin-top: 0; }
+[data-layout="poster"] .card-foot b { color: inherit; }
+
+/* C: a broad introduction followed by an editorial reading list. */
+[data-layout="journal"] { background: var(--bg); }
+[data-layout="journal"] .home-intro__stage { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; gap: var(--space-6) var(--space-12); height: auto; min-height: 0; padding: var(--space-8) 0 0; border: 0; border-radius: 0; }
+[data-layout="journal"] .home-intro__copy { display: contents; }
+[data-layout="journal"] .home-intro__copy h1 { grid-column: 1; grid-row: 1; font-size: var(--text-display); margin: 0; }
+[data-layout="journal"] .home-intro__copy p { grid-column: 2; grid-row: 1 / span 2; align-self: center; border-left: 2px solid var(--brand); padding-left: var(--space-6); margin: 0; }
+[data-layout="journal"] .home-intro__start { grid-column: 1; grid-row: 2; justify-self: start; }
+[data-layout="journal"] .home-intro__art { position: relative; inset: auto; grid-column: 1/-1; grid-row: 3; width: 100%; height: 360px; max-height: none; border-radius: var(--radius-xl); }
+[data-layout="journal"] .home-intro__art::before { display: none; }
+[data-layout="journal"] .subjects button[aria-pressed="true"] { color: var(--text); border-color: var(--text); }
+[data-layout="journal"] .subject-heading { border-bottom: 2px solid var(--text); margin-bottom: var(--space-8); }
+[data-layout="journal"] .unit[aria-pressed="true"] { background: transparent; color: var(--brand); box-shadow: inset 3px 0 var(--brand); border-radius: 0; }
+[data-layout="journal"] .cards { display: block; }
+[data-layout="journal"] .chapter { margin-bottom: var(--space-10); }
+[data-layout="journal"] .chapter-heading { border-bottom: 1px solid var(--border); margin-bottom: 0; padding-bottom: var(--space-4); }
+[data-layout="journal"] .chapter-number { font-size: var(--text-3xl); }
+[data-layout="journal"] .chapter-cards { display: block; }
+[data-layout="journal"] .lesson-card { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: var(--space-5); align-items: center; min-height: 148px; padding: var(--space-5) 0; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+[data-layout="journal"] .lesson-card:hover { transform: none; box-shadow: none; background: var(--color-surface-sidebar); }
+[data-layout="journal"] .card-image { width: 112px; height: 96px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+[data-layout="journal"] .card-content { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: var(--space-2) var(--space-4); padding: 0 var(--space-2) 0 0; }
+[data-layout="journal"] .card-unit { display: none; }
+[data-layout="journal"] .card-title { grid-column: 1; font-size: var(--text-2xl); text-wrap: initial; }
+.card-description { color: var(--text-muted); font-size: var(--text-sm); line-height: 1.65; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+[data-layout="journal"] .card-description { grid-column: 1; }
+[data-layout="journal"] .card-foot { grid-column: 2; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: var(--space-2); padding: 0; margin: 0; }
+
+.directions-page { font-family: var(--font-sans); font-size: var(--text-base); background: var(--color-surface-sidebar); }
+.directions-shell { max-width: 1440px; padding: var(--space-6); margin: auto; }
+.directions-header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-6); padding-bottom: var(--space-8); }
+.directions-header a { display: inline-flex; align-items: center; min-height: var(--space-11); color: var(--text-muted); }
+.directions-header b { font-size: var(--text-xl); color: var(--brand); }
+.directions-intro { padding: var(--space-5) 0 var(--space-10); }
+.directions-intro h1 { font-size: var(--text-4xl); }
+.directions-intro p { margin: var(--space-4) 0 0; color: var(--text-muted); }
+.direction-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--space-6); }
+.direction { overflow: hidden; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xl); }
+.direction-heading { padding: var(--space-6); }
+.direction-heading h2 { font-size: var(--text-2xl); color: var(--text); }
+.direction-heading h2 span { color: var(--brand); margin-right: var(--space-2); }
+.direction-heading p { min-height: 52px; font-size: var(--text-base); color: var(--text-muted); margin: var(--space-3) 0 0; }
+.direction-preview { display: block; padding: 0 var(--space-4); }
+.direction-preview img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.direction-preview + .direction-preview { margin-top: var(--space-3); }
+.direction-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-6); }
+.direction-actions .btn { flex: 1; font-size: var(--text-sm); white-space: nowrap; }
+@media (max-width: 1100px) {
+  [data-layout="atlas"] .home-intro__stage { grid-template-columns: 1fr; padding: var(--space-8); }
+  [data-layout="atlas"] .home-intro__copy { grid-column: 1; grid-row: 1; }
+  [data-layout="atlas"] .home-intro__art { grid-column: 1; grid-row: 2; max-height: 340px; }
+  [data-layout="atlas"] .home-intro__copy h1 { font-size: var(--text-4xl); }
+  [data-layout="atlas"] .home-intro__copy p br:first-child { display: none; }
+  [data-layout="poster"] .cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  [data-layout="journal"] .home-intro__copy h1 { font-size: var(--text-5xl); }
+}
+@media (max-width: 900px) {
+  [data-layout="atlas"] .cards { grid-template-columns: minmax(0,1fr); }
+  .direction-heading { padding: var(--space-4); }
+  .direction-heading h2 { font-size: var(--text-xl); }
+  .direction-heading p { min-height: 80px; }
+  .direction-actions { padding: var(--space-4); }
+}
+@media (max-width: 760px) {
+  .direction-switch { gap: var(--space-1); }
+  .direction-switch a { padding-inline: var(--space-3); font-size: var(--text-sm); }
+  [data-layout="atlas"] .home-intro__stage { padding: var(--space-6); gap: var(--space-5); }
+  [data-layout="atlas"] .home-intro__copy { padding: 0; }
+  [data-layout="atlas"] .home-intro__copy h1 { font-size: var(--text-3xl); }
+  [data-layout="atlas"] .home-intro__art { height: auto; }
+  [data-layout="atlas"] .subjects button { font-size: var(--text-base); }
+  [data-layout="atlas"] .unit { flex-basis: 180px; min-height: 80px; }
+  [data-layout="atlas"] .chapter { padding: var(--space-4); }
+  [data-layout="atlas"] .chapter-heading h3 { font-size: var(--text-lg); }
+  [data-layout="atlas"] .chapter-number { font-size: var(--text-3xl); }
+  [data-layout="atlas"] .chapter-cards { grid-template-columns: minmax(0,1fr); }
+  [data-layout="atlas"] .lesson-card { flex-direction: row; }
+  [data-layout="atlas"] .card-image { width: 96px; flex-basis: 96px; aspect-ratio: auto; }
+  [data-layout="atlas"] .chapter-cards > .lesson-card:only-child .card-image { aspect-ratio: auto; }
+  [data-layout="poster"] #lesson-library { display: block; padding-top: 0; }
+  [data-layout="poster"] .subjects { position: static; flex-direction: row; overflow-x: auto; gap: var(--space-5); padding: var(--space-4) 0; }
+  [data-layout="poster"] .subject-group { flex-direction: row; align-items: center; }
+  [data-layout="poster"] .subjects button { font-size: var(--text-base); }
+  [data-layout="poster"] .subject-heading { padding-top: var(--space-5); }
+  [data-layout="poster"] .subject-heading h2 { font-size: var(--text-3xl); }
+  [data-layout="poster"] .cards { grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--space-3); }
+  [data-layout="poster"] .lesson-card { aspect-ratio: 3/5; }
+  [data-layout="poster"] .card-content { padding: var(--space-3); }
+  [data-layout="poster"] .card-unit { font-size: var(--text-sm); }
+  [data-layout="poster"] .card-title { font-size: var(--text-lg); }
+  [data-layout="poster"] .card-foot { padding-top: var(--space-3); }
+  [data-layout="journal"] .home-intro__stage { grid-template-columns: minmax(0,1fr); gap: var(--space-5); padding-top: var(--space-5); }
+  [data-layout="journal"] .home-intro__copy h1 { grid-column: 1; grid-row: 1; font-size: var(--text-4xl); }
+  [data-layout="journal"] .home-intro__copy p { grid-column: 1; grid-row: 2; padding-left: var(--space-4); }
+  [data-layout="journal"] .home-intro__start { grid-column: 1; grid-row: 3; }
+  [data-layout="journal"] .home-intro__art { grid-row: 4; height: 60vw; max-height: 300px; }
+  [data-layout="journal"] .chapter-heading h3 { font-size: var(--text-lg); }
+  [data-layout="journal"] .lesson-card { grid-template-columns: 72px minmax(0,1fr); gap: var(--space-3); }
+  [data-layout="journal"] .card-image { width: 72px; height: 80px; }
+  [data-layout="journal"] .card-title { font-size: var(--text-lg); }
+  [data-layout="journal"] .card-content { column-gap: var(--space-2); }
+  [data-layout="journal"] .card-foot span { display: none; }
+  .directions-shell { padding: var(--space-4); }
+  .direction-grid { grid-template-columns: minmax(0,1fr); }
+  .directions-header { padding-bottom: var(--space-5); }
+  .directions-intro h1 { font-size: var(--text-3xl); }
+  .direction-heading { padding: var(--space-5); }
+  .direction-heading p { min-height: 0; }
+}

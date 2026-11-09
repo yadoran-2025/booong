@@ -10,7 +10,7 @@ Ranges were checked against source contents, bookmarks, and opening pages. Sourc
 
 PDFs stay outside Git and the static website. The original and the 49 cuts are uploaded without Firebase download tokens, with `Cache-Control: private, no-store`. Existing Storage rules permit reads only under the unrelated `characters/` prefix; all textbook paths are denied by default. Bucket IAM has no public principals.
 
-`api/textbooks.js` reuses the admin API’s Firebase Google identity verification and checks the member sheet’s `admin` email allowlist on the server before issuing a five-minute V4 signed URL. Only reviewed book/unit/chapter combinations can be requested. Signed links are bearer links and can be shared until they expire. There is no permanent public PDF address. This is access control, not DRM.
+`api/textbooks.js` reuses the admin API’s Firebase Google identity verification and checks the server-only `BOOONG_ADMIN_EMAILS` allowlist on the server before issuing a five-minute V4 signed URL. Only reviewed book/unit/chapter combinations can be requested. Signed links are bearer links and can be shared until they expire. There is no permanent public PDF address. This is access control, not DRM.
 
 PDF access requires selecting a middle unit (소단원). Opening the page or selecting a major unit only shows chapter choices; no PDF is fetched. The API rejects requests without `chapter` with HTTP 400 (`chapter_required`), for both redirects and JSON URLs. Existing major-unit page links still open the choices, while chapter links open that chapter directly.
 

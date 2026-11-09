@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildDashboardCatalog, createWorkMap, loadDashboardConfig, mergeDashboardCatalog, normalizeDashboardConfig } from "../js/dashboard-data.js";
+import { buildDashboardCatalog, createWorkMap, createMakerWorkMap, loadDashboardConfig, mergeDashboardCatalog, normalizeDashboardConfig } from "../js/dashboard-data.js";
 
 const unitRows = [
   { "단원_코드": "36", "과목": "사회1", "대단원": "XII. 세계화와 평화", "중단원": "2. 세계화의 양상" },
@@ -60,6 +60,12 @@ assert.deepEqual(catalog.units.find(({ key }) => key === "사회2::III. 시장�
 assert.deepEqual(catalog.diagnostics.unknownUnitCodes, [999]);
 
 const workMap = createWorkMap([], [], catalog.resources);
+const makers = [{id:'CHOI',aliases:['old-choi'],making:['manual-only','담당 수업']},{id:'Hyum'}];
+const assigned = createWorkMap([],[],[{id:'assigned',title:'담당 수업',makers:['old-choi','Hyum']},{id:'manual-only',title:'수동 입력 자료',makers:[]}]);
+assert.deepEqual(createMakerWorkMap(assigned,makers).get('choi').map(work=>work.id),['assigned']);
+assert.deepEqual(createMakerWorkMap(assigned,makers).get('hyum').map(work=>work.id),['assigned']);
+assigned.get('lesson:assigned').makers=['Hyum'];
+assert.equal(createMakerWorkMap(assigned,makers).has('choi'),false,'수업에서 메이커를 해제하면 예전 제작 자료 입력이 있어도 다시 연결하지 않는다');
 const inquiryCatalog = buildDashboardCatalog(
   [{ published: "TRUE", group_id: "inquiry-material", group_title: "사회문제 탐구 자료", "단원_코드": "185" }],
   [{ "단원_코드": "185", 과목: "사회문제탐구", 대단원: "I. 사회문제의 이해와 탐구", 중단원: "1. 사회문제의 의미와 관점", 소단원: "1. 사회문제의 의미와 특징" }],
@@ -100,6 +106,17 @@ assert.deepEqual(legacy.catalog.resources.find(({ title }) => title === "로컬 
 const originalFetch = globalThis.fetch;
 const originalWarn = console.warn;
 try {
+  let releaseLocal, managedStarted = false;
+  globalThis.fetch = async input => {
+    if (String(input).startsWith("/lessons/index.json")) return new Promise(resolve => { releaseLocal = () => resolve({ ok: true, json: async () => ({ groups: [], games: [] }) }); });
+    assert.equal(input, "/api/lesson-catalog");
+    managedStarted = true;
+    return { ok: true, json: async () => ({ active: true, catalog }) };
+  };
+  const concurrent = loadDashboardConfig();
+  assert.equal(managedStarted, true, "Managed catalog starts before the local index responds");
+  releaseLocal();
+  assert.equal((await concurrent).catalogSource, "managed");
   globalThis.fetch = async input => {
     if (String(input).startsWith("/lessons/index.json")) {
       return { ok: true, json: async () => ({ groups: [], games: [] }) };

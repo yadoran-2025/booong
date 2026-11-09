@@ -1,4 +1,8 @@
-export function normalizeMemberDraft({ kind, userId, displayName }) {
+import { profileMemberId } from "./directory.js";
+
+export function normalizeMemberDraft({ kind, userId, profileId, displayName }) {
+  if (kind === "profile" && typeof profileId === "string" && profileId && profileId.length <= 80 && !/[/\x00-\x1f]/.test(profileId)
+    && typeof displayName === "string" && displayName.trim() && displayName.trim().length <= 120) return { kind, profileId, displayName: displayName.trim(), active: true };
   if (kind === "registered" && userId) return { kind, userId, active: true };
   const name = displayName?.trim().slice(0, 16);
   if (kind !== "guest" || !name) throw new Error("객원 이름을 입력해 주세요.");
@@ -11,7 +15,7 @@ export function resolveMeetingMembers(records, users, { activeOnly = true } = {}
     .filter((member) => !activeOnly || member.active)
     .map((member) => ({
       ...member,
-      displayName: member.kind === "registered"
+      displayName: member.kind === "profile" ? names.get(profileMemberId(member.profileId)) || member.displayName : member.kind === "registered"
         ? names.get(member.userId) || member.userId.slice(0, 8)
         : member.displayName
     }))

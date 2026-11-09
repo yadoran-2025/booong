@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import AuthGate from "../components/AuthGate.js";
 import ItineraryDialog from "../components/ItineraryDialog.js";
-import MeetingWorkspace from "../components/MeetingWorkspace.js";
+import TripCalendar, { dayLabel } from "../components/TripCalendar.js";
+import { isMeetingDay } from "../../lib/bungmo/calendar.js";
+import { useBungmoWorkspace } from "../components/BungmoWorkspace.js";
 import { deleteItinerary, saveItinerary, subscribeItinerary } from "../../lib/bungmo/repository.js";
 import { googleMapsSearchUrl } from "../../lib/bungmo/maps.js";
 
@@ -15,21 +16,21 @@ function Trip({ meeting }) {
   const [retry, setRetry] = useState(0);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [selectedDay, setSelectedDay] = useState("");
+  const today = new Date().toLocaleDateString("sv-SE");
+  const [selectedDay, setSelectedDay] = useState(meeting.startDate || today);
   const generation = useRef(0);
   const selectedMeetingId = useRef(meeting.id);
   useEffect(() => {
     generation.current += 1;
     selectedMeetingId.current = meeting.id;
-    setEvents([]); setSelectedDay(""); setError(""); setEditing(null);
+    setEvents([]); setSelectedDay(meeting.startDate || today); setError(""); setEditing(null);
     let active = true;
     const current = generation.current;
     setLoading(true);
     const stop = subscribeItinerary(meeting.id, (items) => {
       if (!active || current !== generation.current) return;
       const sorted = items.toSorted((a, b) => a.day.localeCompare(b.day) || a.startMinutes - b.startMinutes);
-      const days = [...new Set(sorted.map((item) => item.day))];
-      setEvents(sorted); setSelectedDay((current) => days.includes(current) ? current : days[0] ?? ""); setError(""); setLoading(false);
+      setEvents(sorted); setError(""); setLoading(false);
     }, () => {
       if (!active || current !== generation.current) return;
       setError("여행 일정을 불러오지 못했어요."); setLoading(false);
@@ -42,19 +43,34 @@ function Trip({ meeting }) {
     if (selectedMeetingId.current !== meetingId) return;
     try { await deleteItinerary(meetingId, event.id); } catch { setError("일정을 삭제하지 못했어요."); }
   }
-  function openEditor(event) { setEditing({ event, meetingId: meeting.id }); }
+  function openEditor(event) { setEditing({ event, day: selectedDay, meetingId: meeting.id }); }
   async function save(event) {
     if (!editing || editing.meetingId !== selectedMeetingId.current) throw new Error("모임이 변경되어 일정을 저장하지 않았어요.");
     await saveItinerary(editing.meetingId, event);
+    if (editing.meetingId === selectedMeetingId.current) setSelectedDay(event.day);
   }
-  const days = [...new Set(events.map((event) => event.day))];
+  const canAdd = !loading && !error && isMeetingDay(selectedDay, meeting);
   const visibleEvents = events.filter((event) => event.day === selectedDay);
   return <main className="service-page">
-    <div className="service-heading"><div><span>OUR ITINERARY</span><h1>여행의 모든 순간</h1><p>{meeting.title}에서 함께할 일정은 시간순으로 모두에게 보여요.</p></div><button className="service-primary" type="button" onClick={() => openEditor(null)}>+ 일정 추가</button></div>
-    {error && <div className="subscription-error" role="alert"><span>{error}</span><button type="button" onClick={() => setRetry((value) => value + 1)}>다시 시도</button></div>}
-    {loading ? <section className="service-empty" role="status"><h2>여행 일정을 불러오는 중이에요.</h2></section> : events.length ? <><div className="trip-tabs">{days.map((day, index) => <button type="button" className={selectedDay === day ? "active" : ""} onClick={() => setSelectedDay(day)} key={day}><span>DAY {index + 1}</span><strong>{day}</strong></button>)}</div><section className="trip-layout"><ol className="itinerary-list timeline">{visibleEvents.map((event, index) => <li key={event.id}><time dateTime={event.day}>{displayTime(event.startMinutes)}</time><i className={["blue", "coral", "green"][index % 3]} /><div><button type="button" className="itinerary-event" onClick={() => openEditor(event)}><strong>{event.title}</strong><span>{event.placeName}</span></button><a href={googleMapsSearchUrl(event.placeName)} target="_blank" rel="noreferrer">지도 보기 ↗</a><button type="button" className="expense-delete" onClick={() => remove(event)} aria-label={`${event.title} 삭제`}>삭제</button></div></li>)}</ol><aside className="trip-map" aria-label="여행 동선"><div className="map-grid" /><span className="map-river">BUNGMO TRIP</span>{visibleEvents.slice(0, 3).map((event, index) => <i className={`pin pin-${index + 1}`} key={event.id}>{index + 1}</i>)}<div><strong>오늘의 동선</strong><p>{visibleEvents.map((event) => event.placeName).join(" → ")}</p></div></aside></section></> : <section className="service-empty"><h2>아직 등록된 일정이 없어요.</h2><p>일정을 추가해 여행 동선을 함께 정리해 보세요.</p><button className="service-primary" type="button" onClick={() => openEditor(null)}>+ 일정 추가</button></section>}
-    {editing && <ItineraryDialog event={editing.event} meeting={meeting} onClose={() => setEditing(null)} onSave={save} />}
+    <div className="service-heading"><h1>여행 일정</h1><button className="service-primary" type="button" disabled={!canAdd} onClick={() => openEditor(null)}>+ 일정 추가</button></div>
+    {error && <div className="subscription-error" role="alert"><span>{error}</span><button type="button" onClick={() => setRetry(value => value + 1)}>다시 시도</button></div>}
+    {loading ? <section className="service-empty" role="status"><h2>여행 일정을 불러오는 중이에요.</h2></section> : <div className="trip-calendar-layout">
+      <TripCalendar meeting={meeting} events={events} selectedDay={selectedDay} onSelect={setSelectedDay} />
+      <section className="trip-day-agenda" aria-labelledby="trip-day-title">
+        <h2 id="trip-day-title" aria-live="polite">{dayLabel(selectedDay)}</h2>
+        {visibleEvents.length ? <ol className="trip-day-events">{visibleEvents.map(event => <li key={event.id}>
+          <time dateTime={`${event.day}T${displayTime(event.startMinutes)}`}>{displayTime(event.startMinutes)}–{displayTime(event.endMinutes)}</time>
+          <button className="trip-day-event" type="button" onClick={() => openEditor(event)}><strong>{event.title}</strong><span>{event.placeName}</span></button>
+          <div className="trip-day-actions"><a href={googleMapsSearchUrl(event.placeName)} target="_blank" rel="noreferrer">지도 보기 ↗</a><button className="expense-delete" type="button" onClick={() => remove(event)} aria-label={`${event.title} 삭제`}>삭제</button></div>
+        </li>)}</ol> : <p className="trip-day-empty">{error ? "일정을 확인할 수 없어요." : "등록된 일정이 없어요."}</p>}
+        {canAdd ? <button className="btn btn--secondary trip-day-add" type="button" onClick={() => openEditor(null)}>+ 이 날짜에 일정 추가</button> : !isMeetingDay(selectedDay, meeting) && <p className="trip-day-empty">모임 기간 밖의 날짜예요.</p>}
+      </section>
+    </div>}
+    {editing && <ItineraryDialog event={editing.event} initialDay={editing.day} meeting={meeting} onClose={() => setEditing(null)} onSave={save} />}
   </main>;
 }
 
-export default function TripPage() { return <AuthGate>{({ user, profile }) => <MeetingWorkspace user={user} profile={profile}>{(meeting) => <Trip meeting={meeting} />}</MeetingWorkspace>}</AuthGate>; }
+export default function TripPage() {
+  const { meeting } = useBungmoWorkspace();
+  return <Trip key={meeting.id} meeting={meeting} />;
+}

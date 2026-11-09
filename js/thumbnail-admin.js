@@ -38,7 +38,7 @@ function openEditor(item, opener) {
   editor = openThumbnailEditor({ root, item, opener, account, record: records[item.id],
     onSaved(record) {
       records[item.id] = record; renderGallery();
-      root.querySelector("[data-thumbnail-status]").textContent = "저장했습니다. 수업 목록에는 약 1분 이내에 반영됩니다.";
+      root.querySelector("[data-thumbnail-status]").textContent = record.warning || "저장했습니다.";
     },
     onRefreshed(latest) { records = latest; renderGallery(); },
     onClose() { editor = null; },
@@ -76,7 +76,7 @@ async function start() {
     if (edit) return openEditor(item, edit);
     const status = root.querySelector("[data-thumbnail-status]");
     setBusy(true);
-    try { records[item.id] = await saveThumbnail(item.id, null, true, records[item.id]?.revision || null, account); renderGallery(); status.textContent = "이전 이미지로 복원했습니다."; }
+    try { records[item.id] = await saveThumbnail(item.id, null, true, records[item.id]?.revision || null, account); renderGallery(); status.textContent = records[item.id].warning || "이전 이미지로 복원했습니다."; }
     catch (error) { status.textContent = error.message; }
     finally { setBusy(false); }
   });

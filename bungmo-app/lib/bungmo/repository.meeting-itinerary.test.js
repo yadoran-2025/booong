@@ -10,6 +10,7 @@ const firestore = {
   doc: (parent, id = "generated-meeting") => ({ id, path: `${parent.path}/${id}` }),
   getDoc: async () => ({ exists: () => false }),
   onSnapshot: () => () => {},
+  runTransaction: async () => {},
   serverTimestamp: () => timestamp,
   setDoc: async () => {},
   updateDoc: async (...args) => { calls.update.push(args); },
@@ -23,15 +24,12 @@ mock.module("firebase/firestore", { exports: firestore });
 mock.module("../firebase.js", { exports: { db: "database" } });
 const { deleteItinerary, deleteMeeting, saveItinerary, saveMeeting } = await import("./repository.js");
 
-test("새 모임과 생성자 멤버십을 한 batch로 저장한다", async () => {
+test("새 모임은 생성자를 기록하고 참가 명단은 자동으로 만들지 않는다", async () => {
   const draft = { round: 8, title: "화천", location: "강원", status: "upcoming", candidateDates: [], startHour: 10, endHour: 22, startDate: "2026-08-14", endDate: "2026-08-15" };
-  assert.equal(await saveMeeting(draft, "u1"), "generated-meeting");
-  assert.deepEqual(calls.batchSet.map(({ reference }) => reference.path), ["bungmoMeetings/generated-meeting", "bungmoMeetings/generated-meeting/members/u1"]);
-  assert.deepEqual(calls.batchSet.map(({ values }) => values), [
-    { ...draft, creatorId: "u1", createdAt: timestamp, updatedAt: timestamp },
-    { kind: "registered", userId: "u1", active: true, createdAt: timestamp, updatedAt: timestamp }
-  ]);
-  assert.equal(calls.batchCommits, 1);
+  assert.equal(await saveMeeting(draft, "u1"), "new-record");
+  assert.deepEqual(calls.add, [[{ path: "bungmoMeetings" }, { ...draft, creatorId: "u1", createdAt: timestamp, updatedAt: timestamp }]]);
+  assert.equal(calls.batchSet.length, 0);
+  assert.equal(calls.batchCommits, 0);
 });
 
 test("새 모임에는 생성자 ID가 필요하다", async () => {

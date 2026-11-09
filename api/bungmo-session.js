@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       .setProtectedHeader({ alg: "RS256" }).setIssuer(account).setSubject(account)
       .setAudience("https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit")
       .setIssuedAt().setExpirationTime("60s").sign(await importPKCS8(credentials.private_key, "RS256"));
-    return sendJson(res, 200, { token, expiresAt });
+    return sendJson(res, 200, { token, expiresAt, email: access.body.email });
   } catch {
     return sendJson(res, 503, { reason: "bungmo_not_configured" });
   }

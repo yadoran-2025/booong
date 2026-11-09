@@ -1,9 +1,12 @@
 import { adminAccess } from "./admin.js";
 import { sendJson, siteOrigin } from "../lib/dorms-auth.js";
 import { validateNoticeInput } from "../js/notices.js";
+import { cachePublicList, refreshPublicList } from "../lib/public-list-cache.js";
+import { isLoopbackRequest } from "../lib/local-admin.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const COLUMNS = "id,title,body,link,published,created_at,updated_at";
+const cacheTag = "booong-notice-list";
 
 async function store(method, filters = {}, body) {
   const base = new URL(process.env.SUPABASE_URL || "");
@@ -42,14 +45,26 @@ async function inputBody(req) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader("Vercel-CDN-Cache-Control", "no-store");
   if (!["GET", "POST", "PATCH"].includes(req.method)) return sendJson(res, 405, { reason: "method_not_allowed" });
+  const query = new URL(req.url, "https://booong.invalid").searchParams;
+  if ([...query.keys()].some(key => key !== "admin" || query.getAll(key).length !== 1) || (query.has("admin") && query.get("admin") !== "1") || (req.method !== "GET" && query.size)) return sendJson(res, 400, { reason: "invalid_query" });
+  const local = isLoopbackRequest(req);
   if (req.method === "GET") {
-    const manage = new URL(req.url, "https://booong.invalid").searchParams.get("admin") === "1";
+    const manage = query.has("admin");
     if (manage) {
       const access = await adminAccess(req);
       if (access.status !== 200) return sendJson(res, access.status, access.body);
     }
-    try { return sendJson(res, 200, { notices: await store("GET", manage ? {} : { published: "eq.true" }) }); }
+    try {
+      const notices = await store("GET", manage ? {} : { published: "eq.true" });
+      if (manage) return sendJson(res, 200, { notices });
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      cachePublicList(res, cacheTag, local);
+      res.end(JSON.stringify({ notices }));
+      return;
+    }
     catch { return sendJson(res, 503, { reason: "temporarily_unavailable" }); }
   }
   const access = await adminAccess(req);
@@ -77,10 +92,12 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       const rows = await store("POST", {}, { ...value, updated_at: now });
       if (rows.length !== 1) throw new Error("Invalid inserted notice");
-      return sendJson(res, 201, { notice: rows[0] });
+      const warning = await refreshPublicList(cacheTag, local);
+      return sendJson(res, 201, { notice: rows[0], ...(warning ? { warning } : {}) });
     }
     const rows = await store("PATCH", { id: `eq.${input.id}`, updated_at: `eq.${input.updated_at}` }, { ...value, updated_at: now });
     if (!rows.length) return sendJson(res, 409, { reason: "notice_changed" });
-    return sendJson(res, 200, { notice: rows[0] });
+    const warning = await refreshPublicList(cacheTag, local);
+    return sendJson(res, 200, { notice: rows[0], ...(warning ? { warning } : {}) });
   } catch { return sendJson(res, 503, { reason: "temporarily_unavailable" }); }
 }

@@ -3,11 +3,12 @@ import { createScooterModel } from './scooter-model.js';
 
 const IMAGE_WIDTH = 1586;
 const IMAGE_HEIGHT = 992;
-// Trace the painted lane through each bend rather than cutting between its corners.
+// Follow the center of the single C bend painted into the landscape.
 const ROAD = [
-  [.27, .91], [.45, .835], [.52, .79], [.55, .748], [.545, .711],
-  [.522, .675], [.52, .652], [.549, .625], [.611, .604], [.679, .582],
-  [.723, .555], [.726, .528], [.70, .506], [.65, .49], [.583, .477], [.524, .462],
+  [.27, .90], [.362, .857], [.431, .827], [.501, .796], [.567, .766],
+  [.624, .736], [.668, .706], [.700, .675], [.722, .645], [.732, .615],
+  [.734, .595], [.731, .575], [.723, .554], [.709, .534], [.686, .514],
+  [.649, .494], [.590, .474], [.547, .462], [.534, .457],
 ];
 
 export function createIntroRoute() {
@@ -22,7 +23,7 @@ export function createIntroRoute() {
     return ray.ray.intersectPlane(ground, new THREE.Vector3());
   });
   const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal');
-  curve.arcLengthDivisions = 600;
+  curve.arcLengthDivisions = 1200;
   return { camera, curve };
 }
 

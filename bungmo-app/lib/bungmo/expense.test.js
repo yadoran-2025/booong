@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as expenseDomain from "./expense.js";
 
-const { normalizeExpenseDraft, resolveExpenseMembers, syncExpenseDraftMembers } = expenseDomain;
+const { normalizeExpenseDraft, normalizeExpenseRows, resolveExpenseMembers, syncExpenseDraftMembers } = expenseDomain;
 
 test("지출 초안을 정규화하고 알 수 없는 참여자 ID도 보존한다", () => {
   assert.deepEqual(normalizeExpenseDraft({ title: "  식사 ", amount: "10000", payerId: "payer", participantIds: ["unknown-user", "payer", "unknown-user"] }), {
@@ -89,4 +89,16 @@ test("지출 참여자 수는 제한하지 않고 모든 ID를 검증한다", ()
   assert.equal(normalizeExpenseDraft({ ...base, participantIds: Array.from({ length: 20 }, (_, index) => `u${index}`) }).participantIds.length, 20);
   assert.throws(() => normalizeExpenseDraft({ ...base, participantIds: ["payer", 3] }), /멤버 정보/);
   assert.throws(() => normalizeExpenseDraft({ ...base, payerId: " ".repeat(2) }), /결제한 사람/);
+});
+
+test("지출 시트는 빈 행을 건너뛰고 입력한 행을 순서대로 검증한다", () => {
+  const row = { title: " 식사 ", amount: "12000", payerId: "payer", participantIds: ["payer", "guest"] };
+  assert.deepEqual(normalizeExpenseRows([{ title: " ", amount: "" }, row, { ...row, title: "교통", amount: "3000" }], ["payer", "guest"]), [
+    { ...row, title: "식사", amount: 12000 }, { ...row, title: "교통", amount: 3000 }
+  ]);
+  assert.throws(() => normalizeExpenseRows([{ title: "", amount: "" }]), /한 건 이상/);
+  assert.throws(() => normalizeExpenseRows([{ title: "", amount: "" }, { ...row, amount: "1.5" }]), error => error.rowIndex === 1 && /^2행:/.test(error.message));
+  assert.throws(() => normalizeExpenseRows([{ ...row, title: "" }]), /^Error: 1행:/);
+  assert.throws(() => normalizeExpenseRows([row], ["payer"]), /모임 멤버/);
+  assert.throws(() => normalizeExpenseRows(Array(501).fill(row)), /500행/);
 });

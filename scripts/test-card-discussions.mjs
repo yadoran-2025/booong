@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readCardComments, renderCardDiscussion, renderList } from "../js/ui/card-discussions.js";
+import { bindCardDiscussions, readCardComments, renderCardDiscussion, renderList } from "../js/ui/card-discussions.js";
 import { shouldShowCommentNotice } from "../js/ui/home-comment-notice.js";
 
 globalThis.fetch = async url => {
@@ -36,4 +36,62 @@ assert.match(list.innerHTML, /data-comment-action="edit"/);
 assert.match(list.innerHTML, /data-comment-action="delete"/);
 assert.doesNotMatch(list.innerHTML, /피드백/);
 assert.doesNotMatch(list.innerHTML, /<script>/);
+
+function countView(ids) {
+  const node = () => ({ textContent: "", listeners: {}, addEventListener(name, handler) { this.listeners[name] = handler; }, setAttribute() {}, replaceChildren() {} });
+  const sections = ids.map(id => {
+    const count = node(), modalCount = node(), trigger = node(), form = node();
+    form.querySelector = () => node();
+    trigger.querySelector = () => count;
+    const nodes = Object.fromEntries(["status", "list", "submit", "cancel", "close"].map(key => [`[data-comment-${key}]`, { ...node(), querySelectorAll: () => [] }]));
+    Object.assign(nodes, { "[data-comment-form]": form, "[data-form-label]": node(), "[data-discussion-count]": modalCount });
+    return { dataset: { cardDiscussion: id }, isConnected: true, previousElementSibling: trigger, getAttribute: () => id, querySelector: selector => nodes[selector], showModal() { this.open = true; }, count };
+  });
+  return { isConnected: true, sections, querySelectorAll: () => sections };
+}
+const observers = [];
+globalThis.IntersectionObserver = class {
+  constructor(callback) { this.callback = callback;observers.push(this); }
+  observe() {}
+  unobserve() {}
+  disconnect() { this.disconnected = true; }
+  show(view) { this.callback(view.sections.map(section => ({ target: section.previousElementSibling, isIntersecting: true }))); }
+};
+globalThis.document = { createElement: () => ({}) };
+globalThis.location = { pathname: '/index.html', search: '', hash: '' };
+const calls = [];let unavailable = false;
+globalThis.fetch = async url => {
+  calls.push(url);
+  return { ok: !unavailable, json: async () => url.includes('countOnly') ? { count: 3 } : { count: 5, comments: [], viewer: null } };
+};
+const tick = () => new Promise(setImmediate);
+const visible = countView(['visible', 'visible']);bindCardDiscussions(visible);
+assert.equal(calls.length, 0, '화면 밖 카드의 댓글 수는 조회하지 않는다');
+observers.at(-1).show(visible);await tick();
+assert.equal(calls.length, 1, '같은 수업의 동시 요청을 합친다');
+assert.deepEqual(visible.sections.map(s => s.count.textContent), ['3', '3']);
+const firstObserver = observers.at(-1);bindCardDiscussions(visible);observers.at(-1).show(visible);await tick();
+assert.equal(firstObserver.disconnected, true, '다시 그릴 때 이전 관찰을 해제한다');
+assert.equal(calls.length, 1, '과목·정렬 변경은 최근 댓글 수를 재사용한다');
+visible.sections[0].previousElementSibling.listeners.click();await tick();
+assert.equal(calls.at(-1), '/api/comments?resourceId=visible&viewer=1', '댓글을 열면 항상 최신 응답과 권한을 확인한다');
+const refreshed = countView(['visible']);bindCardDiscussions(refreshed);observers.at(-1).show(refreshed);await tick();
+assert.equal(refreshed.sections[0].count.textContent, '5', '새 댓글 수로 캐시를 갱신한다');
+const failed = countView(['retry']);unavailable = true;bindCardDiscussions(failed);observers.at(-1).show(failed);await tick();
+assert.equal(failed.sections[0].count.textContent, '–');
+unavailable = false;bindCardDiscussions(failed);observers.at(-1).show(failed);await tick();
+assert.equal(failed.sections[0].count.textContent, '3', '조회 실패를 캐시하지 않고 재시도한다');
+const expired = countView(['visible']), now = Date.now;
+Date.now = () => now() + 20000;
+bindCardDiscussions(expired);observers.at(-1).show(expired);await tick();
+assert.equal(expired.sections[0].count.textContent, '5');
+Date.now = () => now() + 31000;
+bindCardDiscussions(expired);observers.at(-1).show(expired);await tick();Date.now = now;
+assert.equal(expired.sections[0].count.textContent, '3', '반복 정렬로 캐시 만료를 연장하지 않고 30초가 지나면 다시 조회한다');
+const detached = countView(['detached']);bindCardDiscussions(detached);detached.isConnected = false;
+const beforeDetached = calls.length;observers.at(-1).show(detached);await tick();
+assert.equal(calls.length, beforeDetached);assert.equal(observers.at(-1).disconnected, true);
+delete globalThis.IntersectionObserver;
+const fallback = countView(['fallback']);bindCardDiscussions(fallback);await tick();
+assert.equal(fallback.sections[0].count.textContent, '3', '관찰 API가 없는 브라우저도 댓글 수를 표시한다');
 console.log("Card discussion API and markup checks passed.");

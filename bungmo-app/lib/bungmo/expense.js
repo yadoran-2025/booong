@@ -27,6 +27,23 @@ export function normalizeExpenseDraft(form, allowedMemberIds) {
   return { title, amount, payerId: form.payerId, participantIds };
 }
 
+export const MAX_EXPENSE_ROWS = 500;
+
+export function normalizeExpenseRows(rows, allowedMemberIds) {
+  if (!Array.isArray(rows) || rows.length > MAX_EXPENSE_ROWS) throw new Error("한 번에 500행까지 저장할 수 있어요.");
+  const drafts = [];
+  rows.forEach((row, rowIndex) => {
+    try {
+      if (!row || typeof row !== "object" || Array.isArray(row)) throw new Error("지출 정보를 확인해 주세요.");
+      if (!String(row.title ?? "").trim() && !String(row.amount ?? "").trim()) return;
+      drafts.push(normalizeExpenseDraft(row, allowedMemberIds));
+    }
+    catch (error) { throw Object.assign(new Error(`${rowIndex + 1}행: ${error.message}`), { rowIndex }); }
+  });
+  if (!drafts.length) throw new Error("지출을 한 건 이상 입력해 주세요.");
+  return drafts;
+}
+
 export function syncExpenseDraftMembers(form, members) {
   const allowed = new Set(members.map((member) => member.id));
   const payerId = allowed.has(form.payerId) ? form.payerId : members[0]?.id ?? "";

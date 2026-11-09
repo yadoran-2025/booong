@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { exportJWK, exportPKCS8, generateKeyPair, SignJWT } from "jose";
-import { MEMBER_PROFILE_SHEET_URL } from "../js/member-data.js";
+import { adminReturnPath } from "../js/admin-return.js";
+
+assert.equal(adminReturnPath("?next=%2Fbungmo%2Fsettlement%2F%3Fround%3D2%23detail"), "/bungmo/settlement/?round=2#detail");
+for (const path of ["https://evil.example/bungmo/", "//evil.example/bungmo/", "javascript:alert(1)", "/admin.html?next=/bungmo/", "/api/admin", "/bungmo/../../admin.html", "/bungmo/access/"]) {
+  assert.equal(adminReturnPath(`?${new URLSearchParams({ next: path })}`), null);
+}
+assert.equal(adminReturnPath(""), null);
 
 const { publicKey, privateKey } = await generateKeyPair("RS256", { extractable: true });
 const key = { ...await exportJWK(publicKey), kid: "test-admin", alg: "RS256", use: "sig" };
@@ -10,19 +16,16 @@ const originalNow = Date.now;
 // Keep the fake clock behind real time to catch token timestamps that ignore it.
 let now = originalNow() - 1500;
 Date.now = () => now;
-let sheet = "id,name,admin\nDo,관리자, Admin@Example.com \nOther,일반 멤버,\n";
-let sheetAvailable = true, sheetReads = 0;
+const originalAdminEmails = process.env.BOOONG_ADMIN_EMAILS;
+const originalSiteUrl = process.env.DORMS_SITE_URL;
+process.env.DORMS_SITE_URL = "https://booong.vercel.app";
+process.env.BOOONG_ADMIN_EMAILS = " Admin@Example.com , SECOND@example.com, admin@example.com ";
 globalThis.fetch = async input => {
   const url = String(input);
   if (url === "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com") {
     return new Response(JSON.stringify({ keys: [key] }), { headers: { "content-type": "application/json" } });
   }
-  const sheetUrl = new URL(url);
-  assert.match(sheetUrl.searchParams.get("_") || "", /^\d+$/);
-  sheetUrl.searchParams.delete("_");
-  assert.equal(sheetUrl.href, MEMBER_PROFILE_SHEET_URL);
-  sheetReads++;
-  return new Response(sheet, { status: sheetAvailable ? 200 : 503 });
+  throw new Error(`Admin authorization must not fetch a sheet: ${url}`);
 };
 
 try {
@@ -42,9 +45,20 @@ try {
 
   assert.equal((await request()).statusCode, 401);
   assert.equal((await request("forged")).statusCode, 401);
-  assert.equal(sheetReads, 0);
   const valid = await token();
+  for (const [identity, origin, contentType, expected] of [
+    [valid, "https://evil.example", "application/json", 403],
+    [valid, "https://booong.vercel.app", "text/plain", 415],
+    [await token({ email: "other@example.com" }), "https://booong.vercel.app", "application/json", 403],
+  ]) {
+    const result = { setHeader() {}, end(body) { this.body = JSON.parse(body); } };
+    await admin({ method: "POST", url: "/api/members", headers: { authorization: `Bearer ${identity}`, origin, "content-type": contentType } }, result);
+    assert.equal(result.statusCode, expected, "Profile edits require a verified operator, same origin and JSON");
+  }
   assert.equal((await request(valid)).statusCode, 200);
+  assert.equal((await request(await token({ email: "SECOND@EXAMPLE.COM" }))).statusCode, 200);
+  assert.equal((await request(await token({ email: "prefix-admin@example.com" }))).statusCode, 403);
+  assert.equal((await request(await token({ email: "admin@example.com.evil.test" }))).statusCode, 403);
   assert.equal((await request(await token({ email: "other@example.com" }))).statusCode, 403);
   assert.equal((await request(await token({ email_verified: false }))).statusCode, 401);
   assert.equal((await request(await token({ firebase: { sign_in_provider: "password" } }))).statusCode, 401);
@@ -125,28 +139,24 @@ try {
   delete process.env.BOOONG_TEXTBOOK_PREVIEW;
   delete process.env.FIREBASE_TEXTBOOK_READER;
 
-  assert.equal(sheetReads, 1, "Admin, catalog and PDF requests reuse the trusted list while tokens are checked on every request");
-  now += 30_001;
   assert.deepEqual((await Promise.all([request(valid), request(valid), request(valid)])).map(result => result.statusCode), [200, 200, 200]);
-  assert.equal(sheetReads, 2, "Concurrent refreshes share one sheet request");
-  sheet = "id,admin\nDo,\n";
-  now += 30_001;
-  assert.equal((await request(valid)).statusCode, 403, "Removing an email removes access after the 30-second list cache expires");
+  process.env.BOOONG_ADMIN_EMAILS = "second@example.com";
+  assert.equal((await request(valid)).statusCode, 403, "Removing an email denies the existing token without a list cache");
   const removedBook = response();
   await textbookApi(textbookRequest, removedBook);
-  assert.equal(removedBook.statusCode, 403, "Revoked admin cannot obtain textbook access after cache expiry");
-  now += 30_001;
-  sheetAvailable = false;
-  assert.equal((await request(valid)).statusCode, 503, "Expired allowlist must not grant access during an outage");
-  sheetAvailable = true;
-  sheet = "id,name\nDo,관리자\n";
-  const missingColumn = await request(valid);
-  assert.equal(missingColumn.statusCode, 503);
-  assert.equal(missingColumn.body.reason, "admin_not_configured");
-  sheetAvailable = false;
-  assert.equal((await request(valid)).statusCode, 503);
+  assert.equal(removedBook.statusCode, 403, "Revoked admin cannot obtain textbook access");
+  for (const setting of [undefined, "", " , , ", "not-an-email", "admin@example.com,invalid", "admin@example.com;second@example.com", "admin@example.com\nsecond@example.com"]) {
+    if (setting === undefined) delete process.env.BOOONG_ADMIN_EMAILS;
+    else process.env.BOOONG_ADMIN_EMAILS = setting;
+    const unconfigured = await request(valid);
+    assert.equal(unconfigured.statusCode, 503, "Missing or malformed settings never grant access");
+    assert.deepEqual(unconfigured.body, { reason: "admin_not_configured" });
+    assert.equal((await request()).statusCode, 401, "Configuration errors do not bypass identity verification");
+  }
+  process.env.BOOONG_ADMIN_EMAILS = "admin@example.com";
+  assert.deepEqual((await request(valid)).body, { email: "admin@example.com" }, "Configuration recovers without exposing the allowlist");
 
-  const source = (await readFile(new URL("../js/admin.js", import.meta.url), "utf8"))
+  const source = (await readFile(new URL("../js/admin-return.js", import.meta.url), "utf8")).replace(/^export /gm, "") + "\n" + (await readFile(new URL("../js/admin.js", import.meta.url), "utf8"))
     .replace(/^import .*;\n/gm, "").replace(/^export /gm, "")
     .replace(/^if \(root[^\n]*\) renderAdmin\(\);$/m, "await renderAdmin();");
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
@@ -159,9 +169,16 @@ try {
   assert.match(container.innerHTML, /href="textbook-analysis.html"/);
   assert.match(container.innerHTML, /href="watcha-library.html"/);
   assert.match(container.innerHTML, /href="notice-admin.html"/);
+  assert.match(container.innerHTML, /href="member-admin.html"/);
   assert.match(container.innerHTML, /href="bungmo\/"/);
   const folderLink = /<a class="admin-tool" href="https:\/\/drive\.google\.com\/drive\/folders\/1DJk3fA986d_FmoRrOW0HFJc_cg7rMPcp" target="_blank" rel="noopener noreferrer">/;
   assert.match(container.innerHTML, folderLink);
+  let returned;
+  await render(document, () => fakeAuth, {}, async () => new Response("{}"), String, { origin: "https://booong.vercel.app", search: "?next=/bungmo/trip/", replace: path => { returned = path; } });
+  assert.equal(returned, "/bungmo/trip/", "A verified operator returns to the requested Bungmo screen");
+  returned = null;
+  await render(document, () => fakeAuth, {}, async () => new Response('{}', { status: 403 }), String, { origin: "https://booong.vercel.app", search: "?next=/bungmo/", replace: path => { returned = path; } });
+  assert.equal(returned, null, "Denied accounts never return to the protected screen");
   await render(document, () => fakeAuth, {}, async () => new Response('{"reason":"access_denied"}', { status: 403 }), String, { origin: "https://booong.vercel.app" });
   assert.doesNotMatch(container.innerHTML, /admin-cards|href="analytics.html"/);
   assert.doesNotMatch(container.innerHTML, folderLink);
@@ -224,8 +241,11 @@ try {
   await render(document, () => fakeAuth, {}, async () => { throw new Error("Anonymous users must not fetch protected content"); }, String, { origin: "https://booong.vercel.app" });
   assert.match(container.innerHTML, /Google로 로그인/);
   assert.doesNotMatch(container.innerHTML, folderLink);
-  console.log("Admin Google identity and member-sheet access checks passed.");
+  console.log("Admin Google identity and server-environment allowlist checks passed.");
 } finally {
+  if (originalSiteUrl === undefined) delete process.env.DORMS_SITE_URL; else process.env.DORMS_SITE_URL = originalSiteUrl;
+  if (originalAdminEmails === undefined) delete process.env.BOOONG_ADMIN_EMAILS;
+  else process.env.BOOONG_ADMIN_EMAILS = originalAdminEmails;
   globalThis.fetch = originalFetch;
   Date.now = originalNow;
 }

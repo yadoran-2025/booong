@@ -18,7 +18,7 @@
 .curation-app a, .curation-app button, .curation-app input, .curation-app select { font-family: inherit; }
 .curation-app button { cursor: pointer; }
 .curation-app :is(a, button, input, select):focus-visible { outline: 3px solid var(--color-primary-tint); outline-offset: 3px; }
-.curation-shell { display: flex; flex-direction: column; width: min(1440px, 100%); min-height: 100dvh; margin: 0 auto; background: var(--desk-white); }
+.curation-shell { display: flex; flex-direction: column; width: 100%; min-height: 100dvh; margin: 0; background: var(--desk-white); }
 .curation-shell > main { flex: 1; padding: 0; background: var(--desk-paper); }
 .curation-topbar {
   position: sticky;
@@ -191,7 +191,6 @@
   .unit-axis__track--grouped { display: grid; overflow-x: visible; }
   .unit-axis__track--grouped .unit-picker__chapter { max-width: none; }
   .unit-picker__chapter { flex: 0 0 auto; max-width: 240px; }
-  .unit-picker__middle { display: none; }
   .curation-middle-select { display: block; width: 100%; max-width: 100%; margin-top: var(--space-4); font-size: var(--text-sm); }
   .unit-detail { border-left: 0; }
   .bundle-card.has-cover { grid-template-columns: 240px minmax(0, 1fr); }

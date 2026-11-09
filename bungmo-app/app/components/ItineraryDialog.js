@@ -6,8 +6,8 @@ import { validateItineraryDraft } from "../../lib/bungmo/model.js";
 const time = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 const minutes = (value) => { const [hour, minute] = value.split(":").map(Number); return hour * 60 + minute; };
 
-export default function ItineraryDialog({ event, meeting, onClose, onSave }) {
-  const [form, setForm] = useState({ day: event?.day ?? meeting?.startDate ?? "", startTime: time(event?.startMinutes ?? 600), endTime: time(event?.endMinutes ?? 660), title: event?.title ?? "", placeName: event?.placeName ?? "" });
+export default function ItineraryDialog({ event, initialDay, meeting, onClose, onSave }) {
+  const [form, setForm] = useState({ day: event?.day ?? initialDay ?? meeting?.startDate ?? "", startTime: time(event?.startMinutes ?? 600), endTime: time(event?.endMinutes ?? 660), title: event?.title ?? "", placeName: event?.placeName ?? "" });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));

@@ -11,6 +11,7 @@ const firestore = {
   doc: (parent, id = "generated-member") => ({ id, path: `${parent.path}/${id}` }),
   getDoc: async (reference) => ({ exists: () => existingMemberPaths.has(reference.path) }),
   onSnapshot: (...args) => { calls.snapshots.push(args); return "unsubscribe"; },
+  runTransaction: async () => {},
   serverTimestamp: () => timestamp,
   setDoc: async (...args) => { calls.set.push(args); },
   updateDoc: async (...args) => { calls.update.push(args); },
@@ -19,7 +20,7 @@ const firestore = {
 
 mock.module("firebase/firestore", { exports: firestore });
 mock.module("../firebase.js", { exports: { db: "database" } });
-const { deactivateMeetingMember, saveMeetingMember, subscribeMeetingMembers, updateUserAccess } = await import("./repository.js");
+const { deactivateMeetingMember, saveMeetingMember, subscribeMeetingMembers } = await import("./repository.js");
 
 beforeEach(() => {
   Object.values(calls).forEach((items) => { items.length = 0; });
@@ -79,14 +80,6 @@ test("member deactivation updates only active and updatedAt", async () => {
   await deactivateMeetingMember("m1", "g1");
   assert.deepEqual(calls.update.pop(), [
     { id: "g1", path: "bungmoMeetings/m1/members/g1" },
-    { active: false, updatedAt: timestamp }
-  ]);
-});
-
-test("site access update writes only the access flag and timestamp", async () => {
-  await updateUserAccess("u2", false);
-  assert.deepEqual(calls.update.pop(), [
-    { id: "u2", path: "bungmoUsers/u2" },
     { active: false, updatedAt: timestamp }
   ]);
 });

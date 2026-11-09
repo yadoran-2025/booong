@@ -146,29 +146,30 @@ test("다른 사람의 닉네임은 바꿀 수 없다", async () => {
   await assertFails(updateDoc(doc(db, "bungmoUsers/u2"), { nickname: "변경" }));
 });
 
-test("붕모 관리자만 다른 계정의 사이트 권한을 바꿀 수 있다", async () => {
+test("붕모에서는 별도의 사이트 이용 권한을 만들거나 바꿀 수 없다", async () => {
   await seedMember("admin", "관리자");
   await seedMember("u2", "민수");
   const admin = env.authenticatedContext("admin", googleClaims("noamchomsky1571@gmail.com")).firestore();
   const member = env.authenticatedContext("u2", { email: "u2@example.com", email_verified: true, firebase: { sign_in_provider: "google.com" } }).firestore();
 
-  await assertSucceeds(updateDoc(doc(admin, "bungmoUsers/u2"), { active: false, updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(admin, "bungmoUsers/u2"), { active: false, updatedAt: serverTimestamp() }));
   await assertFails(updateDoc(doc(member, "bungmoUsers/admin"), { active: false, updatedAt: serverTimestamp() }));
   await assertFails(updateDoc(doc(admin, "bungmoUsers/admin"), { active: false, updatedAt: serverTimestamp() }));
 });
 
-test("권한이 꺼진 계정은 모임을 읽지 못하고 기존 계정은 계속 이용한다", async () => {
+test("기존 붕모 접근 플래그와 관계없이 BOOONG 승인 세션을 따른다", async () => {
   await seedMember("inactive", "차단", { active: false });
   await seedMember("legacy", "기존 멤버");
   await seedMeeting("m1");
   const inactive = env.authenticatedContext("inactive", googleClaims("inactive@example.com")).firestore();
   const legacy = env.authenticatedContext("legacy", googleClaims("legacy@example.com")).firestore();
 
-  await assertFails(getDoc(doc(inactive, "bungmoMeetings/m1")));
+  await assertSucceeds(getDoc(doc(inactive, "bungmoMeetings/m1")));
   await assertSucceeds(getDoc(doc(inactive, "bungmoUsers/inactive")));
   await assertFails(updateDoc(doc(inactive, "bungmoUsers/inactive"), { active: true, updatedAt: serverTimestamp() }));
   await assertFails(updateDoc(doc(inactive, "bungmoUsers/legacy"), { active: false, updatedAt: serverTimestamp() }));
   await assertSucceeds(getDoc(doc(legacy, "bungmoMeetings/m1")));
+  await assertSucceeds(updateDoc(doc(inactive, "bungmoUsers/inactive"), { nickname: "운영자", updatedAt: serverTimestamp() }));
 });
 
 test("회원은 모임 지출을 함께 관리할 수 있다", async () => {
@@ -179,6 +180,26 @@ test("회원은 모임 지출을 함께 관리할 수 있다", async () => {
     title: "숙소", payerId: "u1", participantIds: ["u1"], amount: 10000,
     settled: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp()
   }));
+});
+
+test("지출 여러 건은 함께 저장되고 잘못된 행이 있으면 전부 저장하지 않는다", async () => {
+  await seedMember("u1", "운영자");
+  await seedMeeting("batch-meeting");
+  await seedMeetingMember("batch-meeting", "u1", { kind: "registered", userId: "u1", active: true });
+  const db = env.authenticatedContext("u1", googleClaims("u1@example.com")).firestore();
+  const base = { title: "식사", payerId: "u1", participantIds: ["u1"], amount: 10000, settled: false, createdAt: CREATED_AT, updatedAt: UPDATED_AT };
+  const first = doc(db, "bungmoMeetings/batch-meeting/expenses/first"), second = doc(db, "bungmoMeetings/batch-meeting/expenses/second");
+  const batch = writeBatch(db);
+  batch.set(first, base); batch.set(second, { ...base, title: "교통", amount: 3000 });
+  await assertSucceeds(batch.commit());
+  assert.equal((await getDoc(first)).data().amount, 10000);
+  assert.equal((await getDoc(second)).data().amount, 3000);
+  const third = doc(db, "bungmoMeetings/batch-meeting/expenses/third"), fourth = doc(db, "bungmoMeetings/batch-meeting/expenses/fourth");
+  const invalid = writeBatch(db);
+  invalid.set(third, base); invalid.set(fourth, { ...base, amount: 0 });
+  await assertFails(invalid.commit());
+  assert.equal((await getDoc(third)).exists(), false);
+  assert.equal((await getDoc(fourth)).exists(), false);
 });
 
 test("new expenses require an active payer", async () => {
@@ -252,30 +273,32 @@ test("guest names containing only whitespace are rejected", async () => {
   }));
 });
 
-test("a meeting and its registered creator membership are created atomically", async () => {
+test("a meeting records its operator without automatically adding a participant", async () => {
   await seedMember("u1", "진영");
   const db = env.authenticatedContext("u1", googleClaims("u1@example.com")).firestore();
-  const batch = writeBatch(db);
-  batch.set(doc(db, "bungmoMeetings/m1"), meetingData({ creatorId: "u1" }));
-  batch.set(doc(db, "bungmoMeetings/m1/members/u1"), {
-    kind: "registered", userId: "u1", active: true,
-    createdAt: CREATED_AT, updatedAt: UPDATED_AT
-  });
-  await assertSucceeds(batch.commit());
+  await assertSucceeds(setDoc(doc(db, "bungmoMeetings/m1"), meetingData({ creatorId: "u1" })));
+  assert.equal((await getDoc(doc(db, "bungmoMeetings/m1/members/u1"))).exists(), false);
 });
 
-test("new meetings reject a missing or inactive creator membership", async () => {
+test("new meetings require the actual creator identity", async () => {
   await seedMember("u1", "진영");
   const db = env.authenticatedContext("u1", googleClaims("u1@example.com")).firestore();
-  await assertFails(setDoc(doc(db, "bungmoMeetings/missing-creator"), meetingData({ creatorId: "u1" })));
+  const { creatorId, ...withoutCreator } = meetingData({ creatorId: "u1" });
+  await assertFails(setDoc(doc(db, "bungmoMeetings/missing-creator"), withoutCreator));
+  await assertFails(setDoc(doc(db, "bungmoMeetings/wrong-creator"), meetingData({ creatorId: "other" })));
+});
 
-  const batch = writeBatch(db);
-  batch.set(doc(db, "bungmoMeetings/inactive-creator"), meetingData({ creatorId: "u1" }));
-  batch.set(doc(db, "bungmoMeetings/inactive-creator/members/u1"), {
-    kind: "registered", userId: "u1", active: false,
-    createdAt: CREATED_AT, updatedAt: UPDATED_AT
-  });
-  await assertFails(batch.commit());
+test("BOOONG 참가자는 프로필 ID로 저장하고 다른 프로필로 바꿀 수 없다", async () => {
+  await seedMember("u1", "운영자");
+  const db = env.authenticatedContext("u1", googleClaims("u1@example.com")).firestore();
+  const member = doc(db, "bungmoMeetings/m1/members/booong:CHOI");
+  const data = { kind: "profile", profileId: "CHOI", displayName: "최진영", active: true, createdAt: CREATED_AT, updatedAt: UPDATED_AT };
+  await assertSucceeds(setDoc(member, data));
+  await assertFails(updateDoc(member, { profileId: "Moon", displayName: "문영종" }));
+  await assertFails(setDoc(doc(db, "bungmoMeetings/m1/members/wrong"), data));
+  await assertFails(setDoc(doc(db, "bungmoMeetings/m1/members/booong:Moon"), { ...data, kind: "guest", profileId: "Moon" }));
+  await assertSucceeds(updateDoc(member, { active: false, updatedAt: serverTimestamp() }));
+  await assertSucceeds(updateDoc(member, { active: true, updatedAt: serverTimestamp() }));
 });
 
 test("meeting creatorId must be the requester and is immutable", async () => {

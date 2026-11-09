@@ -6,7 +6,7 @@
 
 관리 화면에서 저장한 이미지가 수업 시트의 `thumbnail_url`, 아래의 정적 화면 캡처, 기본 이미지보다 우선합니다. 수업 ID는 바꾸지 않습니다.
 
-배포 환경은 BOOONG 프로젝트에 연결된 전용 Vercel Blob 저장소의 `BLOB_READ_WRITE_TOKEN`을 사용합니다. 저장소는 private이며, 서버가 `booong-thumbnails/manifest.json`과 `booong-thumbnails/images/`에만 접근합니다. 카드 이미지만 공개 API를 통해 전달합니다. 변경 사항은 수업 목록 새로고침으로 반영됩니다. 관리자 인증과 같은 출처 검사를 통과한 요청만 이미지를 수정할 수 있습니다.
+배포 환경은 Firebase 프로젝트 `yadoran-2025`의 전용 콘텐츠 DB `content/thumbnails`와 기존 Storage 버킷의 `booong/managed-content/thumbnails/images/`를 사용합니다. 서버 전용 `FIREBASE_BOOONG_CONTENT_SERVER`로 연결하며 이미지 원본은 비공개입니다. 카드 이미지만 공개 API를 통해 전달합니다. 변경 사항은 수업 목록 새로고침으로 반영됩니다. 관리자 인증과 같은 출처 검사를 통과한 요청만 이미지를 수정할 수 있습니다.
 
 공개 목록은 CDN과 서버에서 각각 30초 동안 캐시하므로 변경이 모든 방문자에게 보이기까지 약 1분 걸릴 수 있습니다. 동시 요청은 저장소 조회 한 번으로 합치고, 이미지는 서버 메모리에서 최대 32MB까지 재사용합니다. 현재·직전 썸네일로 등록되지 않은 이미지 ID와 불필요한 쿼리는 저장소를 읽지 않고 거절합니다. 관리자 조회와 저장·복원에는 캐시를 사용하지 않습니다.
 

@@ -165,8 +165,6 @@ export async function renderTextbookPages(viewer, pdf, { TextLayer } = {}) {
   });
   viewer.replaceChildren(...sheets);
   layout();
-  const anchor = sheets[Number(scroller.dataset.scrollPage) - 1];
-  scroller.scrollTop = anchor ? anchor.offsetTop - viewer.offsetTop + (Number(scroller.dataset.scrollFraction) || 0) * anchor.offsetHeight : Number(scroller.dataset.scrollTop) || 0;
   // ponytail: draw only nearby pages and release offscreen canvases; long books must not fill GPU memory.
   const observer = new IntersectionObserver(entries => {
     for (const entry of entries) {
@@ -177,7 +175,7 @@ export async function renderTextbookPages(viewer, pdf, { TextLayer } = {}) {
       if (job.visible) draw(sheet, job, job.version);
       else release(sheet);
     }
-  }, { root: scroller, rootMargin: "640px 0px" });
+  }, { root: null, rootMargin: "640px 0px" });
   sheets.forEach(sheet => observer.observe(sheet));
   const cleanup = () => {
     clearTimeout(redrawTimer);
@@ -186,12 +184,15 @@ export async function renderTextbookPages(viewer, pdf, { TextLayer } = {}) {
     sheets.forEach(release);
   };
   cleanup.resize = () => {
-    const anchor = sheets.find(sheet => sheet.offsetTop - viewer.offsetTop + sheet.offsetHeight > scroller.scrollTop);
-    const fraction = anchor ? (scroller.scrollTop - (anchor.offsetTop - viewer.offsetTop)) / anchor.offsetHeight : 0;
+    const anchor = sheets.find(sheet => {
+      const rect = sheet.getBoundingClientRect();
+      return rect.top <= 0 && rect.bottom > 0;
+    });
+    const fraction = anchor ? -anchor.getBoundingClientRect().top / anchor.offsetHeight : 0;
     const oldWidth = parseFloat(viewer.style.width);
     for (const job of jobs.values()) cancel(job);
     layout();
-    if (anchor) scroller.scrollTop = anchor.offsetTop - viewer.offsetTop + fraction * anchor.offsetHeight;
+    if (anchor) window.scrollBy(0, anchor.getBoundingClientRect().top + fraction * anchor.offsetHeight);
     scroller.scrollLeft *= parseFloat(viewer.style.width) / oldWidth;
     clearTimeout(redrawTimer);
     // ponytail: scale existing pixels immediately; redraw at rest to avoid blank frames and pinch render churn.

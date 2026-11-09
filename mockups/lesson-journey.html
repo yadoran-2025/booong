@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>BOOONG · 수업 정류장 목업</title>
+  <link rel="icon" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css">
+  <link rel="stylesheet" href="../css/font-overrides.css">
+  <link rel="stylesheet" href="../css/dashboard-intro.css">
+  <link rel="stylesheet" href="../css/curriculum.css">
+  <link rel="stylesheet" href="../css/notices.css">
+  <link rel="stylesheet" href="lesson-cards.css">
+  <link rel="stylesheet" href="lesson-cards-features.css">
+  <link rel="stylesheet" href="lesson-journey.css">
+</head>
+<body data-library-features data-journey>
+  <header class="topbar">
+    <a class="brand" href="../index.html"><img src="../assets/favicon.svg" width="40" height="40" alt=""><b>BOOONG</b><span>수업 준비실</span></a>
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="search" type="search" aria-label="모든 과목의 수업 검색" placeholder="주제, 단원, 수업 이름으로 검색"></label>
+    <button class="btn btn--secondary" type="button" data-view="favorites" aria-pressed="false">내 수업함 <span data-saved-count>0</span></button>
+    <a class="current-site" href="lesson-cards.html">기본안 보기 ↗</a>
+  </header>
+  <div class="page">
+    <section class="welcome home-intro" aria-labelledby="welcome-title">
+      <div class="home-intro__stage">
+        <div class="home-intro__art" aria-hidden="true">
+          <img class="home-intro__landscape" src="../assets/intro-city.jpg" width="1586" height="992" alt="" fetchpriority="high">
+          <img class="home-intro__scooter" src="../assets/intro-scooter.png" width="1374" height="1145" alt="">
+        </div>
+        <div class="home-intro__copy">
+          <h1 id="welcome-title">함께 가면,<br>더 멀리 간다</h1>
+          <p>“많은 개인적 곤경은 개인의 문제로만 해결할 수 없으며,<br>공적 쟁점으로 이해해야 한다.”<br>
+            <small>— C. 라이트 밀스, 『사회학적 상상력』 (발췌·번역)</small></p>
+          <a class="btn btn--primary home-intro__start" href="#lesson-library" data-intro-skip>수업 둘러보기 ↓</a>
+        </div>
+        <div id="lesson-journey" class="lesson-journey" hidden><svg class="journey-connection" aria-hidden="true"><path/></svg><div class="journey-stops" role="group" aria-label="수업 정류장"></div><div class="journey-preview"></div></div>
+      </div>
+    </section>
+    <div id="lesson-library">
+    <div class="library-quick-nav"><nav role="group" aria-label="수업 탐색"><button type="button" data-view="all" aria-pressed="true">수업 둘러보기</button><button type="button" data-view="new" aria-pressed="false">새로 들어온 수업</button></nav><button type="button" data-open="notices" aria-haspopup="dialog">공지사항 ↗</button></div>
+    <div id="notice-bar"></div>
+    <nav class="subjects" aria-label="과목 선택" id="subjects"></nav>
+    <header class="subject-heading"><div><p id="school-year"></p><h2 id="subject-title"></h2></div><div id="subject-tools" class="reference-actions"></div></header>
+    <main class="workspace">
+      <aside class="units" aria-label="단원 선택"><h2>단원</h2><div id="unit-domains" role="group" aria-label="단원 영역"></div><div id="units" role="group" aria-label="단원"></div></aside>
+      <section class="library" aria-labelledby="library-title">
+        <header class="library-heading"><h2 id="library-title">전체 단원</h2><span id="result-count" role="status"></span><div class="sort-buttons" role="group" aria-label="수업 정렬"><button type="button" data-sort="unit" aria-pressed="true">단원순</button><button type="button" data-sort="title" aria-pressed="false">가나다순</button></div></header>
+        <div id="unit-tools" class="reference-actions"></div>
+        <div id="middle-units" role="group" aria-label="중단원 선택"></div>
+        <div class="cards" id="cards"></div>
+      </section>
+    </main>
+    </div>
+    <footer class="page-footer"><b>BOOONG</b><span>사회교육공동체</span><span class="visit-count" title="운영 통계 연동 위치">오늘 — · 전체 —</span><nav aria-label="사이트 안내"><a href="../about.html">붕 소개 ↗</a><button type="button" data-open="comment-help" aria-haspopup="dialog">댓글 이용안내</button><a id="operator-textbook" href="../textbook-analysis.html">교과서 분석 · 운영자 ↗</a><a href="../admin.html">운영자 ↗</a><a href="../index.html#lesson-library">현재 사이트 ↗</a></nav></footer>
+  </div>
+  <dialog id="lesson-dialog" aria-labelledby="detail-title">
+    <button class="btn btn--ghost close" type="button" aria-label="수업 소개 닫기" autofocus>×</button>
+    <div id="detail-tools"></div>
+    <div class="detail" id="detail"></div>
+    <footer class="detail-navigation"><button class="btn btn--ghost" type="button" data-step="-1">← 이전 수업</button><span id="detail-position"></span><button class="btn btn--ghost" type="button" data-step="1">다음 수업 →</button></footer>
+  </dialog>
+  <dialog id="feature-dialog" class="feature-dialog" aria-labelledby="feature-title"><header><h2 id="feature-title"></h2><form method="dialog"><button class="btn btn--ghost" autofocus>닫기 ×</button></form></header><div id="feature-content"></div></dialog>
+  <p id="preview-status" class="preview-status" role="status" hidden></p>
+  <script type="module" src="lesson-cards.js"></script>
+</body>
+</html>

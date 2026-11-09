@@ -7,3 +7,10 @@ supabase/.temp/
 
 /bungmo/
 /public/
+.DS_Store
+/.playwright-cli/
+/artifacts/
+/mockups/*.png
+/mockups/*.jpg
+/mockups/*.pdf
+/assets/watcha-*-preview.png

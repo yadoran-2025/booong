@@ -32,7 +32,7 @@ export default function SettlementWorkflow({ meeting, profile, activeMembers, re
         <span>지출 입력 완료</span>
         <strong className="readiness-progress" aria-live="polite">{status.readyIds.length}/{status.total}</strong>
         <div className="settlement-workflow-actions">
-          {activeMembers.map(member => <button className="btn btn--secondary" type="button" key={member.id} aria-pressed={status.readyIds.includes(member.id)} disabled={saving} onClick={() => toggleReady(member.id)}>{member.displayName} · {status.readyIds.includes(member.id) ? "완료 취소" : "입력 완료"}</button>)}
+          {activeMembers.map(member => <button className={`btn ${status.readyIds.includes(member.id) ? "btn--primary" : "btn--ghost"}`} type="button" key={member.id} aria-pressed={status.readyIds.includes(member.id)} disabled={saving} onClick={() => toggleReady(member.id)}>{member.displayName} · {status.readyIds.includes(member.id) ? "완료 취소" : "입력 완료"}</button>)}
         </div>
       </div>
     </section>

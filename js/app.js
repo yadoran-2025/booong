@@ -1,12 +1,7 @@
 import { app } from "./state.js";
 import { loadExternalAssets } from "./api.js";
-import { isJsonLessonUrl } from "./dashboard-data.js";
-import { loadDashboardConfig, showDashboard } from "./ui/dashboard.js";
+import { isJsonLessonUrl, loadDashboardConfig } from "./dashboard-data.js";
 import { showCommentNotice } from "./ui/home-comment-notice.js";
-import { renderGuideGallery } from "./ui/guide-gallery.js";
-import { buildAppShell, renderSidebar, renderNavFooter, bindKeyboard, toggleFirstVisibleAnswer } from "./ui/layout.js";
-import { attachFocusAffordance, closeImageLightbox, closeFocusOverlay, closeBlockFullscreen, navigateBlockFullscreen, setBlockFullscreenSectionNavigator, expandNextFullscreenToggle, scrollBlockFullscreen } from "./ui/components.js";
-import { renderBlock, renderBlockSeparator } from "./ui/blocks/index.js";
 import { escapeHtml } from "./utils.js";
 import { trackCurrentPage } from "./visitor-analytics.js";
 
@@ -19,6 +14,7 @@ async function init() {
 
   if (!lessonId) {
     trackCurrentPage();
+    const { showDashboard } = await import("./ui/dashboard.js");
     await showDashboard();
     if (!params.get("view")) showCommentNotice();
     return;
@@ -46,10 +42,12 @@ async function init() {
   }
 
   if (app.lesson.kind === "guide-gallery") {
+    const { renderGuideGallery } = await import("./ui/guide-gallery.js");
     renderGuideGallery();
     return;
   }
 
+  const { startLesson } = await import("./ui/lesson.js");
   startLesson();
 }
 
@@ -107,90 +105,6 @@ function getLessonTargetId(lesson) {
     if (match) return match[1];
   }
   return lesson.id || "";
-}
-
-/* ====================================================================
-   수업 시작 및 섹션 이동
-   ==================================================================== */
-function startLesson() {
-  document.body.innerHTML = "";
-  document.body.style.cssText = "";
-
-  buildAppShell();
-  renderSidebar(goTo);
-  renderNavFooter(goTo);
-  setBlockFullscreenSectionNavigator(navigateFullscreenSection);
-
-  const hash = location.hash.replace("#", "");
-  const idx = app.lesson.sections.findIndex(s => s.id === hash);
-  goTo(idx >= 0 ? idx : 0);
-
-  bindKeyboard({
-    goToIdx: goTo,
-    toggleFirstVisibleAnswer,
-    closeImageLightbox,
-    closeFocusOverlay,
-    closeBlockFullscreen,
-    navigateBlockFullscreen,
-    expandNextFullscreenToggle,
-    scrollBlockFullscreen
-  });
-
-  window.addEventListener("hashchange", () => {
-    const h = location.hash.replace("#", "");
-    const i = app.lesson.sections.findIndex(s => s.id === h);
-    if (i >= 0 && i !== app.currentIdx) goTo(i);
-  });
-
-  document.title = `${app.lesson.title} — ${app.lesson.lessonGroup || "수업 자료"}`;
-}
-
-function goTo(idx) {
-  if (idx < 0 || idx >= app.lesson.sections.length) return;
-  app.currentIdx = idx;
-  const sec = app.lesson.sections[idx];
-
-  document.querySelectorAll(".sidebar__section").forEach(el => {
-    el.classList.toggle("is-active", Number(el.dataset.idx) === idx);
-  });
-  renderSection(sec);
-  renderNavFooter(goTo);
-  history.replaceState(null, "", `#${sec.id}`);
-  window.scrollTo({ top: 0, behavior: "instant" });
-}
-
-function renderSection(sec) {
-  const main = document.getElementById("main-content");
-  if (!main) return;
-  main.innerHTML = "";
-
-  const header = document.createElement("div");
-  header.className = "section-header";
-  header.innerHTML = `
-    <div class="section-header__id">${escapeHtml(sec.id)} · ${escapeHtml(app.lesson.title)}</div>
-    <h1 class="section-header__title">${escapeHtml(sec.title)}</h1>
-  `;
-  attachFocusAffordance(header);
-  main.appendChild(header);
-
-  let previousBlockType = null;
-  sec.blocks.forEach((block, idx) => {
-    const el = renderBlock(block, idx);
-    if (el) {
-      if (previousBlockType && previousBlockType !== "구분선" && block.type !== "구분선") {
-        main.appendChild(renderBlockSeparator());
-      }
-      main.appendChild(el);
-      previousBlockType = block.type;
-    }
-  });
-}
-
-function navigateFullscreenSection(direction, options = {}) {
-  const nextIdx = app.currentIdx + direction;
-  if (nextIdx < 0 || nextIdx >= app.lesson.sections.length) return false;
-  if (!options.dryRun) goTo(nextIdx);
-  return true;
 }
 
 // 시작

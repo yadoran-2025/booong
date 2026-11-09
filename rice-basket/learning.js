@@ -1,4 +1,5 @@
-import { HTML_LAB_PAGE_ID, htmlFileLab } from './html-lab.js';
+import { HTML_LAB_PAGE_ID, webProjectLab } from './html-lab.js';
+import { toolConnectionLab } from './tool-connection.js';
 
 const TEXT = value => String(value ?? '');
 
@@ -1036,7 +1037,7 @@ function architectureStory() {
   const video = story.querySelector('.lp-story-video');
   const play = button('', 'lp-story-video-play');
   const poster = el('img');
-  poster.src = '/rice-basket/architecture-video-thumb-max.jpg';
+  poster.src = '/studies/architecture-video-thumb-max.jpg';
   poster.alt = '';
   poster.loading = 'lazy';
   play.append(poster, el('span', '', '▶  이 페이지에서 영상 재생'));
@@ -1122,10 +1123,19 @@ export function renderLearningPage(target, page, { resourceCardsOnly = false } =
   overview.append(el('p', '', isArchitecture ? '철근콘크리트가 건축가에게 열어 준 가능성을 살펴보고, 코딩 에이전트가 교사의 수업 설계에 던지는 질문으로 이어갑니다.' : isBasics ? '수업 마무리 티켓을 세 번의 프롬프트로 고쳐 보며 학생 화면, 응답 저장, 교사 대시보드가 어떻게 이어지는지 확인합니다.' : resources ? resources.intro || '직접 만든 자료들을 모아 공유합니다.' : data.content || data.description || '소개할 내용을 준비 중입니다.'));
   hero.append(el('h1', '', data.title || '학습 페이지'), overview);
 
+  if (data.id === 'page-9eb2deff689d') {
+    root.classList.remove('lp-standalone');
+    root.classList.add('lp-tools-page');
+    root.append(hero, toolConnectionLab());
+    target.replaceChildren(root);
+    return root;
+  }
+
   if (data.id === HTML_LAB_PAGE_ID) {
     root.classList.remove('lp-standalone');root.classList.add('lp-html-page');
-    overview.querySelector('p').textContent = '화면 속 연습 폴더에 HTML 파일을 만들고, 저장한 문서를 브라우저로 열어 보세요. HTML은 웹페이지의 글과 구조를 적은 문서입니다.';
-    root.append(hero, htmlFileLab());target.replaceChildren(root);return root;
+    hero.querySelector('h1').textContent = 'HTML에서 웹 프로젝트까지';
+    overview.hidden = true;
+    root.append(hero, webProjectLab());target.replaceChildren(root);return root;
   }
 
   if (data.id === 'page-b6afb8c12a41') {
@@ -1142,7 +1152,7 @@ export function renderLearningPage(target, page, { resourceCardsOnly = false } =
     const before = el('section', 'lp-red-brick-panel');
     const after = el('section', 'lp-red-brick-panel');
     const frame = el('iframe', 'lp-red-brick-frame');
-    frame.src = '/rice-basket/red-brick/index.html';
+    frame.src = '/studies/red-brick/index.html';
     frame.title = 'Before — 빨간 벽돌집 짓기 교사 대시보드';
     frame.onload = () => {
       const doc = frame.contentDocument;

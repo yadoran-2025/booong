@@ -15,7 +15,12 @@ const experiences = { opening:'아이디어 시작하기', architecture:'건축 
 let pages = [], sessions = [], dirty = false, revision = 0, pollTimer;
 let currentSession, person, token;
 let authGeneration = 0;
-const hrefPage = (id, sid = '') => `/rice-basket/?p=${encodeURIComponent(id)}${sid ? `&s=${encodeURIComponent(sid)}${operatorMode ? '&manage=1' : ''}` : ''}`;
+const hrefPage = (id, sid = '') => `/studies/?${operatorMode ? 'admin=1&' : ''}p=${encodeURIComponent(id)}${sid ? `&s=${encodeURIComponent(sid)}` : ''}`;
+const sharedSessionUrl = id => `/studies/?s=${encodeURIComponent(id)}`;
+function sessionAdminLinks(id) {
+  const base = `/studies/?admin=1&s=${encodeURIComponent(id)}`;
+  return `<nav class="session-admin-nav" aria-label="연수 관리"><a class="button" href="${base}" ${!pageId?'aria-current="page"':''}>연수 구성</a><a class="button" href="/studies/?admin=1&p=page-4a2b86a58156&s=${encodeURIComponent(id)}" ${pageId==='page-4a2b86a58156'?'aria-current="page"':''}>설문 관리</a><a class="button" href="${sharedSessionUrl(id)}" target="_blank" rel="noopener noreferrer">연수생 화면 열기 ↗</a></nav>`;
+}
 function toast(message) { const el = document.querySelector('#toast'); el.textContent = message; el.classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(()=>el.classList.remove('visible'),4000); }
 async function api(path, method='GET', body) {
   const account = operatorMode ? adminAccountId() : null;
@@ -25,9 +30,9 @@ async function api(path, method='GET', body) {
   }
 }
 function setDirty() { dirty=true; revision++; const el=document.querySelector('#save-status'); if(el) el.textContent='저장하지 않은 변경 내용'; }
-function errorView(error) { app.innerHTML=`<main class="error-page"><h1>페이지를 열 수 없습니다</h1><p>${escapeHtml(error.message)}</p><a class="button" href="${sessionId&&!operatorMode?`/rice-basket/?s=${encodeURIComponent(sessionId)}`:'/rice-basket/?admin=1'}">${sessionId&&!operatorMode?'강연 목차로':'관리 화면으로'}</a></main>`; }
+function errorView(error) { app.innerHTML=`<main class="error-page"><h1>페이지를 열 수 없습니다</h1><p>${escapeHtml(error.message)}</p><a class="button" href="${sessionId&&!operatorMode?`/studies/?s=${encodeURIComponent(sessionId)}`:'/studies/?admin=1'}">${sessionId&&!operatorMode?'강연 목차로':'관리 화면으로'}</a></main>`; }
 function adminShell(content, tab='pages') {
-  app.className='admin-app'; app.innerHTML=`<header class="app-header"><a class="wordmark" href="/rice-basket/?admin=1">BOOONG의 쌀바구니</a><nav aria-label="관리 메뉴"><a class="${tab==='pages'?'active':''}" href="/rice-basket/?admin=1">내용요소</a><a class="${tab==='classes'?'active':''}" href="/rice-basket/?admin=1&tab=classes">연수 출강 리스트</a></nav><a class="text-link" href="/admin.html">운영자 화면</a></header><main class="admin-main">${content}</main>`;
+  app.className='admin-app'; app.innerHTML=`<header class="app-header"><a class="wordmark" href="/studies/?admin=1">쌀바구니 관리</a><nav aria-label="관리 메뉴"><a class="${tab==='pages'?'active':''}" href="/studies/?admin=1">내용요소</a><a class="${tab==='classes'?'active':''}" href="/studies/?admin=1&tab=classes">연수 출강 리스트</a><a class="${tab==='surveys'?'active':''}" href="/studies/?admin=1&p=page-4a2b86a58156">연수별 설문 관리</a></nav><a class="text-link" href="/admin.html">운영자 화면</a></header><main class="admin-main">${content}</main>`;
 
 }
 function cardArt(page) {
@@ -51,14 +56,17 @@ function pageCard(page,{sid='',manage=false,number=0}={}) {
 function pageLibrary() {
   adminShell(`<div class="view-heading library-heading"><div><p class="eyebrow">직접 해 보며 배우는 공간</p><h1>내용요소</h1><p>제목과 내용을 작성하고, 필요하면 코덱스에서 페이지를 더 개발하세요.</p></div><button id="add-page" class="button primary" type="button" aria-haspopup="dialog" aria-controls="page-form-dialog">+ 내용요소 추가</button></div><dialog id="page-form-dialog" class="confirm-dialog page-form-dialog" aria-labelledby="page-form-heading"><form id="add-page-form" class="add-page-form"><h2 id="page-form-heading">새 내용요소</h2><div class="add-page-fields"><label for="new-page-title">제목<input id="new-page-title" maxlength="120" required></label><label for="new-page-content">내용<textarea id="new-page-content" maxlength="20000" rows="7" required></textarea><small id="resource-format" class="help" hidden>이 페이지의 링크는 소개 문장 아래에 한 줄씩 ‘제목 | 한 줄 소개 | https://주소’ 형식으로 입력하세요.</small></label></div><p id="page-form-error" class="danger" role="alert"></p><div class="add-page-actions"><button class="button primary" type="submit">추가</button><button id="cancel-add-page" class="text-button" type="button">취소</button></div></form></dialog><div class="library-layout"><aside class="library-sidebar"><label class="search-label">내용요소 찾기<input id="search" type="search" placeholder="제목 또는 내용으로 검색"></label><div class="library-sidebar-top"><span id="library-count"></span><label class="library-sort-control"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h11M3 10h8M3 14h5M18 5v13m-3-3 3 3 3-3"/></svg><select id="library-sort" aria-label="정렬 기준"><option value="default">직접 정한 순서</option><option value="name">가나다순</option><option value="sections">섹션 많은순</option></select></label></div><nav id="library-index" aria-label="내용요소 목록"></nav></aside><div id="page-library" class="library-stack"></div></div>`);
   const indexNav=document.querySelector('#library-index');
+  const libraryPages=()=>pages.filter(page=>page.id!=='page-4a2b86a58156');
   let sorting=null,savingOrder=false;
   async function movePage(id,toIndex){
-    const fromIndex=pages.findIndex(p=>p.id===id);
-    if(savingOrder||fromIndex<0||toIndex<0||toIndex>=pages.length||fromIndex===toIndex)return;
-    const next=[...pages], [page]=next.splice(fromIndex,1);next.splice(toIndex,0,page);
+    const next=libraryPages(),fromIndex=next.findIndex(p=>p.id===id);
+    if(savingOrder||fromIndex<0||toIndex<0||toIndex>=next.length||fromIndex===toIndex)return;
+    const [page]=next.splice(fromIndex,1);next.splice(toIndex,0,page);
+    let index=0;
+    const ordered=pages.map(page=>page.id==='page-4a2b86a58156'?page:next[index++]);
     savingOrder=true;indexNav.setAttribute('aria-busy','true');
     indexNav.querySelectorAll('[data-sort-page]').forEach(handle=>handle.disabled=true);
-    try{pages=(await api('/api/pages/order','PUT',{pageIds:next.map(p=>p.id)})).pages;toast('내용요소 순서를 저장했습니다.');}
+    try{pages=(await api('/api/pages/order','PUT',{pageIds:ordered.map(p=>p.id)})).pages;toast('내용요소 순서를 저장했습니다.');}
     catch(e){toast(e.message)}
     finally{savingOrder=false;indexNav.removeAttribute('aria-busy');draw();[...indexNav.querySelectorAll('[data-sort-page]')].find(handle=>handle.dataset.sortPage===id)?.focus({preventScroll:true});}
   }
@@ -72,7 +80,7 @@ function pageLibrary() {
     const handle=event.target.closest('[data-sort-page]');
     if(!handle||handle.disabled||event.button!==0||sorting)return;
     event.preventDefault();handle.focus({preventScroll:true});
-    sorting={handle,pointerId:event.pointerId,id:handle.dataset.sortPage,x:event.clientX,y:event.clientY,toIndex:pages.findIndex(p=>p.id===handle.dataset.sortPage),dragging:false};
+    sorting={handle,pointerId:event.pointerId,id:handle.dataset.sortPage,x:event.clientX,y:event.clientY,toIndex:libraryPages().findIndex(p=>p.id===handle.dataset.sortPage),dragging:false};
     handle.setPointerCapture(event.pointerId);
   };
   indexNav.onpointermove=event=>{
@@ -96,16 +104,16 @@ function pageLibrary() {
     if(event.key==='Escape')return cancelSort();
     const handle=event.target.closest('[data-sort-page]');
     if(!handle||handle.disabled||!['ArrowUp','ArrowDown'].includes(event.key))return;
-    event.preventDefault();cancelSort();movePage(handle.dataset.sortPage,pages.findIndex(p=>p.id===handle.dataset.sortPage)+(event.key==='ArrowUp'?-1:1));
+    event.preventDefault();cancelSort();movePage(handle.dataset.sortPage,libraryPages().findIndex(p=>p.id===handle.dataset.sortPage)+(event.key==='ArrowUp'?-1:1));
   };
   const draw=()=>{
     cancelSort();
     const q=document.querySelector('#search').value.trim().toLowerCase();
-    const list=pages.filter(p=>(p.title+' '+(p.content||p.description||'')).toLowerCase().includes(q));
+    const list=libraryPages().filter(p=>(p.title+' '+(p.content||p.description||'')).toLowerCase().includes(q));
     const sort=document.querySelector('#library-sort').value;
     if(sort==='name')list.sort((a,b)=>a.title.localeCompare(b.title,'ko'));
     if(sort==='sections')list.sort((a,b)=>(b.sections?.length||0)-(a.sections?.length||0));
-    const order=new Map(pages.map((p,i)=>[p.id,i+1]));
+    const order=new Map(libraryPages().map((p,i)=>[p.id,i+1]));
     const canMove=sort==='default'&&!q&&!savingOrder;
     document.querySelector('#library-count').textContent=`${list.length}개 내용요소`;
     indexNav.innerHTML=list.map(p=>`<div class="library-index-item" data-page-id="${escapeHtml(p.id)}"><button type="button" class="library-drag-handle" data-sort-page="${escapeHtml(p.id)}" ${canMove?'':'disabled'} aria-label="${escapeHtml(p.title)} 순서 변경" aria-description="드래그하거나 위아래 방향키로 순서를 바꿀 수 있습니다. 검색과 정렬을 해제하면 사용할 수 있습니다." aria-keyshortcuts="ArrowUp ArrowDown"><span aria-hidden="true">⠿</span></button><a href="#library-${encodeURIComponent(p.id)}"><span class="library-number">${String(order.get(p.id)).padStart(2,'0')}</span><span>${escapeHtml(p.title)}${p.sections?.length?`<small>${escapeHtml(experiences[p.experience]||'학습 페이지')} · ${p.sections.length}개 섹션</small>`:''}</span></a></div>`).join('');
@@ -149,7 +157,7 @@ function pageLibrary() {
   draw();
 }
 function classLibrary() {
-  adminShell(`<div class="view-heading"><div><p class="eyebrow">학교별 출강 일정</p><h1>연수 출강 리스트</h1><p>학교와 출강일을 기록하고 수업 구성을 관리하세요.</p></div><a href="/rice-basket/?admin=1&new=1" class="button primary">+ 새 연수 만들기</a></div><label class="search-label">수업 찾기<input id="class-search" type="search" placeholder="수업 또는 학교 이름으로 검색"></label><div class="class-grid" id="class-list"></div><dialog id="delete-class-dialog" class="confirm-dialog" aria-labelledby="delete-class-title" aria-describedby="delete-class-description"><h2 id="delete-class-title">연수를 삭제할까요?</h2><p id="delete-class-description">「<strong id="delete-class-name"></strong>」 연수와 참가자 응답·포스트잇이 삭제됩니다. 내용요소는 유지됩니다.</p><p id="delete-class-error" role="alert"></p><div class="dialog-actions"><button id="cancel-delete-class" type="button" class="button">취소</button><button id="confirm-delete-class" type="button" class="button danger-primary">연수 삭제</button></div></dialog>`,'classes');
+  adminShell(`<div class="view-heading"><div><p class="eyebrow">학교별 출강 일정</p><h1>연수 출강 리스트</h1><p>학교와 출강일을 기록하고 수업 구성을 관리하세요.</p></div><a href="/studies/?admin=1&new=1" class="button primary">+ 새 연수 만들기</a></div><label class="search-label">수업 찾기<input id="class-search" type="search" placeholder="수업 또는 학교 이름으로 검색"></label><div class="class-grid" id="class-list"></div><dialog id="delete-class-dialog" class="confirm-dialog" aria-labelledby="delete-class-title" aria-describedby="delete-class-description"><h2 id="delete-class-title">연수를 삭제할까요?</h2><p id="delete-class-description">「<strong id="delete-class-name"></strong>」 연수와 참가자 응답·포스트잇이 삭제됩니다. 내용요소는 유지됩니다.</p><p id="delete-class-error" role="alert"></p><div class="dialog-actions"><button id="cancel-delete-class" type="button" class="button">취소</button><button id="confirm-delete-class" type="button" class="button danger-primary">연수 삭제</button></div></dialog>`,'classes');
   const list=document.querySelector('#class-list');
   const dialog=document.querySelector('#delete-class-dialog');
   const cancel=document.querySelector('#cancel-delete-class');
@@ -157,7 +165,7 @@ function classLibrary() {
   let pendingId,trigger;
   function draw(){
     const q=document.querySelector('#class-search').value.trim().toLowerCase();
-    list.innerHTML=sessions.filter(s=>(s.name+' '+(s.school||'')).toLowerCase().includes(q)).sort((a,b)=>(b.lectureDate||'').localeCompare(a.lectureDate||'')||b.createdAt-a.createdAt).map(s=>`<article class="class-card"><span class="eyebrow">${escapeHtml(s.school||'학교 미입력')} · ${escapeHtml(s.lectureDate?.replaceAll('-','.')||'출강일 미입력')}</span><h2><a href="/rice-basket/?admin=1&s=${s.id}">${escapeHtml(s.name)}</a></h2><p>${s.pageCount??0}개 페이지 · ${s.gridColumns||3}열 그리드</p><div class="actions"><a class="button primary" href="/rice-basket/?admin=1&s=${s.id}" aria-label="${escapeHtml(s.name)} 연수 수정">연수 수정</a><a class="button" href="/rice-basket/?s=${s.id}&manage=1">응답·공유 관리</a><a class="button" href="/rice-basket/?s=${s.id}" target="_blank" rel="noopener">공유 화면 ↗</a><button class="text-button danger" data-delete-class="${s.id}" aria-label="${escapeHtml(s.name)} 연수 삭제">연수 삭제</button></div></article>`).join('')||'<p class="empty">수업이 없습니다. 필요한 학습 페이지를 골라 첫 수업을 만들어 보세요.</p>';
+    list.innerHTML=sessions.filter(s=>(s.name+' '+(s.school||'')).toLowerCase().includes(q)).sort((a,b)=>(b.lectureDate||'').localeCompare(a.lectureDate||'')||b.createdAt-a.createdAt).map(s=>`<article class="class-card"><span class="eyebrow">${escapeHtml(s.school||'학교 미입력')} · ${escapeHtml(s.lectureDate?.replaceAll('-','.')||'출강일 미입력')}</span><h2><a href="/studies/?admin=1&s=${s.id}">${escapeHtml(s.name)}</a></h2><p>${s.pageCount??0}개 페이지 · ${s.gridColumns||3}열 그리드</p><div class="class-card-actions"><div class="class-card-manage"><a class="button primary" href="/studies/?admin=1&s=${s.id}" aria-label="${escapeHtml(s.name)} 연수 수정">연수 수정</a><a class="button" href="/studies/?admin=1&p=page-4a2b86a58156&s=${s.id}">설문 관리</a></div><div class="class-card-footer"><a class="text-link" href="/studies/?s=${s.id}" target="_blank" rel="noopener">연수생 화면 열기 ↗</a><button class="text-button danger" data-delete-class="${s.id}" aria-label="${escapeHtml(s.name)} 연수 삭제">연수 삭제</button></div></div></article>`).join('')||'<p class="empty">수업이 없습니다. 필요한 학습 페이지를 골라 첫 수업을 만들어 보세요.</p>';
   }
   list.onclick=event=>{
     const button=event.target.closest('button[data-delete-class]');
@@ -182,15 +190,35 @@ async function classEditor() {
   const existing=sessionId?await api(`/api/sessions/${sessionId}`):null;
   let selected=existing?[...existing.pageIds]:[];
   let memberCodes=[...(existing?.memberCodes||[])];
-  adminShell(`<a class="back-link" href="/rice-basket/?admin=1&tab=classes">← 연수 출강 리스트</a><div class="view-heading"><div><h1>${existing?'연수 수정':'새 연수 만들기'}</h1><p>연수 이름·학교·출강일과 내용요소 구성을 수정하고 저장하세요.</p></div></div><div class="save-bar"><span id="save-status" role="status">${existing?'수정 후 변경 저장을 눌러 주세요.':'연수 이름·학교·출강일과 페이지를 선택하세요.'}</span><button id="save-class" class="button primary">${existing?'변경 저장':'연수 만들기'}</button></div><div class="class-settings"><label>연수 이름<input id="class-name" maxlength="100" value="${escapeHtml(existing?.name||'')}" placeholder="예: 잠원중학교 0331 연수"></label><label>학교<input id="class-school" maxlength="120" value="${escapeHtml(existing?.school||'')}" placeholder="예: 잠원중학교"></label><label>출강일<input id="class-date" type="date" value="${escapeHtml(existing?.lectureDate||'')}"></label><fieldset class="segmented"><legend>공유 화면의 열 수</legend>${[1,2,3,4].map(n=>`<button type="button" data-columns="${n}" aria-pressed="${n===(existing?.gridColumns||3)}">${n}열</button>`).join('')}<small>작은 화면에서는 자동으로 줄어듭니다.</small></fieldset><fieldset class="class-members"><legend>BOOONG 참가자</legend><div id="class-members" class="class-member-options" aria-live="polite"></div></fieldset></div><div class="compose-layout"><section class="page-picker"><h2>넣을 내용요소</h2><input id="pick-search" aria-label="페이지 검색" placeholder="페이지 검색"><div id="page-options"></div><button id="refresh-pages" class="text-button">페이지 목록 새로고침</button></section><section class="composition"><div class="section-heading"><h2>공유 화면 구성</h2><span id="selected-count"></span></div><p class="muted">화살표로 카드 순서를 바꿀 수 있습니다.</p><div id="selected-pages" class="page-grid"></div></section></div>`,'classes');
+  adminShell(`<div class="class-editor">
+    <a class="back-link" href="/studies/?admin=1&tab=classes">← 연수 출강 리스트</a>
+    <div class="view-heading class-editor-heading"><h1>${existing?'연수 수정':'새 연수 만들기'}</h1><div class="class-editor-save"><span id="save-status" role="status"></span><button id="save-class" class="button primary">${existing?'변경 저장':'연수 만들기'}</button></div></div>
+    <div class="class-settings" role="group" aria-label="연수 기본 정보">
+      <label>연수 이름<input id="class-name" maxlength="100" value="${escapeHtml(existing?.name||'')}" placeholder="예: 잠원중학교 0331 연수"></label>
+      <label>학교<input id="class-school" maxlength="120" value="${escapeHtml(existing?.school||'')}" placeholder="예: 잠원중학교"></label>
+      <label>출강일<input id="class-date" type="date" value="${escapeHtml(existing?.lectureDate||'')}"></label>
+      <fieldset class="segmented"><legend>목차 열 수</legend>${[1,2,3,4].map(n=>`<button type="button" data-columns="${n}" aria-pressed="${n===(existing?.gridColumns||3)}">${n}열</button>`).join('')}</fieldset>
+      <fieldset class="class-members"><legend>연수자</legend><div id="class-members" class="class-member-options" aria-live="polite"></div></fieldset>
+    </div>
+    <div class="compose-layout">
+      <section class="page-picker"><h2>내용요소 선택</h2><input id="pick-search" aria-label="내용요소 검색" placeholder="내용요소 검색"><div id="page-options"></div><button id="refresh-pages" class="text-button">목록 새로고침</button></section>
+      <section class="composition"><div class="section-heading"><h2>진행 순서</h2><span id="selected-count"></span></div><ol id="selected-pages" class="class-selected-list"></ol></section>
+    </div>
+    ${existing?sessionSharePanel(existing):''}
+  </div>`,'classes');
   let columns=existing?.gridColumns||3;
-  function drawOptions(){const q=document.querySelector('#pick-search').value.trim().toLowerCase();document.querySelector('#page-options').innerHTML=pages.filter(p=>(p.title+' '+(p.content||p.description||'')).toLowerCase().includes(q)).map(p=>`<label class="page-option"><input type="checkbox" value="${p.id}" ${selected.includes(p.id)?'checked':''}><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(experiences[p.experience]||'학습 페이지')}</small></span></label>`).join('');document.querySelectorAll('.page-option input').forEach(input=>input.onchange=()=>{if(input.checked){if(selected.length>=30){input.checked=false;return toast('한 수업에는 30개 페이지까지 넣을 수 있습니다.')}selected.push(input.value)}else selected=selected.filter(id=>id!==input.value);setDirty();drawSelected()});}
-  function drawSelected(){document.querySelector('#selected-count').textContent=`${selected.length}개 페이지`;const target=document.querySelector('#selected-pages');target.style.setProperty('--columns',columns);target.innerHTML=selected.map((id,i)=>{const p=pages.find(p=>p.id===id);return `<div class="selected-page">${pageCard(p,{sid:existing?.id||''})}<div class="card-order"><span>${i+1}번째</span><button data-up="${id}" ${i===0?'disabled':''} aria-label="${escapeHtml(p.title)} 앞으로">←</button><button data-down="${id}" ${i===selected.length-1?'disabled':''} aria-label="${escapeHtml(p.title)} 뒤로">→</button><button data-remove="${id}" aria-label="${escapeHtml(p.title)} 제외">제외</button></div></div>`}).join('')||'<div class="empty compose-empty">왼쪽에서 학습 페이지를 골라 주세요.<br>선택한 페이지가 이곳에 카드로 나타납니다.</div>';target.querySelectorAll('[data-up],[data-down],[data-remove]').forEach(b=>b.onclick=()=>{const id=b.dataset.up||b.dataset.down||b.dataset.remove;const i=selected.indexOf(id);if(b.dataset.remove)selected.splice(i,1);else{const j=i+(b.dataset.up?-1:1);[selected[i],selected[j]]=[selected[j],selected[i]]}setDirty();drawOptions();drawSelected()});}
+  function drawOptions(){const q=document.querySelector('#pick-search').value.trim().toLowerCase();document.querySelector('#page-options').innerHTML=pages.filter(p=>p.id!=='page-4a2b86a58156'&&(p.title+' '+(p.content||p.description||'')).toLowerCase().includes(q)).map(p=>`<label class="page-option"><input type="checkbox" value="${p.id}" ${selected.includes(p.id)?'checked':''}><span><strong>${escapeHtml(p.title)}</strong></span></label>`).join('');document.querySelectorAll('.page-option input').forEach(input=>input.onchange=()=>{if(input.checked){if(selected.length>=30){input.checked=false;return toast('한 수업에는 30개 페이지까지 넣을 수 있습니다.')}selected.push(input.value)}else selected=selected.filter(id=>id!==input.value);setDirty();drawSelected()});}
+  function drawSelected(){
+    document.querySelector('#selected-count').textContent=`${selected.length}개 선택`;
+    const target=document.querySelector('#selected-pages');
+    target.innerHTML=selected.map((id,i)=>{const p=pages.find(p=>p.id===id);return `<li class="class-selected-page"><span class="class-selected-number">${String(i+1).padStart(2,'0')}</span><a class="class-selected-title" href="${hrefPage(p.id,existing?.id||'')}">${escapeHtml(p.title)}</a><div class="card-order"><button type="button" data-up="${id}" ${i===0?'disabled':''} aria-label="${escapeHtml(p.title)} 위로">↑</button><button type="button" data-down="${id}" ${i===selected.length-1?'disabled':''} aria-label="${escapeHtml(p.title)} 아래로">↓</button><button type="button" data-remove="${id}" aria-label="${escapeHtml(p.title)} 제외">제외</button></div></li>`}).join('')||'<li class="empty compose-empty">내용요소를 선택하세요.</li>';
+    target.querySelectorAll('[data-up],[data-down],[data-remove]').forEach(b=>b.onclick=()=>{const id=b.dataset.up||b.dataset.down||b.dataset.remove;const i=selected.indexOf(id);if(b.dataset.remove)selected.splice(i,1);else{const j=i+(b.dataset.up?-1:1);[selected[i],selected[j]]=[selected[j],selected[i]]}setDirty();drawOptions();drawSelected()});
+  }
   document.querySelectorAll('#class-name,#class-school,#class-date').forEach(input=>input.oninput=setDirty);
   document.querySelector('#pick-search').oninput=drawOptions;
   document.querySelector('#refresh-pages').onclick=async()=>{try{pages=(await api('/api/pages')).pages;drawOptions();drawSelected();toast('페이지 목록을 새로 불러왔습니다.')}catch(e){toast(e.message)}};
   document.querySelectorAll('[data-columns]').forEach(b=>b.onclick=()=>{columns=Number(b.dataset.columns);document.querySelectorAll('[data-columns]').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));setDirty();drawSelected()});
-  document.querySelector('#save-class').onclick=async()=>{const name=document.querySelector('#class-name').value.trim(),school=document.querySelector('#class-school').value.trim(),lectureDate=document.querySelector('#class-date').value;if(!name)return toast('수업 이름을 입력해 주세요.');if(!school)return toast('학교 이름을 입력해 주세요.');if(!lectureDate)return toast('출강일을 선택해 주세요.');if(!selected.length)return toast('페이지를 하나 이상 선택해 주세요.');const button=document.querySelector('#save-class'),rev=revision;button.disabled=true;try{const result=await api(existing?`/api/sessions/${sessionId}`:'/api/sessions',existing?'PATCH':'POST',{name,school,lectureDate,memberCodes:[...memberCodes],pageIds:[...selected],gridColumns:columns});if(rev===revision)dirty=false;if(!existing){location.href=`/rice-basket/?admin=1&s=${result.id}`;return}document.querySelector('.view-heading h1').textContent='연수 수정';document.querySelector('#save-status').textContent=dirty?'추가 변경 내용을 저장해 주세요.':'저장 완료 · 공유 화면에 반영되었습니다.';toast('연수 변경 내용을 저장했습니다.');}catch(e){toast(e.message)}finally{button.disabled=false}};
+  document.querySelector('#save-class').onclick=async()=>{const name=document.querySelector('#class-name').value.trim(),school=document.querySelector('#class-school').value.trim(),lectureDate=document.querySelector('#class-date').value;if(!name)return toast('수업 이름을 입력해 주세요.');if(!school)return toast('학교 이름을 입력해 주세요.');if(!lectureDate)return toast('출강일을 선택해 주세요.');if(!selected.length)return toast('페이지를 하나 이상 선택해 주세요.');const button=document.querySelector('#save-class'),rev=revision;button.disabled=true;try{const result=await api(existing?`/api/sessions/${sessionId}`:'/api/sessions',existing?'PATCH':'POST',{name,school,lectureDate,memberCodes:[...memberCodes],pageIds:[...selected],gridColumns:columns});if(rev===revision)dirty=false;if(!existing){location.href=`/studies/?admin=1&s=${result.id}`;return}document.querySelector('.view-heading h1').textContent='연수 수정';document.querySelector('#save-status').textContent=dirty?'추가 변경 내용을 저장해 주세요.':'저장 완료 · 공유 화면에 반영되었습니다.';toast('연수 변경 내용을 저장했습니다.');}catch(e){toast(e.message)}finally{button.disabled=false}};
   const memberOptions=document.querySelector('#class-members');
   async function loadParticipantOptions(){
     const account=adminAccountId();
@@ -210,6 +238,7 @@ async function classEditor() {
   }
   loadParticipantOptions();
   drawOptions();drawSelected();
+  if(existing)bindSessionSharing();
 }
 function responseRows(s){return s.people.length?s.people.map(p=>`<article class="response-row"><strong>${escapeHtml(p.name)}${s.resultsVisible?` <span>${s.counts[p.id]||0}표</span>`:''}</strong><div><small>첫 아이디어</small><p>${escapeHtml(p.initial||'아직 제출하지 않음')}</p></div><div><small>재설계</small><p>${escapeHtml(p.redesign||'아직 제출하지 않음')}</p></div></article>`).join(''):'<p class="empty">아직 제출된 응답이 없습니다.</p>'}
 function learningNavigation(session) {
@@ -219,42 +248,49 @@ function learningNavigation(session) {
     : `<span class="learning-page-step" aria-disabled="true">${label}</span>`;
   return `<footer class="learning-pagination"><nav aria-label="연수 주제 이동">${adjacent(session.pages[index - 1], '← 이전')}<ol class="learning-page-numbers">${session.pages.map((page, i) => `<li><a href="${hrefPage(page.id, session.id)}" ${i === index ? 'aria-current="page"' : ''} aria-label="${i + 1}. ${escapeHtml(page.title)}" title="${escapeHtml(page.title)}">${i + 1}</a></li>`).join('')}</ol>${adjacent(session.pages[index + 1], '다음 →')}</nav></footer>`;
 }
-function publicHeader(back,label,title='BOOONG의 쌀바구니'){return `<header class="public-header"><a class="wordmark" href="${escapeHtml(back)}">${escapeHtml(title)}</a><a class="learning-return" href="${escapeHtml(back)}"><span aria-hidden="true">←</span>${escapeHtml(label)}</a></header>`;}
-async function sharedGrid(){
-  const s=await api(`/api/sessions/${sessionId}`);
-  const canEdit=operatorMode;
-  const agendaPages=[...s.pages];
-  if(s.surveyPageId&&!agendaPages.some(page=>page.id===s.surveyPageId))agendaPages.push({id:s.surveyPageId,title:'설문'});
-  app.className='shared-app';document.title=s.name;
-  app.innerHTML=`<main class="shared-main"><div class="shared-welcome"><div class="shared-intro"><span class="eyebrow">이번 연수</span><h1>${escapeHtml(s.name)}</h1><p>목차에서 주제를 선택해 함께 살펴보고 실습해 보세요.</p></div><aside class="join-qr"><div class="join-qr-body"><button id="expand-class-qr" class="qr-expand" type="button" aria-label="참가자 접속 QR코드 확대" aria-haspopup="dialog" aria-controls="class-qr-dialog" title="QR코드 확대" disabled><img id="class-qr" width="120" height="120" alt="이 수업 접속 링크 QR코드"></button><div><h2>참가자 접속</h2><p>QR코드를 스캔해<br>접속하세요.</p></div></div>${canEdit?`<details class="short-link-settings"><summary>단축 링크 설정</summary><form id="short-link-form"><div class="short-link-heading"><label for="short-link">직접 등록한 단축 링크</label><a class="external-link" href="https://xn--0p4b.xn--3e0b707e/" target="_blank" rel="noopener noreferrer">숏.한국 바로가기 ↗</a></div><div><input id="short-link" type="url" maxlength="1000" placeholder="https://숏.한국/…" value="${escapeHtml(s.shortUrl||'')}"><button class="button" type="submit">저장</button></div><small>등록한 주소를 붙여 넣으세요. 비워서 저장하면 수업 원래 주소로 돌아갑니다.</small><p id="short-link-status" role="status"></p></form></details>`:''}</aside></div><nav class="lecture-agenda" aria-labelledby="agenda-title"><div class="agenda-heading"><h2 id="agenda-title">이번 강연의 목차</h2><p>주제를 누르면 설명과 실습 페이지가 열립니다.</p></div><ol class="page-grid shared-grid agenda-grid" style="--columns:${s.gridColumns||3}">${agendaPages.map((p,i)=>`<li><a class="agenda-item" href="${hrefPage(p.id,s.id)}"><span class="agenda-number">${String(i+1).padStart(2,'0')}</span><div class="agenda-copy"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml((p.id==='page-20eeb5cdab19'?parseResourceLinks(p.content).intro:p.content||p.description||'').slice(0,160))}</p></div><span class="agenda-open">${p.id===s.surveyPageId?'설문 열기':'주제 열기'} <span aria-hidden="true">→</span></span></a></li>`).join('')}</ol></nav></main><dialog id="class-qr-dialog" class="confirm-dialog qr-dialog" aria-labelledby="class-qr-heading"><div class="qr-dialog-heading"><h2 id="class-qr-heading">${escapeHtml(s.name)}</h2><button id="close-class-qr" class="button" type="button" autofocus>닫기</button></div><img id="class-qr-large" alt="참가자 접속 QR코드"></dialog>`;
+function publicHeader(back,label,title='BOOONG의 쌀바구니',date=''){return `<header class="public-header"><a class="wordmark" href="${escapeHtml(back)}">${escapeHtml(title)}${date?`<time datetime="${escapeHtml(date)}">${escapeHtml(date.replaceAll('-','.'))}</time>`:''}</a><a class="learning-return" href="${escapeHtml(back)}"><span aria-hidden="true">←</span>${escapeHtml(label)}</a></header>`;}
+function sessionQrCard(s, canEdit=false){return `<aside class="join-qr"><div class="join-qr-body"><button id="expand-class-qr" class="qr-expand" type="button" aria-label="참가자 접속 QR코드 확대" aria-haspopup="dialog" aria-controls="class-qr-dialog" title="QR코드 확대" disabled><img id="class-qr" width="120" height="120" alt="이 수업 접속 링크 QR코드"></button><div><h2>참가자 접속</h2><p>QR코드를 스캔해<br>접속하세요.</p></div></div>${canEdit?`<section class="short-link-settings"><h3>단축 링크 설정</h3><form id="short-link-form"><div class="short-link-heading"><label for="short-link">직접 등록한 단축 링크</label><a class="external-link" href="https://xn--0p4b.xn--3e0b707e/" target="_blank" rel="noopener noreferrer">숏.한국 바로가기 ↗</a></div><div><input id="short-link" type="url" maxlength="1000" placeholder="https://숏.한국/…" value="${escapeHtml(s.shortUrl||'')}"><button class="button" type="submit">저장</button></div><small>등록한 주소를 붙여 넣으세요. 비워서 저장하면 수업 원래 주소로 돌아갑니다.</small><p id="short-link-status" role="status"></p></form></section>`:''}</aside><dialog id="class-qr-dialog" class="confirm-dialog qr-dialog" aria-labelledby="class-qr-heading"><div class="qr-dialog-heading"><h2 id="class-qr-heading">${escapeHtml(s.name)}</h2><button id="close-class-qr" class="button" type="button" autofocus>닫기</button></div><img id="class-qr-large" alt="참가자 접속 QR코드"></dialog>`;}
+function bindSessionQr(){
   const qr=document.querySelector('#class-qr'),qrLarge=document.querySelector('#class-qr-large'),qrDialog=document.querySelector('#class-qr-dialog'),expandQr=document.querySelector('#expand-class-qr');
   expandQr.onclick=()=>qrDialog.showModal();
   document.querySelector('#close-class-qr').onclick=()=>qrDialog.close();
   const refreshQr=async()=>{const response=await (operatorMode ? operatorFetch : publicFetch)(`/api/sessions/${sessionId}/qr`);if(!response.ok)throw new Error('QR코드를 불러오지 못했습니다.');const previous=qr.src;qr.src=URL.createObjectURL(await response.blob());qrLarge.src=qr.src;expandQr.disabled=false;if(previous?.startsWith('blob:'))URL.revokeObjectURL(previous);};
   refreshQr().catch(error=>{qr.alt=error.message;});
   const form=document.querySelector('#short-link-form');if(form)form.onsubmit=async e=>{e.preventDefault();const button=form.querySelector('button'),status=document.querySelector('#short-link-status');button.disabled=true;status.textContent='저장 중…';try{await api(`/api/sessions/${sessionId}`,'PATCH',{shortUrl:document.querySelector('#short-link').value});await refreshQr();status.textContent='저장했습니다. QR코드에 반영되었습니다.';}catch(error){status.textContent=error.message;}finally{button.disabled=false}};
-  if(s.surveyPageId){
-    const results=document.createElement('section');results.className='shared-surveys survey-host';results.hidden=true;
-    document.querySelector('.shared-main').append(results);
-    const {mountSharedSurveyResults}=await import('./survey.js');
-    await mountSharedSurveyResults(results,s.id,api);
-  }
+}
+function sessionSharePanel(s){return `<section class="session-share-management" aria-labelledby="session-share-title"><div><h2 id="session-share-title">참가자 접속 링크</h2><label class="session-share-field">공유 주소<input id="session-share-url" readonly value="${escapeHtml(location.origin+sharedSessionUrl(s.id))}"></label><button id="copy-session-link" class="button" type="button">공유 링크 복사</button><p id="session-share-status" role="status"></p></div>${sessionQrCard(s,true)}</section>`;}
+function bindSessionSharing(){
+  bindSessionQr();
+  document.querySelector('#copy-session-link').onclick=async()=>{
+    const input=document.querySelector('#session-share-url'),status=document.querySelector('#session-share-status');
+    try{await navigator.clipboard.writeText(input.value);status.textContent='참가자 공유 링크를 복사했습니다.';}
+    catch{input.focus();input.select();status.textContent='선택된 주소를 복사해 주세요.';}
+  };
+}
+async function sharedGrid(){
+  const s=await api(`/api/sessions/${sessionId}`);
+  app.className='shared-app';document.title=s.name;
+  app.innerHTML=`<main class="shared-main"><div class="shared-welcome"><div class="shared-intro"><span class="eyebrow">이번 연수</span><h1>${escapeHtml(s.name)}</h1><p>목차에서 주제를 선택해 함께 살펴보고 실습해 보세요.</p>${s.surveyPageId?`<a class="button shared-survey-results-link" href="${hrefPage(s.surveyPageId,s.id)}&view=results">설문 결과 보기</a>`:''}</div>${sessionQrCard(s)}</div><nav class="lecture-agenda" aria-labelledby="agenda-title"><div class="agenda-heading"><h2 id="agenda-title">이번 강연의 목차</h2><p>주제를 누르면 설명과 실습 페이지가 열립니다.</p></div><ol class="page-grid shared-grid agenda-grid" style="--columns:${s.gridColumns||3}">${s.pages.map((p,i)=>`<li><a class="agenda-item" href="${hrefPage(p.id,s.id)}"><span class="agenda-number">${String(i+1).padStart(2,'0')}</span><div class="agenda-copy"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml((p.id==='page-20eeb5cdab19'?parseResourceLinks(p.content).intro:p.content||p.description||'').slice(0,160))}</p></div><span class="agenda-open">${p.id===s.surveyPageId?'설문 열기':'주제 열기'} <span aria-hidden="true">→</span></span></a></li>`).join('')}</ol></nav></main>`;
+  bindSessionQr();
+
 }
 function localActivity(target,field,page){const key=`page-practice:${page.id}:${field}`;let value='';try{value=localStorage.getItem(key)||''}catch{}target.innerHTML=`<div class="participation"><p class="activity-note">개별 체험 · 내용은 이 브라우저에만 저장됩니다.</p><form><label>나의 생각<textarea name="answer" maxlength="500" required>${escapeHtml(value)}</textarea></label><button class="button primary">이 브라우저에 저장</button><span role="status"></span></form></div>`;target.querySelector('form').onsubmit=e=>{e.preventDefault();try{localStorage.setItem(key,e.target.elements.answer.value);target.querySelector('[role=status]').textContent='저장했습니다.'}catch{target.querySelector('[role=status]').textContent='브라우저에서 저장을 허용하지 않습니다.'}};}
 function ideaBoard(page){
   const feedback=page.id==='page-b6afb8c12a41';
-  if(page.id!==ideaBoardPageId&&!feedback)return;
+  const webApps=page.id===WEB_APPS_PAGE_ID;
+  if(page.id!==ideaBoardPageId&&!feedback&&!webApps)return;
   const root=app.querySelector('.learning-page');
   root.classList.add('lp-board-page');
   if(feedback)root.classList.add('lp-feedback-page');
-  const heading=feedback?'이 화면에서 불편한 점은?':'우리의 수업 아이디어';
-  const label=feedback?'불편한 점과 바꾸고 싶은 점':'만들고 싶은 수업 개요';
-  const placeholder=feedback?'어떤 버튼이 헷갈렸나요? 무엇을 먼저 보여주면 좋을까요?':'학생이 무엇을 하고, 화면은 어떻게 반응하면 좋을까요?';
-  const anchor=feedback?root.querySelector('.lp-page-intro'):root;
-  const position=feedback?'afterend':'beforeend';
+  const heading=webApps?'웹앱 형태의 수업자료에는 어떤 매력이 있나요?':feedback?'이 화면에서 불편한 점은?':'우리의 수업 아이디어';
+  const label=webApps?'내가 발견한 웹앱 수업자료의 매력':feedback?'불편한 점과 바꾸고 싶은 점':'만들고 싶은 수업 개요';
+  const placeholder=webApps?'눈길을 끈 웹앱과 그 이유를 떠올리며, 나만의 표현으로 적어 주세요.':feedback?'어떤 버튼이 헷갈렸나요? 무엇을 먼저 보여주면 좋을까요?':'학생이 무엇을 하고, 화면은 어떻게 반응하면 좋을까요?';
+  const steps=webApps?'<ol class="wa-reflection-steps"><li>아래 웹앱들을 열어 직접 살펴보세요.</li><li>수업자료로서 느낀 매력을 나만의 표현으로 정리하세요.</li><li>포스트잇에 적어 붙여 주세요.</li></ol>':'';
+  const anchor=feedback||webApps?root.querySelector('.lp-page-intro'):root;
+  const position=feedback||webApps?'afterend':'beforeend';
   const addCard='<button id="lp-note-add" class="lp-note-add-button" type="button" aria-label="포스트잇 추가"><span aria-hidden="true">＋</span><span>포스트잇 추가</span></button>';
   if(!sessionId){
-    anchor.insertAdjacentHTML(position,`<section class="lp-board"><div class="lp-board-heading"><h2>${heading}</h2></div><div class="lp-note-entry">${addCard}<div id="lp-note-sessions" hidden><p>포스트잇을 붙일 연수</p><div class="lp-note-session-links"></div><p role="status"></p></div></div></section>`);
+    anchor.insertAdjacentHTML(position,`<section class="lp-board"><div class="lp-board-heading"><h2>${heading}</h2></div>${steps}<div class="lp-note-entry">${addCard}<div id="lp-note-sessions" hidden><p>포스트잇을 붙일 연수</p><div class="lp-note-session-links"></div><p role="status"></p></div></div></section>`);
     const add=root.querySelector('#lp-note-add'),picker=root.querySelector('#lp-note-sessions');
     add.onclick=async()=>{
       picker.hidden=false;add.disabled=true;
@@ -266,7 +302,7 @@ function ideaBoard(page){
         const links=picker.querySelector('.lp-note-session-links');links.replaceChildren();
         for(const session of matching){
           const link=document.createElement('a');link.className='button';
-          link.href=`${hrefPage(page.id,session.id)}&note=1`;
+          link.href=`/studies/?p=${encodeURIComponent(page.id)}&s=${encodeURIComponent(session.id)}&note=1`;link.target='_blank';link.rel='noopener noreferrer';
           link.textContent=[session.name,session.school,session.lectureDate].filter(Boolean).join(' · ');
           links.append(link);
         }
@@ -277,17 +313,21 @@ function ideaBoard(page){
     return;
   }
   const notesUrl=`/api/sessions/${sessionId}/pages/${page.id}/notes`;
-  anchor.insertAdjacentHTML(position,`<section class="lp-board" aria-labelledby="lp-board-title"><div class="lp-board-heading"><div><h2 id="lp-board-title">${heading}</h2></div><span id="lp-note-count" aria-live="polite">0개의 포스트잇</span></div><ul id="lp-notes" class="lp-notes lp-notes-compose" aria-label="${heading}"><li class="lp-note-add">${addCard}</li><li class="lp-note-draft" hidden><form id="lp-note-form"><label>이름 또는 별명<input name="name" maxlength="30" placeholder="예: 김교사" required></label><label>${label}<textarea name="text" maxlength="500" rows="4" placeholder="${placeholder}" required></textarea></label><small>${operatorMode?'운영자만 확인할 수 있습니다.':'작성한 내용은 운영자에게만 전달됩니다.'}</small><div class="lp-board-actions"><button type="submit">붙이기</button><button id="lp-note-cancel" type="button">취소</button></div></form></li></ul><p id="lp-note-status" role="status"></p></section>`);
+  anchor.insertAdjacentHTML(position,`<section class="lp-board" aria-labelledby="lp-board-title"><div class="lp-board-heading"><div><h2 id="lp-board-title">${heading}</h2></div><span id="lp-note-count" aria-live="polite">0개의 포스트잇</span></div>${steps}<ul id="lp-notes" class="lp-notes lp-notes-compose" aria-label="${heading}"><li class="lp-note-add">${addCard}</li><li class="lp-note-draft" hidden><form id="lp-note-form"><label>이름 또는 별명<input name="name" maxlength="30" placeholder="예: 김교사" required></label><label>${label}<textarea name="text" maxlength="500" rows="4" placeholder="${placeholder}" required></textarea></label><small>${webApps?'이름과 내용이 이 연수의 공유 화면에 표시됩니다.':operatorMode?'운영자만 확인할 수 있습니다.':'작성한 내용은 운영자에게만 전달됩니다.'}</small><div class="lp-board-actions"><button type="submit">붙이기</button><button id="lp-note-cancel" type="button">취소</button></div></form></li></ul><p id="lp-note-status" role="status"></p></section>`);
   const form=root.querySelector('#lp-note-form'),list=root.querySelector('#lp-notes'),status=root.querySelector('#lp-note-status'),count=root.querySelector('#lp-note-count');
   const add=root.querySelector('#lp-note-add'),addItem=add.closest('li'),draft=root.querySelector('.lp-note-draft'),cancel=root.querySelector('#lp-note-cancel');
   add.setAttribute('aria-expanded','false');add.setAttribute('aria-controls','lp-note-form');
   add.onclick=()=>{draft.hidden=false;add.setAttribute('aria-expanded','true');form.elements.name.focus();};
   const closeDraft=()=>{draft.hidden=true;form.elements.text.value='';add.setAttribute('aria-expanded','false');add.focus();};
   cancel.onclick=closeDraft;
-  if(params.get('note')==='1')add.click();
+  addItem.hidden=operatorMode;
+  if(params.get('note')==='1'&&!operatorMode)add.click();
   const cards=new Map();
-  let refreshing;
-  const refresh=()=>refreshing ||= api(notesUrl).then(({notes})=>{
+  let refreshing,liveKey;
+  const refresh=()=>refreshing ||= api(notesUrl).then(data=>{
+    if(root.isConnected===false)return;
+    const key=JSON.stringify(data);if(key===liveKey)return;liveKey=key;
+    const {notes,recordsVisible=true}=data;
     if([...cards.keys()].some((id,index)=>notes[index]?.id!==id)){cards.clear();list.replaceChildren(addItem,draft);}
     for(const note of notes){
       let card=cards.get(note.id);
@@ -297,7 +337,7 @@ function ideaBoard(page){
         author.textContent=note.name;text.textContent=note.text;
         replies.className='lp-note-replies';
         replies.innerHTML='<summary>댓글 0개 · 쓰기</summary><ul class="lp-comment-list"></ul><form class="lp-comment-form"><label>이름 또는 별명<input name="name" maxlength="30" required></label><label>댓글<textarea name="text" maxlength="500" rows="2" required></textarea></label><button type="submit">댓글 남기기</button><p class="lp-comment-status" role="status"></p></form>';
-        const replyForm=replies.querySelector('form'),replyStatus=replies.querySelector('[role=status]');
+        const replyForm=replies.querySelector('form'),replyStatus=replies.querySelector('[role=status]');replyForm.hidden=operatorMode;
         replies.querySelector('summary').onclick=event=>{event.preventDefault();replies.open=!replies.open};
         replies.addEventListener('toggle',()=>{if(replies.open&&!replyForm.elements.name.value)replyForm.elements.name.value=form.elements.name.value});
         replyForm.onsubmit=async event=>{
@@ -315,11 +355,11 @@ function ideaBoard(page){
         const row=document.createElement('li'),author=document.createElement('b'),text=document.createElement('p');
         author.textContent=comment.name;text.textContent=comment.text;row.append(author,text);commentList.append(row);
       }
-      card.querySelector('summary').textContent=`댓글 ${comments.length}개 · 쓰기`;
+      card.querySelector('summary').textContent=`댓글 ${comments.length}개${operatorMode?'':' · 쓰기'}`;
     }
-    count.textContent=operatorMode?`${notes.length}개의 포스트잇`:'';
-    status.textContent=operatorMode?'':'다른 참가자의 기록은 운영자만 확인할 수 있습니다.';
-  }).catch(error=>{status.textContent=`${error.message} 잠시 후 다시 시도합니다.`}).finally(()=>{refreshing=null});
+    count.textContent=recordsVisible?`${notes.length}개의 포스트잇`:'';
+    status.textContent=recordsVisible?'':'다른 참가자의 기록은 운영자만 확인할 수 있습니다.';
+  }).catch(error=>{liveKey=null;status.textContent=`${error.message} 잠시 후 다시 시도합니다.`}).finally(()=>{refreshing=null});
   form.onsubmit=async event=>{
     event.preventDefault();
     const button=form.querySelector('[type=submit]');button.disabled=cancel.disabled=true;status.textContent='붙이는 중…';
@@ -328,7 +368,10 @@ function ideaBoard(page){
     finally{button.disabled=cancel.disabled=false}
   };
   refresh();
-  setInterval(refresh,3000);
+  const timer=setInterval(()=>{
+    if(root.isConnected===false)return clearInterval(timer);
+    if(!document.hidden)return refresh();
+  },3000);
 }
 async function resourceEditor(page){
   if(page.id!=='page-20eeb5cdab19')return;
@@ -394,16 +437,65 @@ async function resourceEditor(page){
   };
   mount();
 }
-async function learningView(){let page;if(sessionId){currentSession=await api(`/api/sessions/${sessionId}`);page=currentSession.pages.find(p=>p.id===pageId);if(!page&&currentSession.surveyPageId===pageId)page=await api(`/api/pages/${pageId}?session=${encodeURIComponent(sessionId)}`);if(!page)throw new Error('이 수업에 포함되지 않은 학습 페이지입니다.');token=localStorage.getItem(`workshop:${sessionId}`);if(token){person=(await api(`/api/sessions/${sessionId}/me`,'POST',{token})).person;if(!person){token=null;localStorage.removeItem(`workshop:${sessionId}`)}}}else page=await api(`/api/pages/${pageId}`);
-  app.className='learning-app';document.title=page.title;app.innerHTML=`${publicHeader(sessionId?`/rice-basket/?s=${encodeURIComponent(sessionId)}${operatorMode?'&manage=1':''}`:'/rice-basket/?admin=1',sessionId?'강연 목차':'전체 페이지',sessionId?currentSession.name:undefined)}<div id="learning-content"></div>`;renderLearningPage(document.querySelector('#learning-content'),page,{resourceCardsOnly:!!sessionId});ideaBoard(page);if(!sessionId)resourceEditor(page);
-  if(sessionId&&currentSession.pageIds.includes(pageId)){app.classList.add('has-learning-pagination');app.insertAdjacentHTML('beforeend',learningNavigation(currentSession));}
-  if(page.id==='page-4a2b86a58156'){const {mountSurvey}=await import('./survey.js');return mountSurvey(app.querySelector('.learning-page'),sessionId,api,currentSession?.name);}
-  if(page.id===WEB_APPS_PAGE_ID){const {mountWebApps}=await import('./web-apps.js');return mountWebApps(app.querySelector('.learning-page'),page,{api,fetchQr:operatorMode?operatorFetch:publicFetch,sessionId,canEdit:operatorMode});}
+async function learningView(){let page;if(sessionId){currentSession=await api(`/api/sessions/${sessionId}`);page=currentSession.pages.find(p=>p.id===pageId);if(!page&&currentSession.surveyPageId===pageId)page=await api(`/api/pages/${pageId}?session=${encodeURIComponent(sessionId)}`);if(!page)throw new Error('이 수업에 포함되지 않은 학습 페이지입니다.');if(!operatorMode){token=localStorage.getItem(`workshop:${sessionId}`);if(token){person=(await api(`/api/sessions/${sessionId}/me`,'POST',{token})).person;if(!person){token=null;localStorage.removeItem(`workshop:${sessionId}`)}}}}else page=await api(`/api/pages/${pageId}`);
+  document.title=operatorMode?`${page.title} · 관리`:page.title;
+  if(operatorMode){
+    adminShell(`${page.id==='page-4a2b86a58156'?'':sessionId?sessionAdminLinks(sessionId):'<a class="back-link" href="/studies/?admin=1">← 내용요소</a>'}<div id="learning-content"></div>`,page.id==='page-4a2b86a58156'?'surveys':sessionId?'classes':'pages');
+    app.classList.add('learning-app');
+  }else{
+    app.className='learning-app';app.innerHTML=`${publicHeader(sharedSessionUrl(sessionId),'강연 목차',sessionId?currentSession.name:undefined,sessionId?currentSession.lectureDate:'')}<div id="learning-content"></div>`;
+  }
+  renderLearningPage(document.querySelector('#learning-content'),page,{resourceCardsOnly:!!sessionId});ideaBoard(page);if(!sessionId)resourceEditor(page);
+  if(!operatorMode&&sessionId&&currentSession.pageIds.includes(pageId)){app.classList.add('has-learning-pagination');app.insertAdjacentHTML('beforeend',learningNavigation(currentSession));}
+  if(page.id==='page-4a2b86a58156'){const {mountSurvey}=await import('./survey.js');return mountSurvey(app.querySelector('.learning-page'),sessionId,api,currentSession);}
+  if(page.id===WEB_APPS_PAGE_ID){
+    const {mountWebApps}=await import('./web-apps.js');
+    const root=app.querySelector('.learning-page'),account=adminAccountId();
+    let lessons=[],catalogError='';
+    if(operatorMode||page.webApps?.some(entry=>entry.lessonId)){
+      try{const {loadWebAppLessons}=await import('./web-app-lessons.js');lessons=await loadWebAppLessons();}catch(error){catalogError=error.message;}
+    }
+    if(!root.isConnected||(operatorMode&&account!==adminAccountId()))return;
+    return mountWebApps(root,page,{api,fetchQr:operatorMode?operatorFetch:publicFetch,sessionId,canEdit:operatorMode,lessons,catalogError});
+  }
   const targets=[...document.querySelectorAll('[data-session-activity]')];
   function drawParticipation(){for(const target of targets){const kind=target.dataset.sessionActivity;if(currentSession?.recordsVisible===false&&['compare','vote'].includes(kind)){target.innerHTML='<p class="empty">참가자별 응답은 운영자만 확인할 수 있습니다.</p>';continue}if(!sessionId){if(['initial','redesign'].includes(kind))localActivity(target,kind,page);else target.innerHTML='<p class="empty">여러 사람의 응답 비교와 투표는 수업 공유 링크에서 참여할 수 있습니다.</p>';continue}if(['initial','redesign'].includes(kind)){if(!person){target.innerHTML=`<div class="participation"><form class="join-form"><label>이름 또는 별명<input name="name" maxlength="30" required placeholder="예: 김교사"></label><button class="button primary">이름으로 참여하기</button><p class="help">이 수업 안에서 첫 아이디어와 재설계를 연결합니다.</p></form></div>`;target.querySelector('form').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;try{const result=await api(`/api/sessions/${sessionId}/join`,'POST',{name:e.target.elements.name.value});token=result.token;person=result.person;localStorage.setItem(`workshop:${sessionId}`,token);drawParticipation()}catch(err){toast(err.message);b.disabled=false}}}else{target.innerHTML=`<div class="participation"><p class="activity-note">${escapeHtml(person.name)}님의 ${kind==='initial'?'첫 아이디어':'재설계'}</p>${kind==='redesign'?`<aside class="before-idea"><small>처음 생각</small><p>${escapeHtml(person.initial||'아직 첫 아이디어를 제출하지 않았습니다.')}</p></aside>`:''}<form class="answer-form"><label>${kind==='initial'?'어떤 수업자료를 만들고 싶나요?':'학생의 행동과 화면의 반응을 어떻게 바꿀까요?'}<textarea name="answer" maxlength="500" required>${escapeHtml(person[kind]||'')}</textarea></label><div class="actions"><button class="button primary">${person[kind]?'답변 수정':'답변 제출'}</button><small>500자 이내 · 운영자에게만 전달됩니다.</small></div></form></div>`;target.querySelector('form').onsubmit=async e=>{e.preventDefault();const text=e.target.elements.answer.value,b=e.target.querySelector('button');b.disabled=true;try{await api(`/api/sessions/${sessionId}/answer`,'POST',{token,field:kind,text,pageId:page.id});person[kind]=text;currentSession=await api(`/api/sessions/${sessionId}`);drawParticipation();toast('답변을 저장했습니다.')}catch(err){toast(err.message);b.disabled=false}}}}else if(kind==='compare')target.innerHTML=`<div class="participation">${responseRows(currentSession)}</div>`;else if(kind==='vote'){const candidates=currentSession.people.filter(p=>p.redesign);target.innerHTML=`<div class="participation"><p class="activity-note">${currentSession.votingOpen?'투표를 받고 있습니다.':'진행자가 투표를 열면 참여할 수 있습니다.'} · 한 사람당 한 표, 자기 아이디어도 선택 가능</p>${!person?'<p>위의 입력 활동에서 이름으로 참여한 뒤 투표해 주세요.</p>':''}<div class="vote-candidates">${candidates.map(p=>`<article><strong>${escapeHtml(p.name)}</strong><p>${escapeHtml(p.redesign)}</p>${currentSession.resultsVisible?`<b>${currentSession.counts[p.id]||0}표</b>`:''}${person?.vote===p.id?'<span class="chosen-vote">내가 선택한 아이디어</span>':''}${person&&!person.vote&&currentSession.votingOpen?`<button class="button" data-vote="${p.id}">이 아이디어에 한 표</button>`:''}</article>`).join('')||'<p class="empty">아직 제출된 재설계안이 없습니다.</p>'}</div></div>`;target.querySelectorAll('[data-vote]').forEach(b=>b.onclick=async()=>{target.querySelectorAll('[data-vote]').forEach(x=>x.disabled=true);try{await api(`/api/sessions/${sessionId}/vote`,'POST',{token,targetId:b.dataset.vote,pageId:page.id});person.vote=b.dataset.vote;currentSession=await api(`/api/sessions/${sessionId}`);drawParticipation();toast('한 표를 보냈습니다.')}catch(e){toast(e.message);drawParticipation()}});}}}
-  drawParticipation();if(sessionId){let liveKey=JSON.stringify([currentSession.people,currentSession.counts,currentSession.votingOpen,currentSession.resultsVisible,currentSession.generation]);pollTimer=setInterval(async()=>{try{const next=await api(`/api/sessions/${sessionId}`);const key=JSON.stringify([next.people,next.counts,next.votingOpen,next.resultsVisible,next.generation]);if(key===liveKey)return;const active=document.activeElement;if(targets.some(t=>t.contains(active))&&['TEXTAREA','INPUT'].includes(active.tagName))return;if(next.generation!==currentSession.generation){person=null;token=null;localStorage.removeItem(`workshop:${sessionId}`)}currentSession=next;liveKey=key;drawParticipation()}catch{}},3000);}
+  if(operatorMode&&sessionId){
+    for(const target of targets)target.hidden=true;
+    return;
+  }
+  drawParticipation();
+  if(sessionId&&targets.length){
+    let liveKey=JSON.stringify([currentSession.people,currentSession.counts,currentSession.votingOpen,currentSession.resultsVisible,currentSession.generation]),refreshing=false;
+    pollTimer=setInterval(async()=>{
+      if(targets.every(target=>target.isConnected===false))return clearInterval(pollTimer);
+      if(document.hidden||refreshing)return;
+      refreshing=true;
+      try{
+        const next=await api(`/api/sessions/${sessionId}`);
+        if(targets.every(target=>target.isConnected===false))return;
+        const key=JSON.stringify([next.people,next.counts,next.votingOpen,next.resultsVisible,next.generation]);if(key===liveKey)return;
+        const active=document.activeElement;if(targets.some(t=>t.contains(active))&&['TEXTAREA','INPUT'].includes(active.tagName))return;
+        if(next.generation!==currentSession.generation){person=null;token=null;localStorage.removeItem(`workshop:${sessionId}`)}
+        currentSession=next;liveKey=key;drawParticipation();
+      }catch{}finally{refreshing=false}
+    },3000);
+  }
 }
-async function start(generation=authGeneration){try{if((operatorMode&&!await requireAdmin(app))||generation!==authGeneration)return;if(admin){let status;try{status=await api('/api/admin')}catch(error){return errorView(error)}pages=status.pages;sessions=status.sessions;if(sessionId||params.has('new'))return await classEditor();return params.get('tab')==='classes'?classLibrary():pageLibrary()}if(pageId)return await learningView();if(sessionId)return await sharedGrid();location.replace('/rice-basket/?admin=1');}catch(e){if(generation===authGeneration)errorView(e)}}
+async function start(generation=authGeneration){
+  try{
+    if((operatorMode&&!await requireAdmin(app))||generation!==authGeneration)return;
+    if(pageId)return await learningView();
+    if(operatorMode&&sessionId&&(!admin||params.get('tab')==='responses'))return location.replace(`/studies/?admin=1&s=${encodeURIComponent(sessionId)}`);
+    if(admin){
+      const status=await api('/api/admin');pages=status.pages;sessions=status.sessions;
+      if(sessionId||params.has('new'))return await classEditor();
+      return params.get('tab')==='classes'?classLibrary():pageLibrary();
+    }
+    if(sessionId)return await sharedGrid();
+    location.replace('/studies/?admin=1');
+  }catch(e){if(generation===authGeneration)errorView(e)}
+}
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 if(operatorMode) onAdminAccountChange(() => { authGeneration++;clearInterval(pollTimer);app.replaceChildren();start(); });
 else start();

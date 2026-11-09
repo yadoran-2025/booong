@@ -5,9 +5,10 @@ import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
-import { BlobPreconditionFailedError } from '@vercel/blob';
+import { Readable } from 'node:stream';
 import { generateKeyPair, exportPKCS8, jwtVerify } from 'jose';
-import { createLocalStore } from '../../scripts/rice-basket-local.mjs';
+import { createLocalRiceBasket } from '../../scripts/rice-basket-local.mjs';
+import { createHandler } from '../../lib/rice-basket/server.mjs';
 
 const serverScript = new URL('../../scripts/serve.mjs', import.meta.url);
 function spoofedHost(url) {
@@ -31,8 +32,9 @@ async function start(t, env = {}) {
   await mkdir(join(root, '.data'));
   await writeFile(join(root, '.data/rice-basket.json'), JSON.stringify({ schemaVersion: 3, pages: [], sessions: [], surveys: [] }));
   await writeFile(join(root, 'rice-basket/operator.js'), await readFile(new URL('../../rice-basket/operator.js', import.meta.url)));
+  await writeFile(join(root, 'rice-basket/index.html'), await readFile(new URL('../../rice-basket/index.html', import.meta.url)));
   const child = spawn(process.execPath, [serverScript.pathname], {
-    cwd: root, env: { ...process.env, NODE_ENV: 'development', VERCEL: '', HOST: '127.0.0.1', PORT: '0', ...env },
+    cwd: root, env: { ...process.env, FIREBASE_BOOONG_CONTENT_SERVER: '', NODE_ENV: 'development', VERCEL: '', HOST: '127.0.0.1', PORT: '0', ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   t.after(async () => {
@@ -55,40 +57,71 @@ async function start(t, env = {}) {
   return { root, base };
 }
 
-test('local store persists changes and rejects stale writes or invalid files', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'rice-basket-store-'));
-  t.after(() => rm(root, { recursive: true, force: true }));
-  const path = join(root, '.data/store.json'), store = createLocalStore(path);
-  await assert.rejects(store.load(), /빈 저장소로 시작하지 않습니다/);
-  await mkdir(join(root, '.data'));
-  await writeFile(path, JSON.stringify({ schemaVersion: 3, pages: [], sessions: [], surveys: [] }));
-  const first = await store.load(), stale = await store.load();
-  first.data.pages.push({ id: 'local-page' });
-  await store.save(first);
-  assert.equal((await createLocalStore(path).load()).data.pages[0].id, 'local-page');
-  await assert.rejects(store.save(stale), BlobPreconditionFailedError);
-  await writeFile(path, '{broken');
-  await assert.rejects(store.load(), SyntaxError);
-  assert.equal(await readFile(path, 'utf8'), '{broken');
+test('studies는 기존 자료를 제공하고 이전 주소는 페이지·연수·설문 쿼리를 유지해 이동한다', async t => {
+  const { base } = await start(t);
+  const query = '?p=page-d5ccbf8787cd&s=training&survey=survey1&manage=1';
+  for (const [oldPath, newPath] of [['/rice-basket', '/studies/'], ['/rice-basket/', '/studies/'], ['/rice-basket/operator.js', '/studies/operator.js']]) {
+    const response = await fetch(base + oldPath + query, { redirect: 'manual' });
+    assert.equal(response.status, 308);
+    assert.equal(response.headers.get('location'), newPath + query);
+  }
+  const page = await fetch(base + '/studies/' + query);
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /src="\/studies\/app.js"/);
+  assert.match(await (await fetch(base + '/studies/operator.js')).text(), /import\('\.\/local-auth.js'\)/);
+  assert.match(await (await fetch(base + '/studies/local-auth.js')).text(), /Bearer rice-basket-local/);
+  assert.equal((await fetch(base + '/studies/.data/rice-basket.json')).status, 403);
+  assert.equal((await fetch(base + '/studies-other/')).status, 404);
+  const config = JSON.parse(await readFile(new URL('../../vercel.json', import.meta.url)));
+  assert.ok(config.redirects.some(route => route.source === '/rice-basket/:path*' && route.destination === '/studies/:path*' && route.permanent));
+  assert.ok(config.rewrites.some(route => route.source === '/studies/:path*' && route.destination === '/rice-basket/:path*'));
+  assert.ok(config.redirects.some(route => route.source === '/rice-basket/' && route.destination === '/studies/' && route.permanent));
+  assert.ok(config.rewrites.some(route => route.source === '/studies/' && route.destination === '/rice-basket/index.html'));
 });
 
-test('loopback server supports local editing, keeps guests public and rejects spoofed hosts', async t => {
+test('로컬에서 저장한 자료와 유형을 운영 핸들러가 즉시 읽고 연결 실패 시 대체 저장하지 않는다', async () => {
+  let data = { schemaVersion: 3, pages: [{ id: 'page-d5ccbf8787cd', title: '웹앱', sections: [], webApps: [] }], sessions: [], surveys: [] };
+  const storage = { load: async () => ({ data: structuredClone(data) }), save: async state => { data = state.data; } };
+  const local = createLocalRiceBasket(storage), production = createHandler(storage);
+  async function call(run, route, method = 'GET', body) {
+    const req = Readable.from(body ? [JSON.stringify(body)] : []);
+    Object.assign(req, { method, url: run === local ? `/api/rice-basket?route=${route}` : route, headers: { host: 'localhost', authorization: 'Bearer rice-basket-local' }, riceBasketAdmin: true });
+    let status, result;
+    await run(req, { writeHead: code => { status = code; }, end: value => { result = JSON.parse(value); } });
+    return { status, body: result };
+  }
+  assert.equal((await call(local, '/api/pages', 'POST', { title: '공유 자료', content: '바로 반영' })).status, 201);
+  const types = [{ id: 'type-1', label: '저장한 유형' }];
+  assert.equal((await call(local, '/api/pages/page-d5ccbf8787cd', 'PATCH', { webAppTypes: types, webAppsRevision: 0 })).status, 200);
+  assert.equal((await call(production, '/api/pages')).body.pages.length, 2);
+  assert.deepEqual((await call(production, '/api/pages/page-d5ccbf8787cd')).body.webAppTypes, types);
+  const session = await call(local, '/api/sessions', 'POST', { name: '공유 연수', pageIds: ['page-d5ccbf8787cd'] });
+  assert.equal(session.status, 201);
+  assert.equal((await call(production, `/api/sessions/${session.body.id}`)).body.name, '공유 연수');
+  assert.equal((await call(local, '/api/pages/page-d5ccbf8787cd', 'PATCH', { webAppTypes: [], webAppsRevision: 0 })).status, 409);
+  const before = structuredClone(data);
+  storage.load = async () => { throw new Error('Connection unavailable'); };
+  assert.equal((await call(local, '/api/pages', 'POST', { title: '저장 실패', content: '로컬로 대체하지 않음' })).status, 503);
+  assert.deepEqual(data, before);
+});
+
+test('loopback server requires production storage, keeps guests public and rejects spoofed hosts', async t => {
   const { root, base } = await start(t);
   const headers = { Authorization: 'Bearer rice-basket-local', 'Content-Type': 'application/json' };
   const adminUrl = base + '/api/rice-basket?route=/api/admin';
   assert.equal((await fetch(adminUrl)).status, 401);
-  assert.equal((await fetch(adminUrl, { headers })).status, 200);
+  assert.equal((await fetch(adminUrl, { headers })).status, 503);
   const created = await fetch(base + '/api/rice-basket?route=/api/pages', {
     method: 'POST', headers, body: JSON.stringify({ title: '로컬 자료', content: '로컬 내용' }),
   });
-  assert.equal(created.status, 201);
-  assert.equal(JSON.parse(await readFile(join(root, '.data/rice-basket.json'), 'utf8')).pages[0].title, '로컬 자료');
+  assert.equal(created.status, 503);
+  assert.deepEqual(JSON.parse(await readFile(join(root, '.data/rice-basket.json'), 'utf8')).pages, []);
   assert.equal((await fetch(base + '/api/rice-basket?route=/api/pages', { method: 'POST', headers: { ...headers, Origin: 'https://evil.example' }, body: '{}' })).status, 401);
-  const operator = await (await fetch(base + '/rice-basket/operator.js')).text();
-  assert.match(operator, /from '\.\/local-auth.js'/);
-  assert.match(await (await fetch(base + '/rice-basket/local-auth.js')).text(), /Bearer rice-basket-local/);
+  const operator = await (await fetch(base + '/studies/operator.js')).text();
+  assert.match(operator, /import\('\.\/local-auth.js'\)/);
+  assert.match(await (await fetch(base + '/studies/local-auth.js')).text(), /Bearer rice-basket-local/);
   assert.equal((await spoofedHost(adminUrl)).status, 401);
-  assert.match((await spoofedHost(base + '/rice-basket/operator.js')).body, /from '\.\.\/js\/admin.js'/);
+  assert.match((await spoofedHost(base + '/studies/operator.js')).body, /import\('\.\.\/js\/admin.js'\)/);
 });
 
 test('운영자 홈과 모든 관리 도구가 로컬 인증을 공유하며 외부 요청은 차단한다', async t => {
@@ -142,8 +175,8 @@ for (const env of [{ NODE_ENV: 'production' }, { VERCEL: '1' }, { HOST: '0.0.0.0
   test(`local authentication is disabled with ${JSON.stringify(env)}`, async t => {
     const { base } = await start(t, env);
     assert.equal((await fetch(base + '/api/rice-basket?route=/api/admin', { headers: { Authorization: 'Bearer rice-basket-local' } })).status, 401);
-    assert.match(await (await fetch(base + '/rice-basket/operator.js')).text(), /from '\.\.\/js\/admin.js'/);
-    assert.equal((await fetch(base + '/rice-basket/local-auth.js')).status, 404);
+    assert.match(await (await fetch(base + '/studies/operator.js')).text(), /import\('\.\.\/js\/admin.js'\)/);
+    assert.equal((await fetch(base + '/studies/local-auth.js')).status, 404);
     assert.equal((await fetch(base + '/api/admin')).status, 401);
     assert.doesNotMatch(await (await fetch(base + '/admin.html')).text(), /local-admin-home/);
     assert.equal((await fetch(base + '/js/local-admin-home.js')).status, 404);

@@ -1,19 +1,12 @@
 export const BUNGMO_USERS = "bungmoUsers";
 export const BUNGMO_MEETINGS = "bungmoMeetings";
 export const MEETING_STATUSES = ["planning", "upcoming", "completed"];
-export const AVAILABILITY_STATES = ["available", "unavailable"];
+export const AVAILABILITY_STATES = ["available", "unavailable", "undecided"];
 
 export const slotId = (date, hour) => `${date}-${String(hour).padStart(2, "0")}`;
 
 export const meetingHours = ({ startHour, endHour }) =>
   Array.from({ length: endHour - startHour }, (_, index) => startHour + index);
-
-export function validateNickname(value) {
-  const nickname = value.trim();
-  if (!nickname) throw new Error("닉네임을 입력해 주세요.");
-  if (nickname.length > 16) throw new Error("닉네임은 16자까지 입력할 수 있어요.");
-  return nickname;
-}
 
 export function normalizeMeeting(data) {
   return {

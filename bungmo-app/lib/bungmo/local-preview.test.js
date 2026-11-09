@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createLocalPreviewStore, isLocalPreview } from "./local-preview.js";
+import { createLocalPreviewStore, isLocalPreview, isLocalOperator } from "./local-preview.js";
+
+test('실제 데이터 로컬 운영자는 서버 표식과 루프백 주소가 모두 필요하다', () => {
+  assert.equal(isLocalOperator({ hostname: 'localhost', enabled: true }), true);
+  assert.equal(isLocalOperator({ hostname: '127.0.0.1', enabled: false }), false);
+  assert.equal(isLocalOperator({ hostname: 'booong.vercel.app', enabled: true }), false);
+  assert.equal(isLocalOperator({ hostname: 'localhost.evil.example', enabled: true }), false);
+});
 
 test("로컬 미리보기는 개발 루프백 주소에서만 켜진다", () => {
   assert.equal(isLocalPreview({ nodeEnv: "development", hostname: "localhost" }), true);

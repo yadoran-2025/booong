@@ -10,6 +10,7 @@ const firestore = {
   doc: (parent, id) => ({ id, path: `${parent.path}/${id}` }),
   getDoc: async () => ({ exists: () => false }),
   onSnapshot: () => () => {},
+  runTransaction: async () => {},
   serverTimestamp: () => timestamp,
   setDoc: async (...args) => { calls.set.push(args); },
   updateDoc: async () => {},

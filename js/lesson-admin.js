@@ -11,6 +11,8 @@ let state, thumbnails = {}, account, epoch = 0, busy = false, dirty = false, sel
 let selectedUnits = new Set(), thumbnailEditor, selectedSubject;
 let members = [], contributors = [];
 let registration, saveToastTimer;
+let searchQuery = "", subjectFilter = "", makerFilter = "", newOnly = false;
+const contributorName = code => members.find(member => member.id.toLowerCase() === code.toLowerCase())?.name || code;
 const published = row => ["true", "1", "yes", "y", "공개"].includes(String(row.published).toLowerCase());
 const isNew = row => ["true", "1", "yes", "y", "new", "checked", "check", "on", "o", "예", "네", "체크"].includes(String(row?.new ?? row?.["new!"] ?? row?.new_flag ?? row?.is_new ?? "").trim().toLowerCase());
 const codes = row => String(row["단원_코드"] || "").split(/[,;\n]+/).filter(x => x.trim()).map(Number);
@@ -45,42 +47,66 @@ function render() {
     content.querySelector("[data-import]").addEventListener("click", () => write({ action: "import", revision: null }));
     return;
   }
-  content.innerHTML = `<div class="catalog-toolbar"><input class="field__input" type="search" aria-label="수업 검색" placeholder="수업 제목·과목·제작자로 찾기" data-search><div class="catalog-choice" role="group" aria-label="공개 여부 필터">${[["all", "전체"], ["published", "공개"], ["draft", "비공개"]].map(([key, label]) => `<button class="btn btn--secondary" type="button" data-filter="${key}" aria-pressed="${filter === key}">${label}</button>`).join("")}</div><button class="btn btn--ghost" type="button" data-refresh aria-label="목록 새로고침" title="새로고침"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 5v6h-6M4 19v-6h6M5.6 7A8 8 0 0 1 19.4 9M4.6 15A8 8 0 0 0 18.4 17"/></svg></button><button class="btn btn--primary" type="button" data-new>수업 등록</button></div>
-    <div class="catalog-workspace"><nav class="catalog-list" aria-label="수업 목록" data-list></nav><section class="catalog-editor" aria-label="수업 편집" data-editor></section></div>`;
-  content.querySelector("[data-search]").addEventListener("input", renderList);
+  const catalog = buildDashboardCatalog(state.rows.map(row => ({ ...row, published: "TRUE" })), state.unitRows);
+  const makerCodes = [...new Set(state.rows.flatMap(row => getLessonContributors(row, members).map(person => person.code)))];
+  if (subjectFilter !== "unassigned" && !catalog.subjects.some(subject => subject.value === subjectFilter)) subjectFilter = "";
+  if (makerFilter !== "unassigned" && !makerCodes.includes(makerFilter)) makerFilter = "";
+  content.innerHTML = `<div class="catalog-toolbar"><input class="field__input" type="search" aria-label="수업 검색" placeholder="제목·소개·단원·제작자 검색" value="${esc(searchQuery)}" data-search><button class="btn btn--ghost" type="button" data-refresh aria-label="목록 새로고침" title="새로고침"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 5v6h-6M4 19v-6h6M5.6 7A8 8 0 0 1 19.4 9M4.6 15A8 8 0 0 0 18.4 17"/></svg></button><button class="btn btn--primary" type="button" data-new>수업 등록</button></div>
+    <section class="catalog-filters" aria-label="수업 필터"><div class="catalog-choice" role="group" aria-label="공개 여부 필터">${[["all", "전체"], ["published", "공개"], ["draft", "비공개"]].map(([key, label]) => `<button class="btn btn--secondary" type="button" data-filter="${key}" aria-pressed="${filter === key}">${label}</button>`).join("")}</div>
+    <div class="catalog-filter-field"><label for="catalog-filter-subject">과목</label><select id="catalog-filter-subject" class="field__input" data-subject-filter><option value="">전체 과목</option>${[...new Set(catalog.subjects.map(subject => subject.school))].map(school => `<optgroup label="${esc(school)}">${catalog.subjects.filter(subject => subject.school === school).map(subject => `<option value="${esc(subject.value)}"${subjectFilter === subject.value ? " selected" : ""}>${esc(subject.label)}</option>`).join("")}</optgroup>`).join("")}<option value="unassigned"${subjectFilter === "unassigned" ? " selected" : ""}>과목 미지정</option></select></div>
+    <div class="catalog-filter-field"><label for="catalog-filter-maker">제작자</label><select id="catalog-filter-maker" class="field__input" data-maker-filter><option value="">전체 제작자</option>${makerCodes.map(code => `<option value="${esc(code)}"${makerFilter === code ? " selected" : ""}>${esc(contributorName(code))}</option>`).join("")}<option value="unassigned"${makerFilter === "unassigned" ? " selected" : ""}>제작자 미지정</option></select></div><button class="btn btn--secondary" type="button" data-new-filter aria-pressed="${newOnly}">신규만</button></section>
+    <div class="catalog-results"><h2 data-result-count aria-live="polite" aria-atomic="true"></h2><button class="btn btn--ghost" type="button" data-clear-filters hidden>필터 초기화</button></div><section class="catalog-list" aria-label="수업 목록" data-list></section><section data-editor hidden></section>`;
+  content.querySelector("[data-search]").addEventListener("input", event => { searchQuery = event.target.value; renderList(); });
   content.querySelectorAll("[data-filter]").forEach(button => button.addEventListener("click", () => {
     filter = button.dataset.filter;
     content.querySelectorAll("[data-filter]").forEach(item => item.setAttribute("aria-pressed", String(item.dataset.filter === filter)));
     renderList();
   }));
+  content.querySelector("[data-subject-filter]").addEventListener("change", event => { subjectFilter = event.target.value; renderList(); });
+  content.querySelector("[data-maker-filter]").addEventListener("change", event => { makerFilter = event.target.value; renderList(); });
+  content.querySelector("[data-new-filter]").addEventListener("click", event => { newOnly = !newOnly; event.currentTarget.setAttribute("aria-pressed", String(newOnly)); renderList(); });
+  content.querySelector("[data-clear-filters]").addEventListener("click", () => {
+    searchQuery = subjectFilter = makerFilter = ""; filter = "all"; newOnly = false;
+    render(); root.querySelector("[data-search]").focus();
+  });
   content.querySelector("[data-new]").addEventListener("click", event => openRegistration(event.currentTarget));
   content.querySelector("[data-refresh]").addEventListener("click", async () => { if (await canLeave()) start().catch(showError); });
   content.querySelector("[data-list]").addEventListener("click", event => {
     const button = event.target.closest("[data-lesson]");
-    if (button) selectLesson(button.dataset.lesson);
+    if (button) selectLesson(button.dataset.lesson, button);
   });
   content.querySelector("[data-list]").addEventListener("change", event => {
     const input = event.target.closest("[data-lesson-flag]");
     if (input) saveFlag(input);
   });
-  if (!state.rows.some(row => row.resource_id === selectedId)) selectedId = state.rows[0]?.resource_id || null;
-  renderList(); renderEditor();
+  selectedId = null;
+  renderList();
 }
 
 function renderList() {
   const query = root.querySelector("[data-search]").value.trim().normalize("NFKC").toLowerCase();
+  const catalog = buildDashboardCatalog(state.rows.map(row => ({ ...row, published: "TRUE" })), state.unitRows);
+  const items = new Map(catalog.resources.map(item => [item.id, item]));
   const rows = state.rows.filter(row => {
-    if (filter === "published" && !published(row) || filter === "draft" && published(row)) return false;
-    const item = resourceFor(row);
-    return `${row.group_title} ${row.maker} ${item?.subjects.join(" ")} ${getLessonContributors(row).map(person => person.role).join(" ")}`.normalize("NFKC").toLowerCase().includes(query);
+    if (filter === "published" && !published(row) || filter === "draft" && published(row) || newOnly && !isNew(row)) return false;
+    const item = items.get(row.resource_id);
+    const people = getLessonContributors(row, members);
+    if (subjectFilter && (subjectFilter === "unassigned" ? item?.subjects.length : !item?.subjects.includes(subjectFilter))) return false;
+    if (makerFilter && (makerFilter === "unassigned" ? people.length : !people.some(person => person.code === makerFilter))) return false;
+    const text = `${item?.searchText || row.group_title} ${people.map(person => `${person.code} ${contributorName(person.code)} ${person.role}`).join(" ")}`.normalize("NFKC").toLowerCase();
+    return query.split(/\s+/).every(term => text.includes(term));
   });
+  root.querySelector("[data-result-count]").textContent = `수업 ${rows.length}개`;
+  root.querySelector("[data-clear-filters]").hidden = !query && filter === "all" && !subjectFilter && !makerFilter && !newOnly;
   root.querySelector("[data-list]").innerHTML = rows.map(row => {
-    const item = resourceFor(row);
-    return `<article class="catalog-row" data-row-selected="${selectedId === row.resource_id}" data-row-id="${esc(row.resource_id)}">
-      <button type="button" class="catalog-row__open" data-lesson="${esc(row.resource_id)}" aria-current="${selectedId === row.resource_id}" title="${esc(row.group_title)}"><img src="${esc(thumbnailUrl(item, thumbnails[row.resource_id]))}" alt="" loading="lazy"><div><strong class="catalog-row__title">${esc(row.group_title)}</strong>${item?.subjects.length ? `<span class="catalog-row__subjects">${esc(item.subjects.join(" · "))}</span>` : ""}</div></button>
-      <div class="catalog-row__flags" role="group" aria-label="${esc(row.group_title)} 표시 설정">${[["published", "공개", published(row)], ["new", "신규", isNew(row)]].map(([field, label, checked]) => `<label><input type="checkbox" data-lesson-flag="${field}" data-flag-id="${esc(row.resource_id)}" aria-label="${esc(row.group_title)} ${label}"${checked ? " checked" : ""}>${label}</label>`).join("")}</div>
+    const item = items.get(row.resource_id);
+    const people = getLessonContributors(row, members);
+    const units = [...new Set(codes(row).map(code => state.unitRows.find(unit => Number(unit["단원_코드"]) === code)).filter(Boolean).map(unitLabel).filter(Boolean))];
+    return `<article class="catalog-row" data-row-id="${esc(row.resource_id)}">
+      <img class="catalog-row__thumbnail" src="${esc(thumbnailUrl(item, thumbnails[row.resource_id]))}" alt="" loading="lazy" width="800" height="500"><div class="catalog-row__body"><h3 class="catalog-row__title">${esc(row.group_title)}</h3>${item?.subjects.length ? `<p class="catalog-row__subjects">${esc(item.subjects.join(" · "))}</p>` : ""}${units.length ? `<div class="catalog-row__units" aria-label="단원">${units.map(unit => `<p>${esc(unit)}</p>`).join("")}</div>` : ""}${people.length ? `<div class="catalog-row__makers" role="group" aria-label="제작자">${people.map(person => `<span class="chip chip--gray">${esc(contributorName(person.code))}</span>`).join("")}</div>` : ""}</div>
+      <footer class="catalog-row__footer"><div class="catalog-row__flags" role="group" aria-label="${esc(row.group_title)} 표시 설정">${[["published", "공개", published(row)], ["new", "신규", isNew(row)]].map(([field, label, checked]) => `<label><input type="checkbox" data-lesson-flag="${field}" data-flag-id="${esc(row.resource_id)}" aria-label="${esc(row.group_title)} ${label}"${checked ? " checked" : ""}>${label}</label>`).join("")}</div><button class="btn btn--secondary" type="button" data-lesson="${esc(row.resource_id)}" aria-label="${esc(row.group_title)} 수정" aria-haspopup="dialog">수정</button></footer>
       <p class="catalog-message" data-flag-status role="status"></p></article>`;
-  }).join("") || '<p class="catalog-message">조건에 맞는 수업이 없습니다.</p>';
+  }).join("") || '<p class="catalog-empty">조건에 맞는 수업이 없습니다.</p>';
 }
 
 async function saveFlag(input) {
@@ -94,7 +120,7 @@ async function saveFlag(input) {
     if (run !== epoch || !active()) return;
     if (!response.ok) throw new Error(result.error || "표시 설정을 저장하지 못했습니다.");
     state = result.state;
-    message(`${field === "published" ? "공개 여부" : "신규 표시"}를 저장했습니다.`);
+    message(result.warning || `${field === "published" ? "공개 여부" : "신규 표시"}를 저장했습니다.`);
   } catch (error) { if (run === epoch && active()) status = error.message; }
   finally {
     if (run === epoch && active()) {
@@ -103,7 +129,7 @@ async function saveFlag(input) {
       if (row) {
         row.querySelector("[data-flag-status]").textContent = status;
         row.querySelector(`[data-lesson-flag="${field}"]`).focus();
-      }
+      } else root.querySelector(field === "published" ? '[data-filter][aria-pressed="true"]' : "[data-new-filter]").focus();
       if (status) message(status);
     }
   }
@@ -118,15 +144,11 @@ async function canLeave() {
   root.append(dialog); dialog.showModal();
   return new Promise(resolve => dialog.addEventListener("close", () => { const discard = dialog.returnValue === "discard"; dialog.remove(); resolve(discard); }, { once: true }));
 }
-async function selectLesson(id) {
-  if (busy || !active() || !await canLeave() || !active()) return;
-  selectedId = id; dirty = false; message("");
-  renderList(); renderEditor();
-  root.querySelector(".catalog-workspace").classList.add("is-editing");
-  root.querySelector('[name="group_title"]').focus();
+function selectLesson(id, opener) {
+  openRegistration(opener, id);
 }
 
-function openRegistration(opener) {
+function openRegistration(opener, id = null) {
   if (busy || registration || !active()) return;
   const run = epoch;
   const previous = { selectedId, selectedUnits, selectedSubject, contributors, dirty };
@@ -137,9 +159,9 @@ function openRegistration(opener) {
   dialog.className = "catalog-registration";
   dialog.setAttribute("aria-labelledby", "catalog-registration-title");
   dialog.innerHTML = '<section class="catalog-editor" data-editor></section>';
-  const entry = registration = { dialog, previous, createdId: null };
+  const entry = registration = { dialog, previous, savedId: null };
   root.append(dialog);
-  selectedId = null; dirty = false;
+  selectedId = id; dirty = false;
   renderEditor();
   dialog.addEventListener("cancel", event => { event.preventDefault(); closeRegistration(); });
   dialog.addEventListener("close", () => {
@@ -148,15 +170,9 @@ function openRegistration(opener) {
     if (run !== epoch || !active() || !marker.isConnected) return;
     ({ selectedId, selectedUnits, selectedSubject, contributors, dirty } = previous);
     marker.replaceWith(panel);
-    if (entry.createdId && !previous.dirty) {
-      selectedId = entry.createdId;
-      renderEditor();
-      root.querySelector(".catalog-workspace").classList.add("is-editing");
-    }
-    renderList();
-    if (entry.createdId) message("새 수업을 비공개로 등록했습니다.");
-    if (entry.createdId && !previous.dirty) root.querySelector('[name="group_title"]').focus();
-    else if (opener.isConnected) opener.focus({ preventScroll: true });
+    if (entry.savedId || entry.deleted) render(); else renderList();
+    const editButton = [...root.querySelectorAll("[data-lesson]")].find(button => button.dataset.lesson === (entry.savedId || id));
+    (editButton || (opener?.isConnected ? opener : root.querySelector("[data-new]")))?.focus({ preventScroll: true });
   }, { once: true });
   dialog.showModal();
   root.querySelector('[name="group_title"]').focus();
@@ -168,6 +184,20 @@ async function closeRegistration() {
   if (await canLeave() && registration === entry) entry.dialog.close();
 }
 
+async function deleteLesson() {
+  if (busy || !registration || !selectedId || !active()) return;
+  const run = epoch, entry = registration, id = selectedId;
+  const row = state.rows.find(row => row.resource_id === id);
+  if (!row) return;
+  const dialog = document.createElement("dialog");
+  dialog.className = "alert-dialog catalog-confirm";
+  dialog.setAttribute("aria-labelledby", "catalog-delete-title");
+  dialog.innerHTML = `<h2 id="catalog-delete-title">수업을 삭제할까요?</h2><p><strong>${esc(row.group_title)}</strong></p><p>삭제하면 되돌릴 수 없습니다.${dirty ? " 저장하지 않은 수정 내용도 사라집니다." : ""}</p><form method="dialog" class="catalog-actions"><button class="btn btn--secondary" value="cancel" autofocus>취소</button><button class="btn btn--danger" value="delete">수업 삭제</button></form>`;
+  root.append(dialog); dialog.showModal();
+  const confirmed = await new Promise(resolve => dialog.addEventListener("close", () => { const confirmed = dialog.returnValue === "delete"; dialog.remove(); resolve(confirmed); }, { once: true }));
+  if (confirmed && run === epoch && registration === entry && selectedId === id && active()) await write({ action: "delete", revision: state.revision, id });
+}
+
 const field = (row, name, label, max, type = "text") => `<div class="field"><label class="field__label" for="lesson-${name}">${label}</label><input class="field__input" id="lesson-${name}" name="${name}" type="${type}" maxlength="${max}" value="${esc(row[name] || "")}"${name === "group_title" ? " required" : ""}></div>`;
 function renderEditor() {
   const row = state.rows.find(row => row.resource_id === selectedId) || { kind: "lesson", published: "FALSE", new: "FALSE" };
@@ -175,26 +205,21 @@ function renderEditor() {
   contributors = getLessonContributors(row, members);
   const subjectNames = [...new Set(state.unitRows.map(unit => unit["과목"]).filter(Boolean))];
   selectedSubject = state.unitRows.find(unit => selectedUnits.has(Number(unit["단원_코드"])))?.["과목"] || subjectNames[0];
-  root.querySelector("[data-editor]").innerHTML = `<header><h2${registration ? ' id="catalog-registration-title"' : ""}>${registration ? "수업 등록" : selectedId ? "수업 편집" : "새 수업"}</h2>${registration ? '<button class="btn btn--ghost btn--round-lg" type="button" data-registration-close aria-label="수업 등록 닫기">×</button>' : '<button class="btn btn--ghost catalog-back" type="button" data-back>← 목록</button>'}</header>
+  root.querySelector("[data-editor]").innerHTML = `<header><h2 id="catalog-registration-title">${selectedId ? "수업 편집" : "수업 등록"}</h2><button class="btn btn--ghost btn--round-lg" type="button" data-registration-close aria-label="${selectedId ? "수업 편집" : "수업 등록"} 닫기">×</button></header>
     <form><div class="catalog-form-body">${field(row, "group_title", "수업 제목", 200)}<section class="catalog-thumbnail" aria-label="썸네일" data-lesson-thumbnail></section><div class="field"><label class="field__label" for="lesson-desc">수업 소개</label><textarea class="field__input" id="lesson-desc" name="desc" maxlength="10000" rows="4">${esc(row.desc || "")}</textarea></div>
     <fieldset class="field catalog-contributors"><legend>제작자 · 맡은 일</legend><div class="catalog-contributor-chips" role="group" aria-label="제작자 선택" data-contributor-chips></div><div class="catalog-contributor-roles" data-contributor-roles></div></fieldset>
     <fieldset class="field"><legend>과목·단원</legend><div class="catalog-choice catalog-subjects" role="group" aria-label="과목 선택">${subjectNames.map(subject => `<button class="btn btn--secondary" type="button" data-subject="${esc(subject)}" aria-haspopup="dialog" aria-label="${esc(subject)} 단원 선택">${esc(subject)}</button>`).join("")}</div><div class="catalog-selected" data-selected></div></fieldset>
     <div class="catalog-links">${field(row, "blog_link", "수업 소개 링크", 2000)}${field(row, "teacher_link", "교사용 자료 링크", 2000)}${field(row, "dorms_link", "도름스 링크", 2000)}</div></div>
-    <footer class="catalog-form-footer">${registration ? '<p class="catalog-message" role="status" aria-live="polite" data-registration-status></p>' : ""}<button class="btn ${registration ? "btn--ghost" : "btn--secondary"}" type="button" data-reset>${registration ? "취소" : "수정 취소"}</button><button class="btn btn--primary" type="submit">${registration ? "수업 등록" : "저장"}</button></footer></form>`;
+    <footer class="catalog-form-footer"><p class="catalog-message" role="status" aria-live="polite" data-registration-status></p>${selectedId ? '<button class="btn btn--ghost catalog-delete" type="button" data-delete-lesson>수업 삭제</button>' : ""}<button class="btn btn--ghost" type="button" data-reset>취소</button><button class="btn btn--primary" type="submit">${selectedId ? "저장" : "수업 등록"}</button></footer></form>`;
   const form = root.querySelector("[data-editor] form");
   form.addEventListener("input", () => { dirty = true; });
   form.querySelectorAll("[data-subject]").forEach(button => button.addEventListener("click", () => {
     selectedSubject = button.dataset.subject;
     openUnitPicker(button);
   }));
-  form.querySelector("[data-reset]").addEventListener("click", async () => {
-    if (registration) return closeRegistration();
-    if (await canLeave() && active()) { dirty = false; renderEditor(); message(""); }
-  });
-  root.querySelector("[data-registration-close]")?.addEventListener("click", closeRegistration);
-  root.querySelector("[data-back]")?.addEventListener("click", async () => {
-    if (await canLeave() && active()) { dirty = false; root.querySelector(".catalog-workspace").classList.remove("is-editing"); renderEditor(); }
-  });
+  form.querySelector("[data-reset]").addEventListener("click", closeRegistration);
+  root.querySelector("[data-registration-close]").addEventListener("click", closeRegistration);
+  form.querySelector("[data-delete-lesson]")?.addEventListener("click", deleteLesson);
   form.addEventListener("submit", event => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(form));
@@ -245,7 +270,7 @@ function renderThumbnail() {
     thumbnailEditor = openThumbnailEditor({ root, item: draft || item, record: thumbnails[item.id], account, opener: event.currentTarget,
       onSaved(record) {
         thumbnails[item.id] = record; renderThumbnail(); renderList();
-        root.querySelector("[data-lesson-thumbnail-status]").textContent = "썸네일을 저장했습니다.";
+        root.querySelector("[data-lesson-thumbnail-status]").textContent = record.warning || "썸네일을 저장했습니다.";
       },
       onRefreshed(records) { thumbnails = records; renderThumbnail(); renderList(); },
       onClose() { thumbnailEditor = null; root.querySelector("[data-edit-lesson-thumbnail]")?.focus(); },
@@ -259,7 +284,7 @@ function renderThumbnail() {
       const record = await saveThumbnail(item.id, null, true, thumbnails[item.id]?.revision || null, account);
       if (run !== epoch || !active()) return;
       thumbnails[item.id] = record; renderThumbnail(); renderList();
-      root.querySelector("[data-lesson-thumbnail-status]").textContent = "이전 이미지로 복원했습니다.";
+      root.querySelector("[data-lesson-thumbnail-status]").textContent = record.warning || "이전 이미지로 복원했습니다.";
     } catch (error) {
       if (run !== epoch || !active()) return;
       if (error.status === 409) {
@@ -329,23 +354,30 @@ async function write(input) {
   if (busy || !active()) return;
   const run = epoch;
   clearTimeout(saveToastTimer); root.querySelector("[data-save-toast]")?.replaceChildren();
-  setBusy(true); message(input.action === "import" ? "수업과 단원표를 가져오고 있습니다…" : "저장하고 있습니다…");
+  setBusy(true); message(input.action === "import" ? "수업과 단원표를 가져오고 있습니다…" : input.action === "delete" ? "삭제하고 있습니다…" : "저장하고 있습니다…");
   try {
     const response = await adminFetch("/api/lesson-catalog", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
     const result = await response.json();
     if (run !== epoch || !active()) return;
     if (!response.ok) throw new Error(result.error || "저장하지 못했습니다. 다시 시도해주세요.");
     state = result.state; dirty = false;
-    if (input.action === "save") showSaveToast(input.lesson.resource_id ? "저장했습니다." : "수업을 등록했습니다.");
-    if (input.action === "save" && !input.lesson.resource_id && registration) {
-      registration.createdId = state.rows.at(-1).resource_id;
+    if (input.action === "save") showSaveToast(result.warning || (input.lesson.resource_id ? "저장했습니다." : "수업을 등록했습니다."));
+    if (input.action === "delete") {
+      showSaveToast(result.warning || "수업을 삭제했습니다.");
+      if (registration) {
+        registration.deleted = true; setBusy(false); registration.dialog.close();
+      } else render();
+      return;
+    }
+    if (input.action === "save" && registration) {
+      registration.savedId = input.lesson.resource_id || state.rows.at(-1).resource_id;
+      setBusy(false);
       registration.dialog.close();
       return;
     }
     if (input.action === "save" && !input.lesson.resource_id) selectedId = state.rows.at(-1).resource_id;
     render();
-    if (input.action === "save") root.querySelector(".catalog-workspace").classList.add("is-editing");
-    message(input.action === "import" ? `${state.rows.length}개 수업을 가져왔습니다.` : "저장했습니다. 수업 목록에는 약 1분 안에 반영됩니다.");
+    message(result.warning || (input.action === "import" ? `${state.rows.length}개 수업을 가져왔습니다.` : "저장했습니다."));
   } catch (error) { if (run === epoch && active()) { message(error.message); showSaveToast(error.message, "error"); } }
   finally { if (run === epoch) setBusy(false); }
 }
@@ -367,7 +399,7 @@ function showError() {
 }
 onAdminAccountChange(id => {
   if (account === undefined || id === account) return;
-  epoch++; thumbnailEditor?.close(); root.querySelectorAll("dialog").forEach(dialog => dialog.close()); state = undefined; thumbnails = {}; contributors = []; members = []; dirty = false; account = id; root.replaceChildren(); start().catch(showError);
+  epoch++; searchQuery = subjectFilter = makerFilter = ""; filter = "all"; newOnly = false; thumbnailEditor?.close(); root.querySelectorAll("dialog").forEach(dialog => dialog.close()); state = undefined; thumbnails = {}; contributors = []; members = []; dirty = false; account = id; root.replaceChildren(); start().catch(showError);
 });
 window.addEventListener("beforeunload", event => { if (dirty || registration?.previous.dirty) { event.preventDefault(); event.returnValue = ""; } });
 start().catch(showError);

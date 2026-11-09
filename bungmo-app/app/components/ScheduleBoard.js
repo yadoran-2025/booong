@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { editableScheduleMembers, resolveMeetingMembers } from "../../lib/bungmo/member.js";
-import { meetingHours, selectedMeetingDate, slotId } from "../../lib/bungmo/model.js";
-import { changeAvailability } from "../../lib/bungmo/response.js";
+import { meetingHours, slotId } from "../../lib/bungmo/model.js";
+import { availabilityGroups, changeAvailability, nextAvailability } from "../../lib/bungmo/response.js";
+import { createResponseWriter } from "../../lib/bungmo/response-writer.js";
 import { saveResponse, subscribeResponse, subscribeResponses } from "../../lib/bungmo/repository.js";
 
 const stateLabel = { available: "가능해요", unavailable: "어려워요", undecided: "미정이에요" };
@@ -14,8 +16,7 @@ const dateLabel = (date) => {
 
 export default function ScheduleBoard({ meeting, user, profile, memberRecords, users }) {
   const [mode, setMode] = useState("mine");
-  const [date, setDate] = useState(meeting.candidateDates[0] ?? "");
-  const [brush, setBrush] = useState("available");
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const [targetId, setTargetId] = useState("");
   const [availability, setAvailability] = useState({});
   const [responses, setResponses] = useState([]);
@@ -26,27 +27,18 @@ export default function ScheduleBoard({ meeting, user, profile, memberRecords, u
   const [targetRetry, setTargetRetry] = useState(0);
   const [responsesRetry, setResponsesRetry] = useState(0);
   const [saveState, setSaveState] = useState("saved");
-  const timer = useRef(null);
-  const painting = useRef(false);
-  const lastPainted = useRef("");
-  const paintRef = useRef(() => {});
-  const board = useRef(null);
+  const writerRef = useRef(null);
+  const detailDialog = useRef(null);
   const latestAvailability = useRef({});
-  const pendingAvailability = useRef({});
   const loaded = useRef(false);
   const saveScope = useRef("");
   const selectionEpoch = useRef(0);
-  const saveEpoch = useRef(0);
   const loadedEpoch = useRef(0);
   const hours = meetingHours(meeting);
   const members = resolveMeetingMembers(memberRecords, users);
   const editableMembers = editableScheduleMembers(members, user.uid);
   const target = editableMembers.find((member) => member.id === targetId) ?? null;
   const targetScope = target ? `${meeting.id}:${target.id}` : "";
-
-  useEffect(() => {
-    setDate((current) => selectedMeetingDate(meeting.candidateDates, current));
-  }, [meeting.candidateDates]);
 
   useEffect(() => {
     const own = editableMembers.find((member) => member.id === user.uid);
@@ -56,15 +48,11 @@ export default function ScheduleBoard({ meeting, user, profile, memberRecords, u
 
   useEffect(() => {
     selectionEpoch.current += 1;
-    saveEpoch.current += 1;
     const session = selectionEpoch.current;
     setAvailability({});
     latestAvailability.current = {};
-    pendingAvailability.current = {};
     loaded.current = false;
     loadedEpoch.current = 0;
-    painting.current = false;
-    window.clearTimeout(timer.current);
     setSaveState("saved");
     setTargetError("");
     setTargetLoading(Boolean(target));
@@ -72,9 +60,13 @@ export default function ScheduleBoard({ meeting, user, profile, memberRecords, u
     saveScope.current = scope;
     if (!target) return;
     let active = true;
+    const writer = createResponseWriter(delta => saveResponse(meeting.id, target.id, target.displayName, delta), state => {
+      if (active && selectionEpoch.current === session && saveScope.current === scope) setSaveState(state);
+    });
+    writerRef.current = writer;
     const stop = subscribeResponse(meeting.id, target.id, (response) => {
       if (!active || selectionEpoch.current !== session || saveScope.current !== scope) return;
-      const next = response?.availability ?? {};
+      const next = { ...(response?.availability ?? {}), ...writer.pending() };
       latestAvailability.current = next;
       setAvailability(next);
       loaded.current = true;
@@ -92,13 +84,13 @@ export default function ScheduleBoard({ meeting, user, profile, memberRecords, u
       active = false;
       if (selectionEpoch.current === session) {
         selectionEpoch.current += 1;
-        saveEpoch.current += 1;
         loaded.current = false;
         loadedEpoch.current = 0;
         saveScope.current = "";
       }
+      writer.flush().catch(() => {});
+      if (writerRef.current === writer) writerRef.current = null;
       stop();
-      window.clearTimeout(timer.current);
     };
   }, [meeting.id, target?.id, targetRetry]);
 
@@ -117,70 +109,21 @@ export default function ScheduleBoard({ meeting, user, profile, memberRecords, u
     return () => { active = false; stop(); };
   }, [meeting.id, responsesRetry]);
 
-  useEffect(() => {
-    const paintAtPointer = (event) => {
-      if (!painting.current) return;
-      const slot = document.elementFromPoint(event.clientX, event.clientY)?.closest(".schedule-slot.editable");
-      const id = slot?.dataset.slot;
-      if (id && board.current?.contains(slot) && id !== lastPainted.current) {
-        lastPainted.current = id;
-        paintRef.current(id);
-      }
-    };
-    const stopPainting = () => { painting.current = false; lastPainted.current = ""; };
-    window.addEventListener("pointermove", paintAtPointer);
-    window.addEventListener("pointerup", stopPainting);
-    window.addEventListener("pointercancel", stopPainting);
-    return () => {
-      window.removeEventListener("pointermove", paintAtPointer);
-      window.removeEventListener("pointerup", stopPainting);
-      window.removeEventListener("pointercancel", stopPainting);
-    };
-  }, []);
-
-  function scheduleSave() {
-    window.clearTimeout(timer.current);
-    const session = selectionEpoch.current;
-    const request = ++saveEpoch.current;
-    const scope = saveScope.current;
-    const meetingId = meeting.id;
-    const member = target;
-    setSaveState("saving");
-    timer.current = window.setTimeout(async () => {
-      if (!member || !scope || saveScope.current !== scope || selectionEpoch.current !== session || saveEpoch.current !== request) return;
-      const pending = pendingAvailability.current;
-      pendingAvailability.current = {};
-      try {
-        // ponytail: same-slot in-flight writes are last-arrival-wins; serialize per target if this becomes observable.
-        await saveResponse(meetingId, member.id, member.displayName, pending);
-        if (saveScope.current === scope && selectionEpoch.current === session && saveEpoch.current === request) setSaveState("saved");
-      } catch {
-        if (saveScope.current === scope && selectionEpoch.current === session && saveEpoch.current === request) setSaveState("error");
-      }
-    }, 300);
-  }
-
-  function paint(id) {
-    if (!loaded.current || loadedEpoch.current !== selectionEpoch.current || saveScope.current !== targetScope) return;
-    const change = changeAvailability(latestAvailability.current, pendingAvailability.current, id, brush);
+  function cycleSlot(id) {
+    if (mode !== "mine" || !loaded.current || loadedEpoch.current !== selectionEpoch.current || saveScope.current !== targetScope) return;
+    const change = changeAvailability(latestAvailability.current, {}, id, nextAvailability(latestAvailability.current[id]));
     latestAvailability.current = change.availability;
-    pendingAvailability.current = change.delta;
     setAvailability(change.availability);
-    scheduleSave();
+    writerRef.current?.change(change.delta);
   }
-  paintRef.current = paint;
 
   function resetTarget(nextTargetId) {
-    window.clearTimeout(timer.current);
+    writerRef.current?.flush().catch(() => {});
     selectionEpoch.current += 1;
-    saveEpoch.current += 1;
     saveScope.current = "";
     loaded.current = false;
     loadedEpoch.current = 0;
     latestAvailability.current = {};
-    pendingAvailability.current = {};
-    painting.current = false;
-    lastPainted.current = "";
     setAvailability({});
     setTargetError("");
     setTargetLoading(Boolean(nextTargetId));
@@ -192,26 +135,52 @@ export default function ScheduleBoard({ meeting, user, profile, memberRecords, u
     resetTarget(event.target.value);
   }
 
-  const targetResponse = target && { id: target.id, displayName: target.displayName, availability };
+  function selectSlot(day, hour) {
+    setSelectedSlot({ day, hour });
+    if (window.matchMedia("(max-width: 760px)").matches) detailDialog.current.showModal();
+  }
+
   const responseById = new Map(responses.map((response) => [response.id, response]));
   const groupResponses = members.map((member) => ({
     id: member.id,
     displayName: member.displayName,
     availability: responseById.get(member.id)?.availability ?? {}
   }));
-  const visibleResponses = mode === "mine" ? targetResponse ? [targetResponse] : [] : groupResponses;
+  const detail = selectedSlot && meeting.candidateDates.includes(selectedSlot.day) && hours.includes(selectedSlot.hour) ? selectedSlot : { day: meeting.candidateDates[0], hour: hours[0] };
+  const detailGroups = availabilityGroups(groupResponses, slotId(detail.day, detail.hour));
 
-  if (!members.length) return <section className="service-empty"><h2>참여 멤버가 없어요.</h2><p>멤버를 먼저 추가하면 일정을 입력하고 비교할 수 있어요.</p></section>;
-  if (!meeting.candidateDates.length || !hours.length) return <section className="service-empty"><h2>입력할 날짜나 시간이 없어요.</h2><p>모임에서 후보 날짜와 시간을 먼저 설정해 주세요.</p></section>;
+  if (!members.length) return <section className="service-empty"><h2>함께할 사람을 먼저 선택하세요.</h2><Link className="btn btn--primary" href="/members/">참가자 선택 →</Link></section>;
+  if (!meeting.candidateDates.length || !hours.length) return <section className="service-empty"><h2>후보 날짜와 시간을 설정하세요.</h2><Link className="btn btn--primary" href="/archive/">모임 정보 수정 →</Link></section>;
   const canPaint = mode === "mine" && Boolean(target) && !targetLoading && !targetError && loaded.current && loadedEpoch.current === selectionEpoch.current && saveScope.current === targetScope;
-  return <section className="schedule-board" ref={board}><div className="schedule-controls"><div className="schedule-modes" role="tablist" aria-label="일정 보기"><button type="button" role="tab" aria-selected={mode === "mine"} className={mode === "mine" ? "active" : ""} onClick={() => setMode("mine")}>참가자 일정 입력</button><button type="button" role="tab" aria-selected={mode === "group"} className={mode === "group" ? "active" : ""} onClick={() => setMode("group")}>모두 비교 <span>{members.length}</span></button></div>{mode === "mine" ? <div>{editableMembers.length <= 6 ? <div className="participant-buttons" role="group" aria-label="일정 입력 대상">{editableMembers.map(member => <button type="button" key={member.id} aria-pressed={targetId === member.id} onClick={() => selectTarget({ target: { value: member.id } })}>{member.displayName}</button>)}</div> : <label className="meeting-selector">입력 대상<select value={targetId} disabled={!editableMembers.length} onChange={selectTarget}>{editableMembers.length ? editableMembers.map((member) => <option key={member.id} value={member.id}>{member.displayName}{member.id === user.uid ? " (나)" : member.kind === "guest" ? " (게스트)" : ""}</option>) : <option value="">입력 가능한 멤버가 없어요</option>}</select></label>}<div className="schedule-brushes" aria-label="입력 상태"><button type="button" className={`available ${brush === "available" ? "active" : ""}`} aria-pressed={brush === "available"} disabled={!canPaint} onClick={() => setBrush("available")}><i />가능해요</button><button type="button" className={`unavailable ${brush === "unavailable" ? "active" : ""}`} aria-pressed={brush === "unavailable"} disabled={!canPaint} onClick={() => setBrush("unavailable")}><i />어려워요</button></div></div> : <div className="schedule-legend"><span><i className="available" />가능</span><span><i className="unavailable" />어려움</span><span><i />미정</span></div>}</div><div className="schedule-day-tabs" role="tablist" aria-label="후보 날짜">{meeting.candidateDates.map((candidate) => <button type="button" role="tab" aria-selected={date === candidate} className={date === candidate ? "active" : ""} onClick={() => setDate(candidate)} key={candidate}><strong>{dateLabel(candidate)}</strong></button>)}</div>{targetError && mode === "mine" && <div className="subscription-error" role="alert"><span>{targetError}</span><button type="button" onClick={() => { resetTarget(targetId); setTargetRetry((value) => value + 1); }}>다시 시도</button></div>}{responsesError && mode === "group" && <div className="subscription-error" role="alert"><span>{responsesError}</span><button type="button" onClick={() => setResponsesRetry((value) => value + 1)}>다시 시도</button></div>}{mode === "mine" && targetLoading && <div className="service-empty" role="status">선택한 일정 응답을 불러오는 중이에요.</div>}{mode === "group" && !responsesLoaded && !responsesError ? <div className="service-empty" role="status">모두의 일정 응답을 불러오는 중이에요.</div> : mode !== "group" || responsesLoaded ? <div className="schedule-grid-scroll"><div className="schedule-grid" style={{ "--schedule-hours": hours.length }}><div className="schedule-corner">이름</div>{hours.map((hour) => <div className="schedule-hour" key={hour}><strong>{hour}</strong><span>시</span></div>)}{visibleResponses.map((response) => <ScheduleRow key={response.id} name={`${response.displayName}${response.id === user.uid ? " (나)" : ""}`} availability={response.availability ?? {}} date={date} hours={hours} editable={canPaint} onPaint={paint} painting={painting} lastPainted={lastPainted} />)}{mode === "group" && <SummaryRow responses={groupResponses} date={date} hours={hours} />}</div></div> : null}<footer className="schedule-help"><p><strong>{mode === "mine" ? target ? "칸을 누르거나 드래그해서 표시하세요." : "먼저 모임에 참가자를 추가해 주세요." : "모든 활성 멤버의 입력을 비교해요."}</strong><span>{mode === "mine" ? "선택한 상태로 입력되며, 0.3초 뒤 저장돼요." : "응답하지 않은 멤버는 미정으로 보여요."}</span></p>{mode === "mine" && target && <span className={`schedule-saved ${saveState}`} aria-live="polite">{saveState === "saving" ? "저장 중" : saveState === "error" ? "저장 실패 · 다시 입력해 주세요" : "저장됨"}</span>}</footer></section>;
+  return <section className="availability-board">
+    <div className="availability-toolbar">
+      <div className="availability-modes" role="group" aria-label="일정 보기"><button className="btn" type="button" aria-pressed={mode === "mine"} onClick={() => setMode("mine")}>일정 입력</button><button className="btn" type="button" aria-pressed={mode === "group"} onClick={() => setMode("group")}>모두 비교</button></div>
+      {mode === "mine" && target && <div className="availability-save" role="status"><span className={`schedule-saved ${saveState}`}>{targetLoading ? "불러오는 중" : saveState === "saving" ? "저장 중…" : saveState === "error" ? "저장하지 못했어요" : "저장됨"}</span>{saveState === "error" && <button className="btn btn--ghost" type="button" onClick={() => writerRef.current?.flush().catch(() => {})}>다시 저장</button>}</div>}
+    </div>
+    {mode === "mine" && <div className="availability-input-controls">
+      {editableMembers.length <= 6 ? <div className="participant-buttons" role="group" aria-label="일정 입력 대상">{editableMembers.map(member => <button type="button" key={member.id} aria-pressed={targetId === member.id} onClick={() => { if (targetId !== member.id) resetTarget(member.id); }}>{member.displayName}</button>)}</div> : <label className="availability-member-label">참가자<select value={targetId} onChange={selectTarget}>{editableMembers.map(member => <option key={member.id} value={member.id}>{member.displayName}</option>)}</select></label>}
+    </div>}
+    {mode === "mine" && <p className="availability-instruction">누를 때마다 가능 → 어려움 → 빈칸으로 바뀌고 자동 저장돼요.</p>}
+    {targetError && mode === "mine" && <div className="subscription-error" role="alert"><span>{targetError}</span><button type="button" onClick={() => { resetTarget(targetId); setTargetRetry(value => value + 1); }}>다시 시도</button></div>}
+    {responsesError && mode === "group" && <div className="subscription-error" role="alert"><span>{responsesError}</span><button type="button" onClick={() => setResponsesRetry(value => value + 1)}>다시 시도</button></div>}
+    {mode === "group" && !responsesLoaded && !responsesError ? <p role="status">모두의 응답을 불러오는 중이에요.</p> : mode === "mine" || responsesLoaded ? <div className={`availability-layout ${mode === "group" ? "comparing" : ""}`}>
+      <div className="availability-scroll"><table className="availability-grid" style={{ minWidth: 72 + meeting.candidateDates.length * 132 }}><caption className="sr-only">{mode === "mine" ? `${target?.displayName ?? "참가자"}의 시간별 가능 여부` : "시간별 함께 가능한 인원"}</caption>
+        <thead><tr><th scope="col">시간</th>{meeting.candidateDates.map(day => <th scope="col" key={day}><strong>{dateLabel(day)}</strong><span>{new Date(`${day}T00:00:00Z`).toLocaleDateString("ko-KR", { weekday: "long", timeZone: "UTC" })}</span></th>)}</tr></thead>
+        <tbody>{hours.map(hour => <tr key={hour}><th scope="row">{String(hour).padStart(2, "0")}:00</th>{meeting.candidateDates.map(day => {
+          const id = slotId(day, hour);
+          const state = availability[id] ?? "undecided";
+          const groups = availabilityGroups(groupResponses, id);
+          const count = groups.available.length;
+          return <td key={day}>{mode === "mine" ? <button className={`availability-cell ${state} ${canPaint ? "editable" : ""}`} type="button" data-slot={id} disabled={!canPaint} aria-label={`${target?.displayName ?? "참가자"}, ${dateLabel(day)} ${hour}시, ${stateLabel[state] ?? stateLabel.undecided}`} onClick={() => cycleSlot(id)}>{state === "available" ? "✓ 가능" : state === "unavailable" ? "− 어려움" : ""}</button> : <button className={`availability-cell comparison ${count === members.length ? "all-available" : count > 0 ? "some-available" : ""}`} type="button" aria-pressed={detail.day === day && detail.hour === hour} aria-label={`${dateLabel(day)} ${hour}시, ${members.length}명 중 ${count}명 가능`} onClick={() => selectSlot(day, hour)}><strong>{count}</strong><span>/ {members.length}명</span></button>}</td>;
+        })}</tr>)}</tbody>
+      </table></div>
+      {mode === "group" && <aside className="availability-detail availability-detail-desktop" aria-label="선택한 시간의 참가자 응답"><ScheduleDetails day={detail.day} hour={detail.hour} groups={detailGroups} /></aside>}
+    </div> : null}
+    <dialog className="availability-dialog" ref={detailDialog} aria-label="선택한 시간의 참가자 응답"><div className="availability-detail"><ScheduleDetails day={detail.day} hour={detail.hour} groups={detailGroups} /><button className="btn btn--primary" type="button" onClick={() => detailDialog.current.close()}>닫기</button></div></dialog>
+  </section>;
 }
 
-function ScheduleRow({ name, availability, date, hours, editable, onPaint, painting, lastPainted }) {
-  const labelName = name.replace(" (나)", "");
-  return <><div className="schedule-person"><i className="avatar">{name[0]}</i><strong>{name}</strong></div>{hours.map((hour) => { const id = slotId(date, hour); const state = availability[id] ?? "undecided"; return <button type="button" data-slot={id} className={`schedule-slot ${state} ${editable ? "editable" : ""}`} disabled={!editable} key={id} aria-label={`${labelName}, ${dateLabel(date)} ${hour}시, ${stateLabel[state]}`} onPointerDown={editable ? (event) => { event.preventDefault(); painting.current = true; lastPainted.current = id; onPaint(id); } : undefined} onClick={editable ? () => onPaint(id) : undefined}><span>{state === "available" ? "✓" : state === "unavailable" ? "—" : ""}</span></button>; })}</>;
-}
-
-function SummaryRow({ responses, date, hours }) {
-  return <><div className="schedule-person summary"><span>함께 가능</span><strong>인원</strong></div>{hours.map((hour) => { const id = slotId(date, hour); const count = responses.filter((response) => response.availability?.[id] === "available").length; return <div className="schedule-summary-slot" key={id}><strong>{count}</strong><span>명</span></div>; })}</>;
+function ScheduleDetails({ day, hour, groups }) {
+  if (!day || hour == null) return null;
+  return <Fragment><h2 aria-live="polite">{dateLabel(day)} · {hour}:00–{hour + 1}:00</h2>{Object.entries(groups).map(([state, people]) => <section key={state} className={state}><h3>{state === "available" ? "가능" : state === "unavailable" ? "어려움" : "미정"} <span>{people.length}명</span></h3>{people.length ? <ul>{people.map(person => <li key={person.id}>{person.displayName}</li>)}</ul> : <p>없음</p>}</section>)}</Fragment>;
 }

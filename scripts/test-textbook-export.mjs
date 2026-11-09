@@ -15,11 +15,18 @@ assert.throws(() => selectedResearchPages([{ ...source, end: 85.5 }]), /쪽수�
 assert.throws(() => selectedResearchPages([]), /하나 이상/);
 assert.throws(() => selectedResearchPages([{ ...source, printedEnd: 110, end: 94 }]), /총 10쪽/);
 assert.equal(selectedResearchPages([source, { ...source, publisher: "리베르스쿨" }]).length, 4);
-const viewer = { closest: () => ({ getBoundingClientRect: () => ({ top: 100, bottom: 640, left: 0, right: 640 }) }), querySelectorAll: () => [
+const viewer = { ownerDocument: { documentElement: { clientHeight: 640 } }, closest: () => ({ getBoundingClientRect: () => ({ top: 100, bottom: 640, left: 0, right: 640 }) }), querySelectorAll: () => [
   { dataset: { pdfSheet: "3" }, getBoundingClientRect: () => ({ top: -200, bottom: 40, left: 0, right: 200 }) },
   { dataset: { pdfSheet: "4" }, getBoundingClientRect: () => ({ top: 140, bottom: 600, left: 0, right: 200 }) },
 ] };
 assert.deepEqual(currentResearchRange(viewer, source, 2), { start: 86, end: 87 }, "Current spread follows scroll position");
+viewer.closest = () => ({ getBoundingClientRect: () => ({ top: -1000, bottom: 2000, left: 0, right: 640 }) });
+viewer.querySelectorAll = () => [
+  { dataset: { pdfSheet: "1" }, getBoundingClientRect: () => ({ top: -1000, bottom: -500, left: 0, right: 200 }) },
+  { dataset: { pdfSheet: "3" }, getBoundingClientRect: () => ({ top: -100, bottom: 400, left: 0, right: 200 }) },
+  { dataset: { pdfSheet: "5" }, getBoundingClientRect: () => ({ top: 700, bottom: 1200, left: 0, right: 200 }) },
+];
+assert.deepEqual(currentResearchRange(viewer, source, 1), { start: 86, end: 86 }, "Current page follows the document viewport in a fully expanded textbook");
 assert.deepEqual(currentResearchRange(null, { ...source, printedEnd: 84 }, 2), { start: 84, end: 84 }, "Odd last pages remain valid");
 const prompt = researchPrompt([{ ...pages[0], filename: "changbi_p84.png", text: "사회 불평등" }], "자료를 비교해줘");
 assert.match(prompt, /창비.*통합사회2 교사용.*2022 개정/);

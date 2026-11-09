@@ -1,7 +1,7 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getApps, initializeApp } from "firebase/app";
+import { getAuth, initializeAuth, inMemoryPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { isLocalPreview } from "./bungmo/local-preview.js";
+import { isLocalPreview, isLocalOperator } from "./bungmo/local-preview.js";
 
 const firebaseConfig = {
   projectId: "yadoran-2025",
@@ -13,9 +13,11 @@ const firebaseConfig = {
   messagingSenderId: "266288546185"
 };
 
-export const firebaseApp = typeof window === "undefined" || isLocalPreview() ? null : (getApps().length ? getApp() : initializeApp(firebaseConfig));
+const localOperator = isLocalOperator();
+const localApp = () => getApps().find(app => app.name === 'booong-local-operator') || initializeApp(firebaseConfig, 'booong-local-operator');
+export const firebaseApp = typeof window === "undefined" || isLocalPreview() ? null : localOperator ? localApp() : (getApps().find(app => app.name === '[DEFAULT]') || initializeApp(firebaseConfig));
 
-export const auth = firebaseApp && getAuth(firebaseApp);
+export const auth = firebaseApp && (localOperator ? initializeAuth(firebaseApp, { persistence: inMemoryPersistence }) : getAuth(firebaseApp));
 const dataApp = firebaseApp && (getApps().find(app => app.name === "booong-bungmo-data") || initializeApp(firebaseConfig, "booong-bungmo-data"));
 export const dataAuth = dataApp && getAuth(dataApp);
 export const db = dataApp && getFirestore(dataApp);

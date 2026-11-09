@@ -13,6 +13,21 @@ function field(text, value = '', multiline = false) {
 function link(text, href, className = 'button') { const node = el('a', className, text); node.href = href; return node; }
 const QUESTION_TYPES = [['choice', '객관식'], ['multiple', '복수 선택'], ['scale', '5점 척도'], ['text', '주관식']];
 
+function renderSurveyResponses(root, survey, data) {
+  root.replaceChildren(el('h2', '', `응답 ${data.responses.length}개`));
+  data.responses.forEach((response, index) => {
+    const card = el('article', 'survey-result-card'), answers = el('dl', 'survey-response-details');
+    card.append(el('h3', '', `응답 ${index + 1}`));
+    for (const question of survey.questions) {
+      const value = response.answers[question.id];
+      const answer = Array.isArray(value) ? value.join(', ') : question.type === 'scale' && value ? `${value}점` : value;
+      answers.append(el('dt', '', question.title), el('dd', '', answer || '미응답'));
+    }
+    card.append(answers);root.append(card);
+  });
+  if (!data.responses.length) root.append(el('p', 'survey-empty', '아직 응답이 없습니다.'));
+}
+
 export function renderSurveyResults(root, data) {
   root.replaceChildren(el('h2', '', `응답 ${data.total}개`));
   for (const [index, question] of data.questions.entries()) {
@@ -33,49 +48,21 @@ export function renderSurveyResults(root, data) {
   }
 }
 
-export async function mountSharedSurveyResults(root, sessionId, api) {
-  root.setAttribute('aria-label','설문 응답 집계');
-  let revision=null,loading=false;
-  const status=el('p','survey-status');status.setAttribute('role','status');
-  const refresh=async()=>{
-    if(loading)return;loading=true;
-    try{
-      const {surveys}=await api(`/api/surveys?session=${encodeURIComponent(sessionId)}`);
-      const visible=surveys.filter(survey=>survey.published&&survey.shareResults);
-      const next=JSON.stringify(visible.map(survey=>[survey.id,survey.revision]));
-      if(next===revision){status.textContent='';return;}
-      const results=await Promise.all(visible.map(survey=>api(`/api/surveys/${encodeURIComponent(survey.id)}/results?session=${encodeURIComponent(sessionId)}`)));
-      if(!root.isConnected)return;
-      root.replaceChildren();root.hidden=!visible.length;
-      visible.forEach((survey,index)=>{
-        const section=el('section','survey-shared-result'),heading=el('div','survey-row');
-        const url=new URL('/rice-basket/',location.href);url.search=new URLSearchParams({p:'page-4a2b86a58156',s:sessionId,survey:survey.id});
-        heading.append(el('h2','',survey.title),link('설문 응답',url.href));
-        const body=el('div','survey-results');renderSurveyResults(body,results[index]);
-        section.append(heading,body);root.append(section);
-      });
-      status.textContent='';root.append(status);revision=next;
-    }catch(error){
-      // A sharing change can invalidate an in-flight result; never keep old answers visible after failure.
-      root.replaceChildren(status);root.hidden=false;status.textContent='설문 집계를 불러오지 못했습니다. 잠시 후 다시 확인합니다.';revision=null;
-    }finally{loading=false;}
-  };
-  await refresh();
-  const timer=setInterval(()=>{if(!root.isConnected)return clearInterval(timer);if(!document.hidden)refresh();},3000);
-}
-
-export async function mountSurvey(root, sessionId, api, sessionName = '') {
+export async function mountSurvey(root, sessionId, api, session = null) {
   root.classList.add('lp-survey-page');
   root.classList.remove('lp-standalone');
   const heading = root.querySelector('.lp-page-intro h1'), intro = root.querySelector('.lp-page-overview p');
+  const sessionName = session?.name || '';
   intro.textContent = '설문을 만들고, 응답을 모아 함께 살펴보세요.';
   const host = el('section', 'survey-host');root.append(host);
   const params = new URLSearchParams(location.search), id = params.get('survey');
+  let managing = params.has('admin') || params.has('manage') || !sessionId;
   let dirty = false;
   window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
   const urlFor = (survey = '', extra = {}) => {
     const url = new URL(location.href);
-    for (const key of ['survey', 'edit', 'view']) url.searchParams.delete(key);
+    for (const key of ['survey', 'edit', 'view', 'admin', 'manage']) url.searchParams.delete(key);
+    if (managing) url.searchParams.set('admin', '1');
     if (sessionId) url.searchParams.set('s', sessionId);
     if (survey) url.searchParams.set('survey', survey);
     for (const [key, value] of Object.entries(extra)) url.searchParams.set(key, value);
@@ -83,6 +70,23 @@ export async function mountSurvey(root, sessionId, api, sessionName = '') {
   };
   const scope = sessionId ? `?session=${encodeURIComponent(sessionId)}` : '';
   const showError = error => { host.replaceChildren(el('p', 'survey-error', error.message)); };
+  const publicUrlFor = survey => {
+    const url = new URL(urlFor(survey));
+    for (const key of ['admin', 'manage', 'edit', 'view']) url.searchParams.delete(key);
+    return url.href;
+  };
+  const copyLink = async (input, status, message) => {
+    try { await navigator.clipboard.writeText(input.value);status.textContent = message; }
+    catch { input.focus();input.select();status.textContent = '선택된 주소를 복사해 주세요.'; }
+  };
+  const summaryCard = (survey, extra = {}, heading = 'h2') => {
+    const card = el('article', 'survey-card survey-summary'), content = el('div', 'survey-summary-content');
+    content.append(el('p', 'survey-meta', `응답 ${survey.total}개`), el(heading, '', survey.title));
+    if (survey.description) content.append(el('p', 'survey-summary-description', survey.description));
+    const actions = el('div', 'survey-row');
+    actions.append(link(extra.view === 'results' ? '결과 보기' : '설문 열기', urlFor(survey.id, extra)));
+    card.append(content, actions);return card;
+  };
 
   function editor(survey) {
     heading.textContent = survey ? '설문 편집' : '새 설문 만들기';
@@ -166,75 +170,117 @@ export async function mountSurvey(root, sessionId, api, sessionName = '') {
 
   try {
     if (!sessionId) {
-      heading.textContent = '연수별 설문';intro.textContent = '연수별로 설문을 만들고 관리하세요.';
+      heading.textContent = '연수별 설문 관리';intro.textContent = '연수별로 설문을 만들고 관리하세요.';
       let data;
       try { data = await api('/api/admin'); }
-      catch { host.append(el('p', 'survey-empty', '참가자는 안내받은 연수 공유 링크로 접속해 주세요.'), link('관리자 로그인', '/rice-basket/?admin=1&tab=classes'));return; }
-      const list = el('div', 'survey-list');
-      for (const session of [...data.sessions].sort((a, b) => (b.lectureDate || '').localeCompare(a.lectureDate || ''))) {
-        const card = el('article', 'survey-card');
-        const actions=el('div','survey-row');
-        actions.append(link('설문 만들기',urlFor('new',{s:session.id,manage:'1'}),'button primary'),link('설문 관리',urlFor('',{s:session.id,manage:'1'})));
-        card.append(el('p', 'survey-meta', [session.school, session.lectureDate].filter(Boolean).join(' · ')), el('h2', '', session.name),actions);list.append(card);
-      }
-      host.append(list);
-      if (!data.sessions.length) host.append(el('p', 'survey-empty', '먼저 연수를 만들어 주세요.'), link('연수 만들기', '/rice-basket/?admin=1&new=1'));
+      catch { host.append(el('p', 'survey-empty', '참가자는 안내받은 연수 공유 링크로 접속해 주세요.'), link('관리자 로그인', '/studies/?admin=1&tab=classes'));return; }
+      const list = el('div', 'survey-list survey-session-list');host.append(list);
+      await Promise.all([...data.sessions].sort((a, b) => (b.lectureDate || '').localeCompare(a.lectureDate || '')).map(async session => {
+        const card = el('article', 'survey-card survey-session'), header = el('div', 'survey-session-heading'), info = el('div', 'survey-summary-content');
+        info.append(el('p', 'survey-meta', [session.school, session.lectureDate].filter(Boolean).join(' · ')), el('h2', '', session.name));
+        header.append(info, link('설문 만들기',urlFor('new',{s:session.id}),'button primary'));
+        const surveys = el('div', 'survey-list survey-summaries');card.append(header, surveys);list.append(card);
+        const load = async () => {
+          const status = el('p', 'survey-status', '설문을 불러오는 중…');status.setAttribute('role', 'status');surveys.replaceChildren(status);
+          try {
+            const data = await api(`/api/surveys?session=${encodeURIComponent(session.id)}`);
+            surveys.replaceChildren(...data.surveys.map(survey => summaryCard(survey, { s: session.id }, 'h3')));
+            if (!data.surveys.length) surveys.append(el('p', 'survey-status', '아직 만든 설문이 없습니다.'));
+          } catch (error) {
+            const retry = button('다시 불러오기');retry.onclick = load;
+            surveys.replaceChildren(el('p', 'survey-error', error.message), retry);
+          }
+        };
+        await load();
+      }));
+      if (!data.sessions.length) host.append(el('p', 'survey-empty', '먼저 연수를 만들어 주세요.'), link('연수 만들기', '/studies/?admin=1&new=1'));
       return;
     }
     if (!id || id === 'new') {
       const data = await api(`/api/surveys${scope}`);
+      managing = data.admin;
       if (id === 'new') {
         if (!data.admin) throw new Error('설문 작성은 관리자만 할 수 있습니다.');
         editor(null);return;
       }
-      if (sessionName) heading.textContent = `${sessionName} 설문`;
+      const resultsOnly = !data.admin && params.get('view') === 'results';
+      const surveys = resultsOnly ? data.surveys.filter(survey => survey.shareResults) : data.surveys;
+      if (resultsOnly) heading.textContent = `${sessionName ? sessionName + ' ' : ''}설문 결과`;
+      else if (sessionName) heading.textContent = `${sessionName} 설문`;
       intro.hidden = true;
-      if (!data.surveys.length) {
+      if (!surveys.length) {
         const empty = el('div', 'survey-list-empty');
-        empty.append(el('h2', '', data.admin ? '첫 설문을 만들어 보세요' : '아직 공개된 설문이 없습니다.'));
+        empty.append(el('h2', '', data.admin ? '첫 설문을 만들어 보세요' : resultsOnly ? '아직 공개된 설문 결과가 없습니다.' : '아직 공개된 설문이 없습니다.'));
         if (data.admin) empty.append(link('+ 새 설문 만들기', urlFor('new'), 'button primary'));
         host.append(empty);return;
       }
       const actions = el('div', 'survey-row survey-list-toolbar');
-      actions.append(el('p', '', `설문 ${data.surveys.length}개`));
+      actions.append(el('p', '', `설문 ${surveys.length}개`));
       if (data.admin) actions.append(link('+ 새 설문 만들기', urlFor('new'), 'button primary'));
       const list = el('div', 'survey-list survey-summaries');
-      for (const survey of data.surveys) {
-        const card = el('article', 'survey-card survey-summary'), content = el('div', 'survey-summary-content');
-        content.append(el('p', 'survey-meta', `${survey.open ? '응답 받는 중' : survey.published ? '마감' : '작성 중'} · 응답 ${survey.total}개`), el('h2', '', survey.title));
-        if (survey.description) content.append(el('p', 'survey-summary-description', survey.description));
-        card.append(content, link(data.admin ? '설문 관리' : '설문 열기', urlFor(survey.id)));
-        list.append(card);
-      }
+      for (const survey of surveys) list.append(summaryCard(survey, resultsOnly ? { view: 'results' } : {}));
       host.append(actions, list);return;
     }
     let survey = await api(`/api/surveys/${encodeURIComponent(id)}${scope}`);
+    managing = survey.admin;
     if (params.get('edit') === '1') {
       if (!survey.admin) throw new Error('설문 편집은 관리자만 할 수 있습니다.');
       editor(survey);return;
     }
     heading.textContent = survey.title;intro.textContent = survey.description;
-    const back = link('← 설문 목록', urlFor(), 'text-link');host.append(back);
+    const fromResults = !survey.admin && params.get('view') === 'results';
+    const back = link(fromResults ? '← 설문 결과 목록' : '← 설문 목록', urlFor('', fromResults ? { view: 'results' } : {}), 'text-link');
+    const configure = button('설정');
+    if (survey.admin) {
+      root.classList.add('lp-survey-admin');
+      const header = root.querySelector('.lp-page-intro'), overview = root.querySelector('.lp-page-overview');
+      const titleRow = el('div', 'survey-detail-heading');titleRow.append(heading, configure);
+      const context = el('div', 'survey-context');context.setAttribute('aria-label', '소속 연수');
+      if (sessionName) context.append(el('strong', '', sessionName));
+      const details = [session?.school, session?.lectureDate?.replaceAll('-', '.')].filter(Boolean).join(' · ');
+      if (details) context.append(el('span', '', details));
+      context.hidden = !sessionName && !details;overview.hidden = !survey.description;
+      header.replaceChildren(back, context, titleRow, overview);
+    } else host.append(back);
     const status = el('p', 'survey-status');status.setAttribute('role', 'status');
     const management = el('div', 'survey-management');
-    const open = button(''), share = button('공유 화면에 집계 공개');
-    const shareBox = field('응답 링크');shareBox.input.readOnly = true;const shareUrl = new URL(urlFor(survey.id));for(const key of ['admin','manage','edit','view'])shareUrl.searchParams.delete(key);shareBox.input.value = shareUrl.href;
-    const copy = button('링크 복사');
+    const share = button('참가자 공개'), privateResults = button('운영자만');
+    const shareBox = field('공개 설문 링크');shareBox.input.readOnly = true;shareBox.input.value = publicUrlFor(survey.id);
+    const copy = button('설문 링크 복사', 'button primary');shareBox.label.hidden = true;shareBox.label.classList.add('survey-link-recovery');
     copy.onclick = async () => {
-      try { await navigator.clipboard.writeText(shareBox.input.value);status.textContent = '응답 링크를 복사했습니다.'; }
-      catch { shareBox.input.focus();shareBox.input.select();status.textContent = '선택된 주소를 복사해 주세요.'; }
+      try { await navigator.clipboard.writeText(shareBox.input.value);shareBox.label.hidden = true;status.textContent = '설문 링크를 복사했습니다.'; }
+      catch { shareBox.label.hidden = false;shareBox.input.focus();shareBox.input.select();status.textContent = '선택된 주소를 복사해 주세요.'; }
     };
-    const shareRow = el('div', 'survey-share');shareRow.append(shareBox.label, copy);
-    const settings = el('div', 'survey-row');settings.append(open, link('설문 편집', urlFor(survey.id, { edit: '1' })), share);
-    management.append(settings, shareRow);management.hidden = !survey.admin;host.append(management);
+    const preview = link('참가자 설문 열기 ↗', shareBox.input.value);preview.target = '_blank';preview.rel = 'noopener noreferrer';
+    const toolbar = el('div', 'survey-detail-toolbar'), linkActions = el('div', 'survey-row');
+    linkActions.append(copy, preview);toolbar.append(linkActions);
+    const settings = el('div', 'survey-settings'), visibility = el('div', 'survey-setting');
+    const visibilityChoices = el('div', 'survey-setting-choices');visibilityChoices.setAttribute('role', 'group');visibilityChoices.setAttribute('aria-label', '결과 공개');
+    visibilityChoices.append(privateResults, share);visibility.append(el('h2', '', '결과 공개'), visibilityChoices);
+    const privacy = el('p', 'survey-setting-help', '참가자에게 공개하면 설문의 결과 보기에서 집계와 주관식 답변을 볼 수 있습니다.');
+    visibility.append(privacy);settings.append(visibility);
+    management.append(settings);management.hidden = !survey.admin;
+    const dialog = el('dialog', 'confirm-dialog survey-settings-dialog'), dialogHeading = el('div', 'survey-dialog-heading'), dismiss = button('닫기');
+    const dialogTitle = el('h2', '', '설문 설정');dialogTitle.id = 'survey-settings-heading';dialog.setAttribute('aria-labelledby', dialogTitle.id);
+    const settingsStatus = el('p', 'survey-status');settingsStatus.setAttribute('role', 'status');
+    const editSurvey = link('설문 편집', urlFor(survey.id, { edit: '1' })), dialogActions = el('div', 'survey-dialog-actions');dialogActions.append(editSurvey);
+    dialogHeading.append(dialogTitle, dismiss);dialog.append(dialogHeading, management, settingsStatus, dialogActions);
+    configure.onclick = () => { settingsStatus.textContent = '';dialog.showModal(); };
+    dismiss.onclick = () => dialog.close();
+    dialog.oncancel = event => { if (share.disabled) event.preventDefault(); };
+    editSurvey.onclick = event => { if (share.disabled) event.preventDefault(); };
+    if (survey.admin) host.append(toolbar, shareBox.label, dialog);else host.append(management);
 
     const tabs = el('div', 'survey-tabs');tabs.setAttribute('role', 'group');tabs.setAttribute('aria-label', '설문 화면');
-    const answerTab = button('설문 응답'), resultsTab = button('결과 보기');tabs.append(answerTab, resultsTab);host.append(tabs, status);
-    const form = el('form', 'survey-answer'), results = el('div', 'survey-results');
+    const answerTab = button('설문 응답'), resultsTab = button('결과 보기'), responsesTab = button('개별 답변');responsesTab.hidden = !survey.admin;
+    answerTab.hidden = survey.admin;
+    tabs.append(answerTab, resultsTab, responsesTab);tabs.hidden = survey.admin;host.append(tabs, status);
+    const form = el('form', 'survey-answer'), results = el('div', 'survey-results'), responses = el('div', 'survey-results survey-responses');responses.hidden = true;
     const disclosure = el('p', 'survey-disclosure');
     const fields = el('fieldset', 'survey-answer-fields'), submit = button('응답 제출', 'button primary'), edit = button('내 응답 수정');edit.hidden = true;submit.type = 'submit';
+    fields.disabled = submit.disabled = true;
     const controls = new Map();
-    for (const [index, question] of survey.questions.entries()) {
+    for (const [index, question] of (survey.admin ? [] : survey.questions).entries()) {
       const card = el('fieldset', 'survey-question');
       const hints = [question.type === 'multiple' ? '복수 선택' : '', question.required ? '필수' : ''].filter(Boolean);
       card.append(el('legend', '', `${index + 1}. ${question.title}${hints.length ? ` (${hints.join(' · ')})` : ''}`));
@@ -253,68 +299,102 @@ export async function mountSurvey(root, sessionId, api, sessionName = '') {
       }
       controls.set(question.id, inputs);fields.append(card);
     }
-    form.append(disclosure, fields, submit, edit);host.append(form, results);
-    let submitted = false, mode = params.get('view') === 'results' || survey.admin && params.get('view') !== 'answer' ? 'results' : 'answer', resultRevision = null, loading = false;
+    const personalLink = el('div', 'survey-personal-link'), personalBox = field('내 응답 수정 링크'), copyPersonal = button('내 수정 링크 복사');
+    personalBox.input.readOnly = true;personalLink.hidden = true;
+    const personalRow = el('div', 'survey-share');personalRow.append(personalBox.label, copyPersonal);
+    personalLink.append(personalRow, el('p', 'survey-disclosure', '다른 기기에서 수정하려면 이 링크를 보관하세요. 링크를 가진 사람은 내 응답을 보고 수정할 수 있습니다.'));
+    form.append(disclosure, fields, submit, edit, personalLink);host.append(form, results, responses);
+    let submitted = false, hasResponse = false, resultRevision = null, responseRevision = null, loading = false;
+    let mode = survey.admin ? 'responses' : params.get('view') || 'answer';
+    if (!['answer', 'results', 'responses'].includes(mode)) mode = 'answer';
     const key = `survey-response:${survey.id}`;
-    let token;
-    try { token = localStorage.getItem(key); } catch {}
-    if (!/^[a-f0-9]{32}$/.test(token || '')) {
+    const incomingToken = survey.admin ? null : new URLSearchParams(new URL(location.href).hash.slice(1)).get('response');
+    if (incomingToken !== null && !/^[a-f0-9]{32}$/.test(incomingToken)) throw new Error('내 응답 수정 링크가 올바르지 않습니다. 보관한 링크를 다시 확인해 주세요.');
+    let token = incomingToken;
+    if (!survey.admin && !token) try { token = localStorage.getItem(key); } catch {}
+    if (!survey.admin && !/^[a-f0-9]{32}$/.test(token || '')) {
       token = [...crypto.getRandomValues(new Uint8Array(16))].map(value => value.toString(16).padStart(2, '0')).join('');
       try { localStorage.setItem(key, token); } catch {}
     }
+    if (!survey.admin) {
+      const personalUrl = new URL(publicUrlFor(survey.id));personalUrl.hash = new URLSearchParams({ response: token }).toString();personalBox.input.value = personalUrl.href;
+    }
+    copyPersonal.onclick = () => copyLink(personalBox.input, status, '내 응답 수정 링크를 복사했습니다.');
     const paintState = () => {
-      open.textContent = survey.open ? '응답 마감' : '응답 받기';share.setAttribute('aria-pressed',String(survey.shareResults));
-      disclosure.textContent=survey.shareResults?'응답은 연수 공유 화면에 이름 없이 집계됩니다. 이 브라우저에서는 내 응답을 확인하고 수정할 수 있습니다.':'응답은 운영자만 확인할 수 있습니다. 이 브라우저에서는 내 응답을 확인하고 수정할 수 있습니다.';
-      fields.disabled = !survey.open || submitted;submit.hidden = submitted;submit.disabled = !survey.open;
-      edit.hidden = !submitted || !survey.open;resultsTab.hidden = !survey.admin&&!survey.shareResults;
-      if (!survey.open) status.textContent = survey.published ? '마감된 설문입니다.' : '아직 응답을 열지 않았습니다.';
+      share.setAttribute('aria-pressed',String(survey.shareResults));privateResults.setAttribute('aria-pressed',String(!survey.shareResults));
+      disclosure.textContent=(survey.shareResults?'응답은 설문의 결과 보기에서 이름 없이 집계됩니다.':'응답은 운영자만 확인할 수 있습니다.')+' 이 브라우저나 내 수정 링크에서 언제든 답을 수정할 수 있습니다.';
+      fields.disabled = submitted;submit.hidden = submitted;submit.disabled = false;
+      submit.textContent = hasResponse ? '수정 저장' : '응답 제출';
+      edit.hidden = !submitted;personalLink.hidden = !hasResponse;resultsTab.hidden = survey.admin || !survey.shareResults;
     };
     const refreshResults = async () => {
       if ((!survey.admin&&!survey.shareResults) || loading) return;loading = true;
       try {
         const data = await api(`/api/surveys/${survey.id}/results${scope}${resultRevision === null ? '' : `&revision=${resultRevision}`}`);
         if (data.unchanged) return;
-        resultRevision = data.revision;survey.open = data.open;paintState();
+        resultRevision = data.revision;paintState();
         renderSurveyResults(results,data);
       } catch (error) { results.replaceChildren(el('p', 'survey-error', error.message));resultRevision = null; }
       finally { loading = false; }
     };
+    const refreshResponses = async () => {
+      if (!survey.admin || loading) return;loading = true;
+      try {
+        const data = await api(`/api/surveys/${survey.id}/responses${scope}${responseRevision === null ? '' : `&revision=${responseRevision}`}`);
+        if (data.unchanged) return;
+        survey = { ...survey, ...data };paintState();
+        renderSurveyResponses(responses, survey, data);responseRevision = data.revision;
+      } catch (error) { responses.replaceChildren(el('p', 'survey-error', error.message));responseRevision = null; }
+      finally { loading = false; }
+    };
     const activate = next => {
-      mode = next === 'results' && !survey.admin&&!survey.shareResults ? 'answer' : next;form.hidden = mode !== 'answer';results.hidden = mode !== 'results';
-      answerTab.setAttribute('aria-pressed', String(mode === 'answer'));resultsTab.setAttribute('aria-pressed', String(mode === 'results'));
+      const denied = next === 'responses' && !survey.admin || next === 'results' && !survey.admin && !survey.shareResults;
+      mode = survey.admin ? 'responses' : denied ? 'answer' : next;
+      form.hidden = mode !== 'answer';results.hidden = mode !== 'results';responses.hidden = mode !== 'responses';
+      status.hidden = mode !== 'answer';
+      answerTab.setAttribute('aria-pressed', String(mode === 'answer'));resultsTab.setAttribute('aria-pressed', String(mode === 'results'));responsesTab.setAttribute('aria-pressed', String(mode === 'responses'));
       if (mode === 'results') refreshResults();
+      if (mode === 'responses') refreshResponses();
     };
     const settingsChange = async body => {
-      open.disabled = share.disabled = true;
-      try { survey = { ...survey, ...await api(`/api/surveys/${survey.id}${scope}`, 'PATCH', body) };status.textContent = '설정을 저장했습니다.';resultRevision = null;paintState(); }
-      catch (error) { status.textContent = error.message;paintState(); }
-      finally { open.disabled = share.disabled = false; }
+      share.disabled = privateResults.disabled = dismiss.disabled = true;
+      try { survey = { ...survey, ...await api(`/api/surveys/${survey.id}${scope}`, 'PATCH', body) };settingsStatus.textContent = '설정을 저장했습니다.';resultRevision = null;paintState(); }
+      catch (error) { settingsStatus.textContent = error.message;paintState(); }
+      finally { share.disabled = privateResults.disabled = dismiss.disabled = false; }
     };
-    open.onclick = () => settingsChange({ open: !survey.open });share.onclick = () => settingsChange({ shareResults: !survey.shareResults });
-    answerTab.onclick = () => activate('answer');resultsTab.onclick = () => activate('results');
+    share.onclick = () => { if (!survey.shareResults) return settingsChange({ shareResults: true }); };
+    privateResults.onclick = () => { if (survey.shareResults) return settingsChange({ shareResults: false }); };
+    answerTab.onclick = () => activate('answer');resultsTab.onclick = () => activate('results');responsesTab.onclick = () => activate('responses');
     edit.onclick = () => { submitted = false;paintState(); };
     form.onsubmit = async event => {
-      event.preventDefault();submit.disabled = true;status.textContent = '제출 중…';
+      event.preventDefault();if (survey.admin) return;submit.disabled = true;status.textContent = '제출 중…';
       const answers = Object.fromEntries(survey.questions.map(question => {
         const inputs = controls.get(question.id);
         return [question.id, question.type === 'multiple' ? inputs.filter(input => input.checked).map(input => input.value) : question.type === 'text' ? inputs[0].value : inputs.find(input => input.checked)?.value || ''];
       }));
       try {
         await api(`/api/surveys/${survey.id}/responses${scope}`, 'POST', { token, version: survey.version, answers });
-        submitted = true;dirty = false;resultRevision = null;paintState();status.textContent = '응답을 저장했습니다.';
-      } catch (error) { status.textContent = error.message;submit.disabled = !survey.open; }
+        submitted = true;hasResponse = true;dirty = false;resultRevision = responseRevision = null;paintState();status.textContent = '응답을 저장했습니다.';
+      } catch (error) { status.textContent = error.message;submit.disabled = false; }
     };
     form.addEventListener('input', () => { dirty = true; });
-    const mine = await api(`/api/surveys/${survey.id}/my-response${scope}`, 'POST', { token });
+    const mine = survey.admin ? { answers: null } : await api(`/api/surveys/${survey.id}/my-response${scope}`, 'POST', { token });
+    if (incomingToken && !mine.answers) throw new Error('이 수정 링크의 응답을 찾을 수 없습니다. 보관한 링크를 다시 확인해 주세요.');
     if (mine.answers) {
+      try { localStorage.setItem(key, token); } catch {}
       for (const question of survey.questions) for (const input of controls.get(question.id)) {
         if (question.type === 'multiple') input.checked = (mine.answers[question.id] || []).includes(input.value);
         else if (question.type === 'text') input.value = mine.answers[question.id] || '';
         else input.checked = input.value === mine.answers[question.id];
       }
-      submitted = true;status.textContent = '이 브라우저에서 제출한 응답입니다.';
+      submitted = hasResponse = true;status.textContent = '저장한 내 응답입니다. 언제든 수정할 수 있습니다.';
     }
     paintState();activate(mode);
-    setInterval(() => { if (mode === 'results' && !document.hidden) refreshResults(); }, 3000);
+    const timer = setInterval(() => {
+      if (!host.isConnected) return clearInterval(timer);
+      if (document.hidden) return;
+      if (mode === 'results') refreshResults();
+      if (mode === 'responses') refreshResponses();
+    }, 3000);
   } catch (error) { showError(error); }
 }

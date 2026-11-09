@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>시장 가격의 변동 · 교육과정 목업 | BOOONG</title>
+  <link rel="icon" href="../assets/favicon.svg">
+  <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="https://yadoran-2025.github.io/booong-design-system/releases/v2.0.0/booong.css">
+  <link rel="stylesheet" href="../css/font-overrides.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/notices.css">
+  <style>
+    .preview-note { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3) var(--space-8); background: var(--color-primary-subtle); color: var(--color-primary-text); font-size: var(--text-xs); }
+    .preview-note a { color: inherit; }
+    .curation-topbar, .subject-roller { position: static; }
+    .unit-tab:disabled, .unit-picker__middle button:disabled, .subject-roller button:disabled { cursor: default; opacity: 1; }
+    .curation-section-head .standards-open { margin-left: auto; font-size: var(--text-sm); }
+    .sample-caption { margin: 0 0 var(--space-4); color: var(--color-text-tertiary); font-size: var(--text-xs); }
+    .standards-dialog { width: min(880px, calc(100% - var(--space-8))); max-height: min(800px, calc(100dvh - var(--space-12))); margin: auto; padding: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-xl); background: var(--color-surface); color: var(--color-text-primary); box-shadow: var(--shadow-xl); }
+    .standards-dialog::backdrop { background: color-mix(in srgb, var(--color-text-primary) 42%, transparent); }
+    .standards-frame { display: flex; flex-direction: column; max-height: inherit; }
+    .standards-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding: var(--space-7) var(--space-8) var(--space-5); }
+    .standards-head small { color: var(--color-primary-text); font-size: var(--text-xs); font-weight: 650; }
+    .standards-head h2 { margin: var(--space-2) 0 0; font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.03em; }
+    .standards-head p { margin: var(--space-2) 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); }
+    .standards-head form { flex-shrink: 0; }
+    .standards-tabs { display: flex; gap: var(--space-6); padding: 0 var(--space-8); border-bottom: 1px solid var(--color-border); }
+    .standards-tabs button { min-height: var(--space-12); padding: var(--space-3) 0; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: 650; white-space: nowrap; }
+    .standards-tabs button[aria-selected="true"] { border-bottom-color: var(--color-primary); color: var(--color-primary-text); }
+    .standards-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--space-6) var(--space-8); }
+    .standards-body h3 { margin: 0; font-size: var(--text-base); font-weight: 750; }
+    .standards-intro { margin: var(--space-2) 0 var(--space-5); color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.7; }
+    .standards-items { display: grid; gap: var(--space-3); list-style: none; padding: 0; margin: 0; }
+    .standard-item { padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+    .standard-item h4 { margin: 0 0 var(--space-2); color: var(--color-primary-text); font-size: var(--text-sm); font-weight: 700; }
+    .standard-item p, .considerations li { margin: 0; font-size: var(--text-base); line-height: 1.85; word-break: keep-all; overflow-wrap: anywhere; }
+    .standard-item p { color: var(--color-text-primary); }
+    #panel-commentary .standard-item { border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; padding: var(--space-4) 0 var(--space-5); }
+    #panel-commentary .standard-item:last-child { border-bottom: 0; }
+    .considerations { display: grid; gap: var(--space-5); padding-left: var(--space-5); margin: 0; }
+    .considerations li::marker { color: var(--color-primary); }
+    .standards-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-8); border-top: 1px solid var(--color-border); background: var(--color-surface-subtle); }
+    .standards-foot p { margin: 0; color: var(--color-text-secondary); font-size: var(--text-xs); line-height: 1.6; }
+    .standards-foot button { flex-shrink: 0; font-size: var(--text-sm); }
+    @media (max-width: 760px) {
+      .preview-note { padding-inline: var(--space-4); }
+      .curation-section-head .standards-open { margin-left: 0; }
+      .standards-dialog { width: calc(100% - var(--space-4)); max-height: calc(100dvh - var(--space-8)); border-radius: var(--radius-lg); }
+      .standards-head { padding: var(--space-5) var(--space-5) var(--space-4); gap: var(--space-2); }
+      .standards-head h2 { font-size: var(--text-xl); }
+      .standards-tabs { gap: var(--space-4); padding-inline: var(--space-5); }
+      .standards-tabs button { font-size: var(--text-xs); }
+      .standards-body { padding: var(--space-5); }
+      .standard-item { padding: var(--space-4); }
+      .standards-foot { padding: var(--space-3) var(--space-5); }
+    }
+
+    .curation-middle-head .standards-open { margin-left: auto; font-size: var(--text-sm); }
+    .standards-dialog { width: min(1100px, calc(100% - var(--space-8))); max-height: calc(100dvh - var(--space-8)); }
+    .standards-tabs { gap: var(--space-6); }
+    .standard-item + h3 { margin-top: var(--space-6); }
+    #panel-standard .standard-item { margin-top: var(--space-4); }
+    .curriculum-action { color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-medium); padding-inline: var(--space-3); }
+    .curriculum-action:hover { color: var(--color-primary-text); }
+    .standard-code { display: inline-block; margin-bottom: var(--space-3); color: var(--color-primary-text); font-weight: 700; font-size: var(--text-sm); }
+    .source-locator { color: var(--color-text-tertiary); font-size: var(--text-xs); margin: var(--space-3) 0 0; }
+    .table-scroll { overflow-x: auto; border: 1px solid var(--color-border-strong); }
+    .curriculum-table { width: 100%; min-width: 800px; border-collapse: collapse; table-layout: fixed; font-size: var(--text-sm); line-height: 1.75; }
+    .curriculum-table caption { text-align: left; padding: var(--space-3); font-weight: 700; background: var(--color-surface-subtle); }
+    .curriculum-table th, .curriculum-table td { border: 1px solid var(--color-border-strong); padding: var(--space-3); vertical-align: middle; color: var(--color-text-primary); word-break: keep-all; overflow-wrap: anywhere; }
+    .curriculum-table th { background: var(--color-surface-sidebar); text-align: center; font-weight: 650; }
+    .curriculum-table ul { margin: 0; padding-left: var(--space-4); }
+    .curriculum-table .knowledge-label { width: 7%; }
+    .curriculum-table .topic-label { width: 10%; }
+    .curriculum-table mark { background: var(--color-highlight-bg); color: var(--color-text-primary); border-radius: var(--radius-sm); padding: var(--space-1); }
+    .curriculum-table .empty-cell { text-align: center; }
+    .table-note { margin: var(--space-3) 0 0; color: var(--color-text-secondary); font-size: var(--text-xs); line-height: 1.7; }
+    .considerations .unit-relevant { padding: var(--space-4); background: var(--color-highlight-bg); border-radius: var(--radius-md); }
+    .standards-foot a { font-size: var(--text-sm); }
+    @media (max-width: 760px) {
+      .standards-dialog { width: calc(100% - var(--space-4)); max-height: calc(100dvh - var(--space-4)); }
+      .standards-tabs { gap: var(--space-3); }
+      .standards-head h2 { font-size: var(--text-lg); }
+      .curation-middle-head .standards-open { margin-left: 0; }
+      .standards-foot { flex-wrap: wrap; }
+      .curriculum-table { min-width: 780px; }
+    }
+  </style>
+</head>
+<body class="curation-app">
+  <div class="curation-shell">
+    <aside class="preview-note"><span>단원 교육과정 목업 · 시장 가격의 변동의 ‘교육과정’ 버튼을 눌러보세요</span><a href="../index.html#lesson-library">현재 대시보드 ↗</a></aside>
+    <header class="curation-topbar">
+      <a class="curation-brand" href="../index.html"><span class="curation-brand__mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 15.5V11l2-2h3.5l1.5 1.5v5M10 9V5h3"/></svg></span><span><b>BOOONG</b><small>수업 준비실</small></span></a>
+      <label class="curation-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="주제, 단원, 수업 이름으로 찾기" aria-label="수업 검색, 목업에서는 사용할 수 없음" disabled></label>
+      <nav class="curation-topbar__actions" aria-label="빠른 이동"><a class="curation-topbar__favorites" href="../index.html?view=favorites">내 수업함 <b>0</b></a></nav>
+    </header>
+    <nav class="subject-roller" aria-label="과목"><div class="subject-roller__field" role="group" aria-label="중학교 과목"><button type="button" aria-pressed="false" disabled>사회1</button><button type="button" aria-pressed="true" disabled>사회2</button><button type="button" aria-pressed="false" disabled>사회2[15개정]</button></div></nav>
+    <main>
+      <section class="unit-workspace" aria-label="교육과정별 수업 탐색">
+        <aside class="unit-picker" aria-label="단원 목차">
+          <h2>단원 목차</h2>
+          <button class="unit-tab" type="button" aria-pressed="false" disabled><strong>전체 단원</strong></button>
+          <div class="unit-picker__chapter"><button class="unit-tab" type="button" aria-pressed="false" disabled><strong>III. 시장과 가격</strong><small>1</small></button><div class="unit-picker__middle" role="group" aria-label="중단원"><button type="button" disabled><span>1. 시장의 의미와 필요성</span></button><button type="button" disabled><span>2. 시장 가격의 결정</span></button><button type="button" aria-pressed="true" disabled><span>3. 시장 가격의 변동</span><small>1개</small></button></div></div>
+        </aside>
+        <div class="unit-detail" id="unit-detail">
+          <header class="curation-library-head"><div><h1>사회2 수업 모아보기</h1><p>과목과 단원에 맞는 수업을 한눈에 살펴보세요.</p></div><div class="curation-kind-filter" role="group" aria-label="자료 종류"><button type="button" aria-pressed="true" disabled>전체</button><button type="button" aria-pressed="false" disabled>수업</button><button type="button" aria-pressed="false" disabled>게임</button></div></header>
+          <p class="curation-library-status">시장 가격의 변동 · 수업 예시 1개</p>
+          <section class="curation-unit-section" aria-labelledby="library-unit-title">
+            <header class="curation-section-head"><h2 id="library-unit-title"><span>III.</span>시장과 가격</h2><span>중단원 3개 · 수업 예시 1개</span></header>
+            <div class="bundle-list" id="sample-lessons"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <footer class="curation-footer"><div class="curation-footer__identity"><strong>BOOONG <span>사회교육공동체</span></strong><p>우리는 함께일 때 강하다</p></div><p>수업 목록은 배치를 확인하기 위한 예시입니다.</p></footer>
+  </div>
+
+  <dialog class="standards-dialog" id="standards-dialog" aria-labelledby="standards-title">
+    <div class="standards-frame">
+      <header class="standards-head"><div><small>중학교 사회 · 2022 개정 교육과정</small><h2 id="standards-title">시장 가격의 변동</h2><p>사회2 · III. 시장과 가격 · 교육과정 원문</p></div><form method="dialog"><button class="btn btn--ghost curriculum-action" autofocus>닫기 <span aria-hidden="true">×</span></button></form></header>
+      <div class="standards-tabs" role="tablist" aria-label="교육과정 내용">
+        <button type="button" id="tab-standard" role="tab" aria-selected="true" aria-controls="panel-standard" tabindex="0">성취기준·해설</button>
+        <button type="button" id="tab-considerations" role="tab" aria-selected="false" aria-controls="panel-considerations" tabindex="-1">적용 시 고려 사항</button>
+        <button type="button" id="tab-table" role="tab" aria-selected="false" aria-controls="panel-table" tabindex="-1">내용 체계표</button>
+      </div>
+      <div class="standards-body">
+        <section id="panel-standard" role="tabpanel" aria-labelledby="tab-standard" tabindex="0"><h3>성취기준</h3><div class="standard-item" id="standard-item"></div><h3>성취기준 해설</h3><p id="commentary-text" class="standards-intro"></p><p class="source-locator">성취기준: 인쇄 63쪽 · 해설: 인쇄 64쪽</p></section>
+        <section id="panel-considerations" role="tabpanel" aria-labelledby="tab-considerations" tabindex="0" hidden><h3>시장과 가격 · 대단원 공통</h3><p class="standards-intro">대단원의 고려 사항 5개를 모두 보여줍니다. 이 중단원의 가격 변동과 대응 방안을 직접 다룬 항목을 강조했습니다.</p><ul class="considerations" id="considerations-list"></ul><p class="source-locator">인쇄 64쪽</p></section>
+        <section id="panel-table" role="tabpanel" aria-labelledby="tab-table" tabindex="0" hidden><h3>경제 영역의 내용 체계</h3><p class="standards-intro">초·중학교 열과 병합 셀을 원문대로 유지했습니다. 중학교의 ‘시장 가격의 변동’을 강조했습니다.</p><div class="table-scroll" role="region" aria-label="경제 내용 체계표, 좁은 화면에서는 좌우로 스크롤" tabindex="0" id="content-table"></div><p class="table-note">경제 영역 공통 표입니다. 과정·기능과 가치·태도는 특정 중단원에만 한정되지 않습니다.<br>출처: 사회과 교육과정 인쇄 14쪽 · 강조 표시는 목업에서 추가했습니다.</p></section>
+      </div>
+      <footer class="standards-foot"><p id="copy-status" role="status">교육부 고시 제2022-33호 [별책 7]<br>사회과 교육과정 · 인쇄 63∼64쪽</p><a class="btn btn--ghost curriculum-action" id="source-link" href="market-price-source.pdf#page=2" target="_blank" rel="noopener">원문 보기 ↗</a></footer>
+    </div>
+  </dialog>
+  <script type="module">
+    import { escapeHtml } from '../js/utils.js';
+    const data = await fetch('./market-price-curriculum.json').then(response => { if (!response.ok) throw new Error('교육과정 예시를 불러오지 못했습니다.'); return response.json(); });
+    console.assert(data.unit.code === 46 && data.standard.code === '[9사(일사)09-03]' && data.considerations.items.length === 5, '단원·성취기준·고려사항 연결을 확인합니다.');
+    const e = escapeHtml;
+    const list = (items, highlight = false) => items.length ? `<ul>${items.map(text => `<li>${highlight && text === '시장 가격의 변동' ? `<mark>${e(text)}</mark>` : e(text)}</li>`).join('')}</ul>` : '<span>–</span>';
+    document.querySelector('#standard-item').innerHTML = `<span class="standard-code">${e(data.standard.code)}</span><p>${e(data.standard.text)}</p>`;
+    document.querySelector('#commentary-text').textContent = data.standard.commentary;
+    document.querySelector('#considerations-list').innerHTML = data.considerations.items.map((text, index) => `<li${index === 3 ? ' class="unit-relevant"' : ''}>${e(text)}</li>`).join('');
+    const t = data.contentTable;
+    document.querySelector('#content-table').innerHTML = `<table class="curriculum-table"><caption>(7) 경제</caption><colgroup><col style="width:7%"><col style="width:10%"><col style="width:26%"><col style="width:26%"><col style="width:31%"></colgroup><tbody>
+      <tr><th colspan="2" scope="row">핵심<br>아이디어</th><td colspan="3">${list(t.coreIdeas)}</td></tr>
+      <tr><th colspan="2" rowspan="3" scope="colgroup">범주</th><th colspan="3" scope="colgroup">내용 요소</th></tr>
+      <tr><th colspan="2" scope="colgroup">초등학교</th><th scope="colgroup">중학교</th></tr>
+      <tr><th scope="col">3~4학년</th><th scope="col">5~6학년</th><th scope="col">1~3학년</th></tr>
+      ${t.knowledge.map((row,index) => `<tr>${index === 0 ? '<th rowspan="3" scope="rowgroup">지식<br>⋅<br>이해</th>' : ''}<th scope="row">${e(row.topic)}</th><td class="${row.elementary34.length ? '' : 'empty-cell'}">${list(row.elementary34)}</td><td class="${row.elementary56.length ? '' : 'empty-cell'}">${list(row.elementary56)}</td><td>${list(row.middle,true)}</td></tr>`).join('')}
+      <tr><th colspan="2" scope="row">과정⋅기능</th><td colspan="2">${list(t.skills.elementary)}</td><td>${list(t.skills.middle)}</td></tr>
+      <tr><th colspan="2" scope="row">가치⋅태도</th><td colspan="2">${list(t.values.elementary)}</td><td>${list(t.values.middle)}</td></tr>
+    </tbody></table>`;
+    document.querySelector('#sample-lessons').innerHTML = `<section class="curation-middle-section"><header class="curation-middle-head"><h3>3. 시장 가격의 변동</h3><span>수업 예시 1개</span><button class="btn btn--ghost curriculum-action standards-open" type="button" aria-haspopup="dialog" aria-controls="standards-dialog">교육과정 <span aria-hidden="true">↗</span></button></header><article class="bundle-card has-cover"><figure class="bundle-card__cover"><img src="../assets/lesson-thumbnails/social-studies-default-v1.jpg" alt="" width="800" height="500"></figure><div class="bundle-card__content"><div class="bundle-card__badges"><span>목업용 수업 예시</span></div><h4>가격이 달라지면, 우리는 어떻게 선택할까?</h4><div class="bundle-card__description"><p>수요와 공급의 변화 사례를 살펴보고, 가계와 기업의 대응 방안을 탐색하는 수업</p></div><div class="bundle-actions"><span class="bundle-action is-disabled">수업 소개</span><span class="bundle-action is-disabled">자료 링크</span><span class="bundle-action is-disabled">활동지</span></div></div><footer class="bundle-card__meta"><span class="bundle-card__makers">BOOONG · 예시 자료</span><span class="bundle-card__stats">조회수 0 · 저장수 0</span></footer></article></section>`;
+    const dialog = document.querySelector('#standards-dialog');
+    const tabs = [...dialog.querySelectorAll('[role="tab"]')];
+    const opener = document.querySelector('.standards-open');
+    function selectTab(tab) {
+      tabs.forEach(button => { const selected = button === tab; button.setAttribute('aria-selected',String(selected)); button.tabIndex = selected ? 0 : -1; document.getElementById(button.getAttribute('aria-controls')).hidden = !selected; });
+      const table = tab.id === 'tab-table';
+      document.querySelector('#copy-status').innerHTML = `교육부 고시 제2022-33호 [별책 7]<br>사회과 교육과정 · 인쇄 ${table ? '14' : tab.id === 'tab-standard' ? '63∼64' : '64'}쪽`;
+      document.querySelector('#source-link').href = `${data.source.url}#page=${table ? 1 : tab.id === 'tab-standard' ? 2 : 3}`;
+      dialog.querySelector('.standards-body').scrollTop = 0;
+    }
+    opener.addEventListener('click',() => { selectTab(tabs[0]); dialog.showModal(); });
+    dialog.addEventListener('close',() => opener.focus());
+    tabs.forEach((tab,index) => {
+      tab.addEventListener('click',() => selectTab(tab));
+      tab.addEventListener('keydown',event => { if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; selectTab(tabs[next]); tabs[next].focus(); });
+    });
+  </script>
+</body>
+</html>

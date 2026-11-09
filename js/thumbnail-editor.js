@@ -1,7 +1,7 @@
 import { adminFetch, adminAccountId } from "./admin.js";
 import { renderResourceCard } from "./ui/dashboard.js";
 import { escapeHtml } from "./utils.js";
-import { thumbnailUrl, thumbnailCrop, encodeThumbnail, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, THUMBNAIL_MIME_TYPE, THUMBNAIL_QUALITY } from "./thumbnail-data.js";
+import { thumbnailUrl, thumbnailCrop, encodeThumbnail, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT } from "./thumbnail-data.js";
 
 export async function readThumbnailRecords(currentAccount = adminAccountId()) {
   if (adminAccountId() !== currentAccount) throw new Error("계정이 변경되었습니다. 새로고침해주세요.");
@@ -23,7 +23,7 @@ export async function saveThumbnail(id, bytes, restore, revision, currentAccount
     throw error;
   }
   if (adminAccountId() !== currentAccount || !result.thumbnail?.revision) throw new Error("계정이 변경되었거나 저장 결과를 확인하지 못했습니다. 새로고침해주세요.");
-  return result.thumbnail;
+  return { ...result.thumbnail, ...(result.warning ? { warning: result.warning } : {}) };
 }
 
 export function openThumbnailEditor({ root, item, record, account, opener, onSaved, onRefreshed, onClose }) {
@@ -34,15 +34,19 @@ export function openThumbnailEditor({ root, item, record, account, opener, onSav
   dialog.innerHTML = `<header><h2 id="thumbnail-editor-title">${escapeHtml(item.title)}</h2><form method="dialog"><button class="btn btn--ghost" aria-label="닫기">닫기 ×</button></form></header>
     <div class="thumbnail-editor__body"><section class="thumbnail-editor__tools" aria-label="이미지 편집">
       <div class="thumbnail-drop" data-thumbnail-drop><canvas width="800" height="500" aria-label="이미지 위치 조절. 드래그하거나 아래 위치 조절 막대를 사용하세요."></canvas></div>
-      <div class="thumbnail-file-actions"><button class="btn btn--secondary" type="button" data-choose-image>이미지 선택</button><button class="btn btn--secondary" type="button" data-paste-image>붙여넣기</button><input type="file" accept="image/png,image/jpeg,image/webp" data-thumbnail-file hidden><button class="btn btn--ghost" type="button" data-reset-crop>화면 맞춤</button></div>
-      <p class="thumbnail-status">이미지를 드래그하거나 캡처를 붙여넣을 수 있습니다.</p>
-      <div class="thumbnail-sliders"><label>확대<input aria-label="이미지 확대" type="range" min="1" max="4" step="0.05" value="1" data-crop="zoom"></label><label>가로 위치<input aria-label="가로 위치" type="range" min="0" max="1" step="0.01" value="0.5" data-crop="x"></label><label>세로 위치<input aria-label="세로 위치" type="range" min="0" max="1" step="0.01" value="0.5" data-crop="y"></label></div>
+      <div class="thumbnail-file-actions"><button class="btn btn--secondary" type="button" data-choose-image>이미지 선택</button><button class="btn btn--secondary" type="button" data-paste-image>붙여넣기</button><input type="file" accept="image/png,image/jpeg,image/webp" data-thumbnail-file hidden><button class="btn btn--secondary" type="button" data-fit-image>전체 보기</button><button class="btn btn--ghost" type="button" data-reset-crop>꽉 채우기</button></div>
+      <p class="thumbnail-status">드래그로 이동 · 마우스 휠로 확대·축소</p>
+      <div class="thumbnail-sliders"><label>확대<input aria-label="이미지 확대" type="range" min="0.1" max="6" step="0.01" value="1" data-crop="zoom"></label><label>가로 위치<input aria-label="가로 위치" type="range" min="0" max="1" step="0.01" value="0.5" data-crop="x"></label><label>세로 위치<input aria-label="세로 위치" type="range" min="0" max="1" step="0.01" value="0.5" data-crop="y"></label></div>
     </section><section class="thumbnail-editor__preview" aria-label="카드 미리보기"><h3>카드 미리보기</h3><div class="curation-app thumbnail-preview" inert>${renderResourceCard({ ...item, thumbnailUrl: thumbnailUrl(item, record) })}</div></section></div>
     <footer><p class="thumbnail-status" data-editor-status role="status" aria-live="polite"></p><button class="btn btn--secondary" type="button" data-editor-refresh hidden>최신 정보 불러오기</button><button class="btn btn--ghost" type="button" data-editor-cancel>취소</button><button class="btn btn--primary" type="button" data-save-thumbnail disabled>썸네일 저장</button></footer>`;
   root.appendChild(dialog);
   const canvas = dialog.querySelector("canvas"), context = canvas.getContext("2d");
   const status = dialog.querySelector("[data-editor-status]"), save = dialog.querySelector("[data-save-thumbnail]");
-  const preview = dialog.querySelector(".bundle-card__cover img");
+  const previewImage = dialog.querySelector(".bundle-card__cover img");
+  const preview = document.createElement("canvas");
+  preview.width = THUMBNAIL_WIDTH; preview.height = THUMBNAIL_HEIGHT;
+  preview.className = "thumbnail-preview__canvas";
+  const previewContext = preview.getContext("2d");
   const fileInput = dialog.querySelector("[data-thumbnail-file]");
   const crop = { zoom: 1, x: 0.5, y: 0.5 };
   let image, dirty = false, imageRequest = 0, revision = record?.revision || null, drag;
@@ -56,9 +60,11 @@ export function openThumbnailEditor({ root, item, record, account, opener, onSav
   function draw(changed = false) {
     if (!image || !active()) return;
     const { sx, sy, sw, sh } = thumbnailCrop(image.naturalWidth, image.naturalHeight, crop.zoom, crop.x, crop.y);
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, sx, sy, sw, sh, 0, 0, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
-    preview.src = canvas.toDataURL(THUMBNAIL_MIME_TYPE, THUMBNAIL_QUALITY);
+    if (previewImage.isConnected) previewImage.replaceWith(preview);
+    previewContext.drawImage(canvas, 0, 0);
     dirty ||= changed;
     save.disabled = busy || !dirty;
     dialog.querySelectorAll("[data-crop]").forEach(input => { input.value = crop[input.dataset.crop]; });
@@ -76,6 +82,7 @@ export function openThumbnailEditor({ root, item, record, account, opener, onSav
       if (!active() || request !== imageRequest) return;
       if (next.naturalWidth * next.naturalHeight > 40_000_000) throw new Error("이미지가 너무 큽니다. 크기를 줄여 다시 선택해주세요.");
       image = next;
+      dialog.querySelector('[data-crop="zoom"]').min = Math.min(0.1, Math.min(THUMBNAIL_WIDTH / image.naturalWidth, THUMBNAIL_HEIGHT / image.naturalHeight) / Math.max(THUMBNAIL_WIDTH / image.naturalWidth, THUMBNAIL_HEIGHT / image.naturalHeight));
       Object.assign(crop, { zoom: 1, x: 0.5, y: 0.5 });
       draw(changed);
       status.textContent = "";
@@ -116,6 +123,12 @@ export function openThumbnailEditor({ root, item, record, account, opener, onSav
   });
   fileInput.addEventListener("change", () => chooseFile(fileInput.files[0]));
   dialog.querySelector("[data-editor-cancel]").addEventListener("click", () => dialog.close());
+  dialog.querySelector("[data-fit-image]").addEventListener("click", () => {
+    if (!image || busy) return;
+    const fit = Math.min(THUMBNAIL_WIDTH / image.naturalWidth, THUMBNAIL_HEIGHT / image.naturalHeight);
+    const fill = Math.max(THUMBNAIL_WIDTH / image.naturalWidth, THUMBNAIL_HEIGHT / image.naturalHeight);
+    Object.assign(crop, { zoom: fit / fill, x: 0.5, y: 0.5 }); draw(true);
+  });
   dialog.querySelector("[data-reset-crop]").addEventListener("click", () => { if (busy) return; Object.assign(crop, { zoom: 1, x: 0.5, y: 0.5 }); draw(true); });
   dialog.querySelectorAll("[data-crop]").forEach(input => input.addEventListener("input", () => { if (busy) return; crop[input.dataset.crop] = Number(input.value); draw(true); }));
   dialog.addEventListener("paste", event => {
@@ -127,7 +140,8 @@ export function openThumbnailEditor({ root, item, record, account, opener, onSav
   drop.addEventListener("dragleave", () => drop.classList.remove("is-dragging"));
   drop.addEventListener("drop", event => { event.preventDefault(); drop.classList.remove("is-dragging"); chooseFile(event.dataTransfer.files[0]); });
   canvas.addEventListener("pointerdown", event => {
-    if (!image || busy) return;
+    if (!image || busy || event.button !== 0) return;
+    event.preventDefault();
     drag = { x: event.clientX, y: event.clientY, crop: { ...crop } };
     canvas.setPointerCapture(event.pointerId);
   });
@@ -135,11 +149,19 @@ export function openThumbnailEditor({ root, item, record, account, opener, onSav
     if (!drag || !image || busy) return;
     const bounds = canvas.getBoundingClientRect();
     const rect = thumbnailCrop(image.naturalWidth, image.naturalHeight, crop.zoom, crop.x, crop.y);
-    const move = (delta, size, visible, total, value) => Math.max(0, Math.min(1, value - delta / size * visible / (total - visible || 1)));
+    const move = (delta, size, visible, total, value) => Math.max(0, Math.min(1, value - delta / size * visible / Math.max(total, visible)));
     crop.x = move(event.clientX - drag.x, bounds.width, rect.sw, image.naturalWidth, drag.crop.x);
     crop.y = move(event.clientY - drag.y, bounds.height, rect.sh, image.naturalHeight, drag.crop.y);
     draw(true);
   });
+  canvas.addEventListener("wheel", event => {
+    if (!image || busy || !active()) return;
+    event.preventDefault(); drag = null;
+    const min = Number(dialog.querySelector('[data-crop="zoom"]').min);
+    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.getBoundingClientRect().height : 1);
+    crop.zoom = Math.max(min, Math.min(6, crop.zoom * Math.exp(-Math.max(-100, Math.min(100, delta)) * 0.002)));
+    draw(true);
+  }, { passive: false });
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) canvas.addEventListener(type, () => { drag = null; });
   dialog.querySelector("[data-editor-refresh]").addEventListener("click", async event => {
     setBusy(true);

@@ -3,6 +3,7 @@ import test from "node:test";
 import { editableScheduleMembers, normalizeMemberDraft, resolveMeetingMembers } from "./member.js";
 
 test("registered and guest member drafts are normalized", () => {
+  assert.deepEqual(normalizeMemberDraft({ kind: "profile", profileId: "CHOI", displayName: " 최진영 " }), { kind: "profile", profileId: "CHOI", displayName: "최진영", active: true });
   assert.deepEqual(normalizeMemberDraft({ kind: "registered", userId: "u1" }), {
     kind: "registered", userId: "u1", active: true
   });
@@ -10,6 +11,12 @@ test("registered and guest member drafts are normalized", () => {
     kind: "guest", displayName: "철수", active: true
   });
   assert.throws(() => normalizeMemberDraft({ kind: "guest", displayName: " " }), /객원 이름/);
+});
+
+test("BOOONG 프로필의 최신 이름을 쓰고 삭제된 프로필은 기록된 이름을 보존한다", () => {
+  const records = [{ id: "booong:CHOI", kind: "profile", profileId: "CHOI", displayName: "옛 이름", active: true }];
+  assert.equal(resolveMeetingMembers(records, [{ id: "booong:CHOI", nickname: "최진영" }])[0].displayName, "최진영");
+  assert.equal(resolveMeetingMembers(records, [])[0].displayName, "옛 이름");
 });
 
 test("meeting members resolve registered profiles and hide inactive records", () => {

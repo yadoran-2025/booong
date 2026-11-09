@@ -4,14 +4,14 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const source=readFileSync(new URL('../../rice-basket/app.js',import.meta.url),'utf8');
-function setup(horizontal=false){
+function setup(horizontal=false,pageIds=['a','b','c']){
   const classes=()=>{const names=new Set();return {add:(...items)=>items.forEach(i=>names.add(i)),remove:(...items)=>items.forEach(i=>names.delete(i)),contains:name=>names.has(name)};};
   const rows=['a','b','c'].map((id,i)=>({dataset:{pageId:id},classList:classes(),getBoundingClientRect:()=>({top:i*60,height:60,left:i*210,width:210})}));
   const handles=rows.map(row=>({dataset:{sortPage:row.dataset.pageId},disabled:false,focus(){context.focused=this.dataset.sortPage;},setPointerCapture(){this.captured=true;},hasPointerCapture(){return this.captured;},releasePointerCapture(){this.captured=false;},closest(){return this;}}));
   const nav={children:rows,attributes:{},setAttribute(name,value){this.attributes[name]=value;},removeAttribute(name){delete this.attributes[name];},querySelectorAll(selector){return selector==='[data-sort-page]'?handles:rows;}};
   const context=vm.createContext({
     document:{querySelector:()=>nav},window:{matchMedia:()=>({matches:horizontal})},
-    pages:['a','b','c'].map(id=>({id})),calls:[],messages:[],failed:false,
+    pages:pageIds.map(id=>({id})),calls:[],messages:[],failed:false,
     async api(path,method,body){context.calls.push({path,method,body});if(context.failed)throw new Error('저장 실패');return {pages:body.pageIds.map(id=>context.pages.find(p=>p.id===id))};},
     draw(){handles.forEach(h=>h.disabled=false);},toast:message=>context.messages.push(message),
   });
@@ -82,4 +82,18 @@ test('카드에는 수정·삭제만 표시한다',()=>{
   const html=context.pageCard({id:'a',title:'제목',content:'내용'},{manage:true});
   assert.match(html,/>수정<\/button>/);assert.match(html,/>삭제<\/button>/);
   assert.doesNotMatch(html,/page-move-actions|data-move-page|제목·내용 수정/);
+});
+
+test('설문 시스템은 내용요소에서 제외하고 보이는 항목만 재정렬해도 기존 설문 ID를 보존한다',async()=>{
+  const survey='page-4a2b86a58156';
+  for(const ids of [[survey,'a','b','c'],['a',survey,'b','c'],['a','b','c',survey]]){
+    const view=setup(false,ids);
+    await view.context.movePage('a',2);
+    const expected=['b','c','a'];expected.splice(ids.indexOf(survey),0,survey);
+    assert.deepEqual(view.order(),expected);
+    assert.deepEqual(Array.from(view.context.calls[0].body.pageIds),expected);
+  }
+  const key=setup(false,['a',survey,'b','c']);
+  key.nav.onkeydown({target:key.handles[1],key:'ArrowUp',preventDefault(){}});
+  await settle();assert.deepEqual(key.order(),['b',survey,'a','c']);
 });

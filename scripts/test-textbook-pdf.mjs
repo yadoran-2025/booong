@@ -4,7 +4,7 @@ import { runInNewContext } from "node:vm";
 import { renderTextbookPages } from "../js/textbook-pdf.js";
 import { clearTextbookRanges, createTextbookRange, TEXTBOOK_RANGE_SIZE } from "../js/textbook-range.js";
 
-const saved = { document: globalThis.document, IntersectionObserver: globalThis.IntersectionObserver, devicePixelRatio: globalThis.devicePixelRatio, getComputedStyle: globalThis.getComputedStyle };
+const saved = { document: globalThis.document, window: globalThis.window, IntersectionObserver: globalThis.IntersectionObserver, devicePixelRatio: globalThis.devicePixelRatio, getComputedStyle: globalThis.getComputedStyle };
 const element = () => ({
   dataset: {}, style: { setProperty(key, value) { this[key] = value; } }, attributes: {}, children: [], isConnected: true,
   setAttribute(key, value) { this.attributes[key] = value; },
@@ -13,6 +13,7 @@ const element = () => ({
   append(...children) { this.children.push(...children); },
   remove() { this.removed = true; },
   getContext() { return {}; },
+  getBoundingClientRect() { return { top: 100, bottom: 100 + (parseFloat(this.style.height) || 0) }; },
 });
 let observer;
 const rendered = [], cancelled = [];
@@ -35,6 +36,8 @@ const pdf = {
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 try {
+  let scrollPosition = 80;
+  globalThis.window = { scrollBy(x, y) { scrollPosition += y; } };
   globalThis.devicePixelRatio = 1;
   globalThis.getComputedStyle = () => ({ paddingLeft: "16px", paddingRight: "16px", columnGap: "16px" });
   globalThis.document = { createElement: element };
@@ -46,12 +49,13 @@ try {
   const viewer = element();
   viewer.dataset = { pdfStart: "150", pdfZoom: "100" };
   viewer.setAttribute("aria-label", "도시화와 도시 문제");
-  viewer.parentElement = { clientWidth: 640, scrollTop: 0, dataset: { scrollTop: "800" } };
+  viewer.parentElement = { clientWidth: 640, scrollTop: 0, scrollLeft: 0 };
   const cleanup = await renderTextbookPages(viewer, pdf);
   assert.equal(viewer.children.length, 3, "Every PDF page gets a vertically stacked slot");
   assert.deepEqual(rendered, [], "Offscreen pages must not allocate canvases");
-  assert.equal(viewer.parentElement.scrollTop, 800, "Zoom/reload preserves the reading position");
-  assert.equal(observer.options.root, viewer.parentElement, "Each textbook scrolls independently");
+  assert.equal(scrollPosition, 80, "Loading pages must not reset the document scroll position");
+  assert.equal(viewer.parentElement.scrollTop, 0, "The textbook does not create a vertical scroll position");
+  assert.equal(observer.options.root, null, "Lazy rendering follows the document viewport");
   assert.match(viewer.children[1].attributes["aria-label"], /책 151쪽/);
   const first = viewer.children[0], second = viewer.children[1];
   observer.callback([{ target: first, isIntersecting: true }, { target: second, isIntersecting: true }]);
@@ -69,19 +73,18 @@ try {
   assert.equal(observer.disconnected, true);
   viewer.dataset.pdfColumns = "2";
   viewer.offsetTop = 200;
-  viewer.parentElement.dataset.scrollPage = "3";
-  viewer.parentElement.dataset.scrollFraction = "0.25";
   let slot = 0;
   globalThis.document.createElement = () => {
     const sheet = element(), index = slot++;
     Object.defineProperties(sheet, {
       offsetHeight: { get: () => parseFloat(sheet.style.height) || 0 },
-      offsetTop: { get: () => 200 + Math.floor(index / 2) * (sheet.offsetHeight + 16) },
+      offsetTop: { get: () => 200 + Math.floor(index / (viewer.style.gridTemplateColumns === "repeat(2, minmax(0, 1fr))" ? 2 : 1)) * (sheet.offsetHeight + 16) },
     });
+    sheet.getBoundingClientRect = () => ({ top: sheet.offsetTop - scrollPosition, bottom: sheet.offsetTop + sheet.offsetHeight - scrollPosition });
     return sheet;
   };
   const cleanupSpread = await renderTextbookPages(viewer, pdf);
-  assert.ok(Math.abs(viewer.parentElement.scrollTop - (500 * 296 / 300 * 1.25 + 16)) < 0.001, "Changing the layout keeps the same page and relative position");
+  assert.equal(scrollPosition, 80, "Changing the layout above the book keeps the document position");
   assert.equal(viewer.style.gridTemplateColumns, "repeat(2, minmax(0, 1fr))");
   assert.equal(viewer.style.width, "608px", "The pair fits the existing viewport");
   assert.equal(viewer.children.length, 3, "An odd final page stays available");
@@ -92,7 +95,14 @@ try {
   assert.equal(viewer.children[1].children[0].style.width, "296px");
   const originalSheets = [...viewer.children];
   const originalSecondCanvas = viewer.children[1].children[0];
+  scrollPosition = viewer.children[2].offsetTop + viewer.children[2].offsetHeight * 0.25;
   viewer.dataset.pdfZoom = "150";
+  cleanupSpread.resize();
+  assert.ok(Math.abs(scrollPosition - (viewer.children[2].offsetTop + viewer.children[2].offsetHeight * 0.25)) < 0.001, "Zoom keeps the same page and relative document position");
+  viewer.dataset.pdfColumns = "1";
+  cleanupSpread.resize();
+  assert.ok(Math.abs(scrollPosition - (viewer.children[2].offsetTop + viewer.children[2].offsetHeight * 0.25)) < 0.001, "Changing columns preserves the page in the document");
+  viewer.dataset.pdfColumns = "2";
   cleanupSpread.resize();
   assert.deepEqual(viewer.children, originalSheets, "Zoom keeps the same page slots");
   assert.equal(viewer.children[1].children[0], originalSecondCanvas, "Existing pixels remain visible during a zoom");

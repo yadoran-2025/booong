@@ -15,6 +15,7 @@ const pages = [
   "analytics.html",
   "admin.html",
   "notice-admin.html",
+  "member-admin.html",
   "thumbnail-admin.html",
   "lesson-admin.html",
   "research-erp.html",
@@ -22,6 +23,7 @@ const pages = [
   "watcha-library.html",
   "login.html",
   "dorms-denied.html",
+  "studies/",
   ...(existsSync("bungmo/.generated") ? ["bungmo/index.html", ...["members", "schedule", "settlement", "trip", "archive", "access"].map(page => `bungmo/${page}/index.html`)] : []),
 ];
 const legacyRefs = [
@@ -39,7 +41,7 @@ const types = {
 };
 
 function resolveRequest(url = "/") {
-  const pathname = decodeURIComponent(url.split("?")[0] || "/");
+  const pathname = decodeURIComponent(url.split("?")[0] || "/").replace(/^\/studies(?=\/|$)/, '/rice-basket');
   const relative = normalize(pathname.replace(/^\/+/, ""));
   const target = resolve(join(root, relative || "index.html"));
   if (target !== root && !target.startsWith(root + sep)) return null;
@@ -91,13 +93,13 @@ try {
     if (!response.ok) errors.push(`${page} returned ${response.status}`);
     const html = await response.text();
     for (const ref of localRefs(html)) {
-      const refResponse = await fetch(`http://127.0.0.1:${port}/${ref}`);
+      const refResponse = await fetch(new URL(ref, `http://127.0.0.1:${port}/${page}`));
       if (!refResponse.ok) errors.push(`${page} references missing ${ref} (${refResponse.status})`);
     }
   }
 
   const searchable = [
-    ...pages,
+    ...pages.map(page => page === 'studies/' ? 'rice-basket/index.html' : page),
     ...["js", "css", "scripts"].flatMap(dir => collectFiles(dir).filter(file => /\.(?:js|mjs|css|html)$/.test(file))),
   ];
   for (const file of searchable) {

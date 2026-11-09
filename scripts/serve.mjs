@@ -9,7 +9,7 @@ const host = process.env.HOST || "127.0.0.1";
 const localRiceBasket = process.env.NODE_ENV !== "production" && !process.env.VERCEL
   && ["127.0.0.1", "localhost", "::1"].includes(host)
   ? await import('./rice-basket-local.mjs') : null;
-const riceBasket = localRiceBasket?.createLocalRiceBasket(join(root, '.data/rice-basket.json'));
+const riceBasket = localRiceBasket?.createLocalRiceBasket();
 const localAdmin = localRiceBasket ? await import('./admin-local.mjs') : null;
 // Explicitly enable the user-requested Watcha preview only in the loopback development server.
 if (process.env.NODE_ENV !== "production" && ["127.0.0.1", "localhost", "::1"].includes(host)) {
@@ -23,6 +23,8 @@ const authRoutes = new Map([
   ["/api/auth/dorms/logout", "../api/auth/dorms/logout.js"],
   ["/api/comments", "../api/comments.js"],
   ["/api/admin", "../api/admin.js"],
+  ["/api/analytics", "../api/admin.js"],
+  ["/api/members", "../api/admin.js"],
   ["/api/lesson-thumbnails", "../api/admin.js"],
   ["/api/lesson-catalog", "../api/admin.js"],
   ["/api/rice-basket", "../api/rice-basket.js"],
@@ -64,6 +66,14 @@ async function fileForRequest(url) {
 }
 
 const server = createServer(async (req, res) => {
+  const requested = new URL(req.url, 'http://localhost');
+  if (requested.pathname === '/rice-basket' || requested.pathname.startsWith('/rice-basket/')) {
+    res.writeHead(308, { Location: '/studies' + (requested.pathname.slice('/rice-basket'.length) || '/') + requested.search });
+    res.end();return;
+  }
+  if (requested.pathname === '/studies' || requested.pathname.startsWith('/studies/')) {
+    req.url = '/rice-basket' + requested.pathname.slice('/studies'.length) + requested.search;
+  }
   const pathname = new URL(req.url, "http://localhost").pathname;
   const localRequest = localAdmin && isLoopbackRequest(req);
   if (localRequest && ['/js/admin.js', '/js/local-admin-home.js', '/js/local-admin-auth.js'].includes(pathname)) {
@@ -89,7 +99,7 @@ const server = createServer(async (req, res) => {
   if (authRoute) {
     try {
       const run = () => import(authRoute).then(module => module.default(req, res));
-      if (localRequest && ['/api/admin', '/api/lesson-catalog', '/api/lesson-thumbnails', '/api/notices', '/api/research-erp', '/api/textbooks', '/api/watcha-library', '/api/bungmo-session'].includes(pathname)) await withLocalAdmin(req, run);
+      if (localRequest && ['/api/admin', '/api/analytics', '/api/members', '/api/lesson-catalog', '/api/lesson-thumbnails', '/api/notices', '/api/research-erp', '/api/textbooks', '/api/watcha-library', '/api/bungmo-session'].includes(pathname)) await withLocalAdmin(req, run);
       else await run();
     }
     catch { res.writeHead(503); res.end("Authentication unavailable"); }
@@ -108,7 +118,9 @@ const server = createServer(async (req, res) => {
       body = body.toString('utf8').replace('<head>', '<head><script>window.__BOOONG_LOCAL_ADMIN__=true;</script>');
       res.setHeader('Cache-Control', 'no-store');
     }
-    res.setHeader("content-type", types[extname(file).toLowerCase()] || "application/octet-stream");
+    const contentType = pathname.startsWith('/bungmo/') && extname(file) === '.txt'
+      ? 'text/plain;charset=utf-8' : types[extname(file).toLowerCase()] || "application/octet-stream";
+    res.setHeader("content-type", contentType);
     res.end(body);
   } catch {
     res.writeHead(404);
@@ -118,4 +130,5 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, host, () => {
   console.log(`BOOONG dashboard: http://${host}:${server.address().port}/`);
+  if (localRiceBasket) console.log('쌀바구니: 로컬 저장과 삭제가 운영 자료에도 바로 반영됩니다.');
 });

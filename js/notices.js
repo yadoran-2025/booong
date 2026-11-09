@@ -17,7 +17,7 @@ export function validateNoticeInput(input) {
 }
 
 export async function readNotices() {
-  const response = await fetch("/api/notices", { cache: "no-store", credentials: "omit" });
+  const response = await fetch("/api/notices", { credentials: "omit" });
   const result = await response.json();
   if (!response.ok || !Array.isArray(result.notices)) throw new Error("공지사항을 불러오지 못했습니다.");
   return result.notices;

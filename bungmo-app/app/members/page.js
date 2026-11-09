@@ -1,16 +1,18 @@
 "use client";
 
-import AuthGate from "../components/AuthGate.js";
+import Link from "next/link";
+
 import MeetingMembers from "../components/MeetingMembers.js";
-import MeetingWorkspace from "../components/MeetingWorkspace.js";
+import { useBungmoWorkspace } from "../components/BungmoWorkspace.js";
 
 function MembersService({ profile, meeting }) {
   return <main className="service-page">
-    <div className="service-heading"><div><span>MEETING MEMBERS</span><h1>{meeting.title} 멤버</h1><p>이 모임에 참여할 멤버를 정하고, 필요하면 객원도 추가할 수 있어요.</p></div></div>
+    <div className="service-heading"><div><h1>함께하는 사람</h1></div><Link className="btn btn--ghost" href="/schedule/">일정 조율하기 →</Link></div>
     <MeetingMembers key={meeting.id} meetingId={meeting.id} profile={profile} />
   </main>;
 }
 
 export default function MembersPage() {
-  return <AuthGate>{({ user, profile }) => <MeetingWorkspace user={user} profile={profile}>{(meeting) => <MembersService profile={profile} meeting={meeting} />}</MeetingWorkspace>}</AuthGate>;
+  const { profile, meeting } = useBungmoWorkspace();
+  return <MembersService key={meeting.id} profile={profile} meeting={meeting} />;
 }

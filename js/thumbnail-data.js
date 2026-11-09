@@ -18,10 +18,11 @@ export function thumbnailUrl(resource, record) {
 }
 
 export function thumbnailCrop(width, height, zoom = 1, x = 0.5, y = 0.5) {
-  if (![width, height, zoom, x, y].every(Number.isFinite) || width <= 0 || height <= 0) throw new Error("이미지 크기를 확인해주세요.");
-  const scale = Math.max(THUMBNAIL_WIDTH / width, THUMBNAIL_HEIGHT / height) * Math.max(1, Math.min(4, zoom));
+  if (![width, height, zoom, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || zoom <= 0) throw new Error("이미지 크기를 확인해주세요.");
+  const scale = Math.max(THUMBNAIL_WIDTH / width, THUMBNAIL_HEIGHT / height) * Math.min(6, zoom);
   const sw = THUMBNAIL_WIDTH / scale, sh = THUMBNAIL_HEIGHT / scale;
-  return { sx: (width - sw) * Math.max(0, Math.min(1, x)), sy: (height - sh) * Math.max(0, Math.min(1, y)), sw, sh };
+  return { sx: (width - sw) / 2 + (Math.max(0, Math.min(1, x)) - 0.5) * Math.max(width, sw),
+    sy: (height - sh) / 2 + (Math.max(0, Math.min(1, y)) - 0.5) * Math.max(height, sh), sw, sh };
 }
 
 export async function loadManagedThumbnails() {

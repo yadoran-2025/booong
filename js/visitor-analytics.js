@@ -6,6 +6,23 @@ const VISITOR_ID_KEY = "booong-visitor-id-v1";
 const SESSION_VIEW_PREFIX = "booong-seen-v1:";
 const DAILY_TIME_ZONE = "Asia/Seoul";
 
+let publicSummaryRequest, publicSummaryUntil = 0;
+
+function loadPublicSummary() {
+  if (!publicSummaryRequest || Date.now() >= publicSummaryUntil) {
+    const request = fetch("/api/analytics", { credentials: "omit", signal: AbortSignal.timeout(8000) }).then(async response => {
+      if (!response.ok) throw new Error("Analytics summary unavailable");
+      const data = await response.json();
+      if (!data?.overview || typeof data.overview.date !== "string" || !Number.isFinite(data.overview.todayViews) || !Number.isFinite(data.overview.totalViews)
+        || !Array.isArray(data.pages) || !Array.isArray(data.groupClicks) || !Array.isArray(data.favorites)) throw new Error("Invalid analytics summary");
+      return data;
+    }).catch(error => { if (publicSummaryRequest === request) publicSummaryRequest = null; throw error; });
+    publicSummaryRequest = request;
+    publicSummaryUntil = Date.now() + 15000;
+  }
+  return publicSummaryRequest;
+}
+
 const PAGE_LABELS = {
   dashboard: "대시보드",
   about: "소개",
@@ -117,10 +134,20 @@ export async function trackGroupClick(group) {
   return normalized;
 }
 
-export async function setFavoriteState(resourceId, isFavorite) {
-  const id = slugify(resourceId).slice(0, 96);
-  if (!id) return null;
+const favoriteStateRequests = new Map();
 
+export function setFavoriteState(resourceId, isFavorite) {
+  const id = slugify(resourceId).slice(0, 96);
+  if (!id) return Promise.resolve(null);
+  const previous = favoriteStateRequests.get(id) || Promise.resolve();
+  const request = previous.catch(() => null).then(() => writeFavoriteState(id, Boolean(isFavorite)));
+  favoriteStateRequests.set(id, request);
+  const cleanup = () => { if (favoriteStateRequests.get(id) === request) favoriteStateRequests.delete(id); };
+  request.then(cleanup, cleanup);
+  return request;
+}
+
+async function writeFavoriteState(id, isFavorite) {
   const visitorId = getVisitorId();
   const favoriteRef = ref(db, `${ANALYTICS_ROOT}/favorites/${id}`);
   const visitorRef = ref(db, `${ANALYTICS_ROOT}/favoriteVisitors/${id}/${visitorId}`);
@@ -146,11 +173,7 @@ export async function setFavoriteState(resourceId, isFavorite) {
 
 export async function loadFavoriteStats(options = {}) {
   try {
-    const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/favorites`));
-    return Object.entries(snapshot.val() || {}).map(([resourceId, value]) => ({
-      resourceId,
-      count: Number(value?.count) || 0,
-    }));
+    return (await loadPublicSummary()).favorites;
   } catch (err) {
     if (options.throwOnError) throw err;
     console.warn("Favorite analytics load failed:", err);
@@ -159,32 +182,18 @@ export async function loadFavoriteStats(options = {}) {
 }
 
 export async function loadTodayStats() {
-  const today = getDayKey();
   try {
-    const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/daily/${today}/views`));
-    return { date: today, views: Number(snapshot.val()) || 0 };
+    const stats = (await loadPublicSummary()).overview;
+    return { date: stats.date, views: stats.todayViews };
   } catch (err) {
     console.warn("Today stats load failed:", err);
-    return { date: today, views: 0 };
+    return { date: getDayKey(), views: 0 };
   }
 }
 
 export async function loadOverviewStats() {
-  const today = getDayKey();
-  try {
-    const [todaySnapshot, totalSnapshot] = await Promise.all([
-      get(ref(db, `${ANALYTICS_ROOT}/daily/${today}/views`)),
-      get(ref(db, `${ANALYTICS_ROOT}/totals/views`)),
-    ]);
-    return {
-      date: today,
-      todayViews: Number(todaySnapshot.val()) || 0,
-      totalViews: Number(totalSnapshot.val()) || 0,
-    };
-  } catch (err) {
-    console.warn("Overview stats load failed:", err);
-    return null;
-  }
+  try { return (await loadPublicSummary()).overview; }
+  catch (err) { console.warn("Overview stats load failed:", err); return null; }
 }
 
 export async function loadDailyViewStats(days = 7) {
@@ -203,14 +212,11 @@ export async function loadDailyViewStats(days = 7) {
 export async function loadDailyLessonClickStats(days = 14) {
   const dates = getRecentDayKeys(days);
   try {
-    const [groupsSnapshot, ...dailySnapshots] = await Promise.all([
-      get(ref(db, `${ANALYTICS_ROOT}/groupClicks`)),
-      ...dates.map(date => get(ref(db, `${ANALYTICS_ROOT}/daily/${date}/groupClicks`))),
-    ]);
-    const groups = groupsSnapshot.val() || {};
-    return dailySnapshots.map((snapshot, index) => ({
-      date: dates[index],
-      lessons: Object.entries(snapshot.val() || {})
+    const analytics = await loadAnalyticsSnapshot();
+    const groups = analytics.groupClicks || {};
+    return dates.map(date => ({
+      date,
+      lessons: Object.entries(analytics.daily?.[date]?.groupClicks || {})
         .map(([groupId, views]) => ({
           groupId,
           title: groups[groupId]?.title || groupId,
@@ -227,12 +233,9 @@ export async function loadDailyLessonClickStats(days = 14) {
 export async function loadTodayPageStats() {
   const today = getDayKey();
   try {
-    const [dailySnapshot, pageSnapshot] = await Promise.all([
-      get(ref(db, `${ANALYTICS_ROOT}/daily/${today}/pages`)),
-      get(ref(db, `${ANALYTICS_ROOT}/pages`)),
-    ]);
-    const dailyValue = dailySnapshot.val() || {};
-    const pageValue = pageSnapshot.val() || {};
+    const analytics = await loadAnalyticsSnapshot();
+    const dailyValue = analytics.daily?.[today]?.pages || {};
+    const pageValue = analytics.pages || {};
 
     return Object.entries(dailyValue)
       .map(([key, views]) => {
@@ -256,20 +259,7 @@ export async function loadTodayPageStats() {
 
 export async function loadPageVisitStats(options = {}) {
   try {
-    const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/pages`));
-    const value = snapshot.val() || {};
-    return Object.values(value)
-      .filter(item => item && item.key)
-      .map(item => ({
-        key: item.key,
-        title: item.title || item.key,
-        path: item.path || "",
-        type: item.type || "page",
-        views: Number(item.views) || 0,
-        visitors: Number(item.visitors) || 0,
-        updatedAt: item.updatedAt || 0,
-      }))
-      .sort((a, b) => b.visitors - a.visitors || b.views - a.views || a.title.localeCompare(b.title, "ko"));
+    return (await loadPublicSummary()).pages;
   } catch (err) {
     if (options.throwOnError) throw err;
     console.warn("Visitor analytics load failed:", err);
@@ -279,21 +269,7 @@ export async function loadPageVisitStats(options = {}) {
 
 export async function loadGroupClickStats(options = {}) {
   try {
-    const snapshot = await get(ref(db, `${ANALYTICS_ROOT}/groupClicks`));
-    const value = snapshot.val() || {};
-    return Object.values(value)
-      .filter(item => item && item.groupId)
-      .map(item => ({
-        groupId: item.groupId,
-        title: item.title || item.groupId,
-        type: item.type || "group",
-        views: Number(item.views) || 0,
-        totalClicks: Number(item.totalClicks) || 0,
-        visitorCount: Number(item.visitorCount) || 0,
-        lastHref: item.lastHref || "",
-        updatedAt: item.updatedAt || 0,
-      }))
-      .sort((a, b) => b.views - a.views || b.visitorCount - a.visitorCount || a.title.localeCompare(b.title, "ko"));
+    return (await loadPublicSummary()).groupClicks;
   } catch (err) {
     if (options.throwOnError) throw err;
     console.warn("Group click analytics load failed:", err);
@@ -303,12 +279,8 @@ export async function loadGroupClickStats(options = {}) {
 
 export async function loadVisitorJourneyStats() {
   try {
-    const [pageVisitorsSnapshot, groupsSnapshot, groupVisitorsSnapshot] = await Promise.all([
-      get(ref(db, `${ANALYTICS_ROOT}/pageVisitors`)),
-      get(ref(db, `${ANALYTICS_ROOT}/groupClicks`)),
-      get(ref(db, `${ANALYTICS_ROOT}/groupClickVisitors`)),
-    ]);
-    return summarizeVisitorJourneys(pageVisitorsSnapshot.val(), groupsSnapshot.val(), groupVisitorsSnapshot.val());
+    const analytics = await loadAnalyticsSnapshot();
+    return summarizeVisitorJourneys(analytics.pageVisitors, analytics.groupClicks, analytics.groupClickVisitors);
   } catch (err) {
     console.warn("Visitor journey analytics load failed:", err);
     return null;
@@ -317,11 +289,8 @@ export async function loadVisitorJourneyStats() {
 
 export async function loadWeeklyLessonClickStats() {
   try {
-    const [groupsSnapshot, groupVisitorsSnapshot] = await Promise.all([
-      get(ref(db, `${ANALYTICS_ROOT}/groupClicks`)),
-      get(ref(db, `${ANALYTICS_ROOT}/groupClickVisitors`)),
-    ]);
-    return summarizeWeeklyLessonClicks(groupsSnapshot.val(), groupVisitorsSnapshot.val(), getWeekStartTimestamp());
+    const analytics = await loadAnalyticsSnapshot();
+    return summarizeWeeklyLessonClicks(analytics.groupClicks, analytics.groupClickVisitors, getWeekStartTimestamp());
   } catch (err) {
     console.warn("Weekly lesson click analytics load failed:", err);
     return [];
@@ -329,8 +298,12 @@ export async function loadWeeklyLessonClickStats() {
 }
 
 export async function loadAnalyticsSnapshot() {
-  const snapshot = await get(ref(db, ANALYTICS_ROOT));
-  return snapshot.val() || {};
+  const { adminFetch } = await import("./admin.js");
+  const response = await adminFetch("/api/analytics?admin=1");
+  if (!response.ok) throw new Error("Private analytics unavailable");
+  const data = await response.json();
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid private analytics");
+  return data;
 }
 
 export function getCurrentPageInfo(extra = {}) {

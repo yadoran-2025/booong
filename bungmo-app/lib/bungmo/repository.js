@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -13,6 +14,8 @@ import {
 import { db } from "../firebase.js";
 import { BUNGMO_MEETINGS, BUNGMO_USERS } from "./model.js";
 import { isLocalPreview, localPreviewStore } from "./local-preview.js";
+import { subscribeBooongProfiles } from "./directory.js";
+import { normalizeExpenseRows } from "./expense.js";
 
 const users = () => collection(db, BUNGMO_USERS);
 const meetings = () => collection(db, BUNGMO_MEETINGS);
@@ -31,33 +34,36 @@ export const subscribeProfile = (uid, callback, onError) => preview() ? localPre
   onError
 );
 
-export const createProfile = (user, nickname) => preview() ? localPreviewStore.save("users", "", { id: user.uid, nickname, email: user.email, photoURL: user.photoURL ?? "" }) : setDoc(doc(users(), user.uid), {
-  nickname,
-  email: user.email,
-  photoURL: user.photoURL ?? "",
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp()
-});
-
-export const updateProfileNickname = (uid, nickname) => preview() ? localPreviewStore.update("users", "", uid, { nickname }) : updateDoc(doc(users(), uid), {
-  nickname,
-  updatedAt: serverTimestamp()
-});
-
-export const updateUserAccess = (uid, active) => preview() ? localPreviewStore.update("users", "", uid, { active }) : updateDoc(doc(users(), uid), {
-  active,
-  updatedAt: serverTimestamp()
-});
+export async function ensureProfile(user) {
+  const reference = doc(users(), user.uid);
+  await runTransaction(db, async transaction => {
+    if ((await transaction.get(reference)).exists()) return;
+    const name = user.displayName?.trim() || user.email.split("@")[0];
+    transaction.set(reference, {
+      nickname: Array.from(name).slice(0, 16).join(""),
+      email: user.email,
+      photoURL: user.photoURL ?? "",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  });
+}
 
 export const subscribeMeetings = (callback, onError) => preview() ? localPreviewStore.subscribe("meetings", "", callback) : onSnapshot(meetings(), records(callback), onError);
-export const subscribeUsers = (callback, onError) => preview() ? localPreviewStore.subscribe("users", "", callback) : onSnapshot(users(), records(callback), onError);
+export function subscribeUsers(callback, onError) {
+  let profiles, legacy;
+  const emit = () => { if (profiles && legacy) callback([...profiles, ...legacy]); };
+  const stopProfiles = subscribeBooongProfiles(items => { profiles = items; emit(); }, onError);
+  const receiveLegacy = items => { legacy = items; emit(); };
+  const stopLegacy = preview() ? localPreviewStore.subscribe("users", "", receiveLegacy) : onSnapshot(users(), records(receiveLegacy), onError);
+  return () => { stopProfiles(); stopLegacy(); };
+}
 
 export async function saveMeeting(meeting, creatorId) {
   const isNew = !meeting.id;
   if (isNew && !creatorId) throw new Error("creatorId is required for a new meeting");
   if (preview()) {
     const id = localPreviewStore.save("meetings", "", isNew ? { ...meeting, creatorId } : meeting);
-    if (isNew) localPreviewStore.save("members", id, { id: creatorId, kind: "registered", userId: creatorId, active: true });
     return id;
   }
   const { id, ...data } = meeting;
@@ -65,11 +71,7 @@ export async function saveMeeting(meeting, creatorId) {
     await updateDoc(doc(meetings(), id), { ...data, updatedAt: serverTimestamp() });
     return id;
   }
-  const reference = doc(meetings());
-  const batch = writeBatch(db);
-  batch.set(reference, { ...data, creatorId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-  batch.set(doc(members(reference.id), creatorId), { kind: "registered", userId: creatorId, active: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-  await batch.commit();
+  const reference = await addDoc(meetings(), { ...data, creatorId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   return reference.id;
 }
 
@@ -142,6 +144,20 @@ export async function saveExpense(meetingId, expense) {
   }
   const reference = await addDoc(expenses(meetingId), { ...data, settled: settled ?? false, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   return reference.id;
+}
+
+export async function saveExpenses(meetingId, rows, allowedMemberIds) {
+  if (!Array.isArray(allowedMemberIds) || !allowedMemberIds.length) throw new Error("모임 참가자를 확인한 뒤 저장해 주세요.");
+  const drafts = normalizeExpenseRows(rows, allowedMemberIds);
+  if (preview()) return drafts.map(draft => localPreviewStore.save("expenses", meetingId, { ...draft, settled: false }));
+  const batch = writeBatch(db);
+  const ids = drafts.map(draft => {
+    const reference = doc(expenses(meetingId));
+    batch.set(reference, { ...draft, settled: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    return reference.id;
+  });
+  await batch.commit();
+  return ids;
 }
 
 export const deleteExpense = (meetingId, expenseId) => preview() ? localPreviewStore.remove("expenses", meetingId, expenseId) : deleteDoc(doc(expenses(meetingId), expenseId));

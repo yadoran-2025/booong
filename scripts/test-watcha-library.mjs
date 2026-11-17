@@ -881,6 +881,25 @@ const shuffleButton = controls.get('[data-sort="random"]');
 const chooseSort = sort => controls.get('[data-sort-options]').listeners.click({target:{closest:selector=>selector==='[data-sort]' ? {dataset:{sort}} : null}});
 const originalRandom = Math.random;
 try {
+  assert.match(uiRoot.innerHTML,/data-sort="recent"[^>]*>최근 추가한 순<\/button>/);
+  await bulk.selectProfiles([WATCHA_PROFILES[0].id]);
+  const recentOrder = genreBooks.map(book=>book.id);
+  chooseSort('recent');
+  assert.deepEqual(visibleIds(),recentOrder,'Recent sorting restores Watcha source order instead of title or interest order');
+  bulk.renderBooks({id:'bGEN002'});
+  assert.deepEqual(visibleIds(),recentOrder,'Loan updates preserve recent sorting');
+  chooseGenre('소설');
+  assert.deepEqual(visibleIds(),['bGEN001','bGEN003'],'Genre filtering preserves recent source order');
+  controls.get('[data-search]').value='과학'; bulk.renderBooks();
+  assert.deepEqual(visibleIds(),['bGEN003'],'Recent sorting composes with title search');
+  controls.get('[data-available]').checked=true; bulk.renderBooks();
+  assert.deepEqual(visibleIds(),[],'Recent sorting respects loan availability');
+  controls.get('[data-search]').value=''; controls.get('[data-available]').checked=false;
+  chooseGenre('소설',false);
+  await bulk.selectProfiles(WATCHA_PROFILES.slice(0,2).map(profile=>profile.id));
+  assert.equal(bulk.getCombined().find(book=>book.id==='bGEN003').recentOrder,1,'A shared book uses its most recent rank among selected accounts');
+  assert.deepEqual(visibleIds(),['bGEN001','bGEN003','bGEN002','bGEN004'],'Recent account ranks merge without duplicating shared books');
+  assert.deepEqual(bulk.getBooks().map(book=>book.id),storedOrder,'Recent sorting leaves saved book order intact');
   chooseSort('alphabetical');
   assert.deepEqual(visibleIds(),['bGEN002','bGEN003','bGEN004','bGEN001'],'Korean alphabetical sorting orders the deduplicated titles');
   bulk.renderBooks({id:'bGEN002'});
@@ -914,7 +933,7 @@ try {
   assert.deepEqual(visibleIds(),defaultOrder,'Leaving random sorting restores the selected sort instead of the old shuffle');
   assert.equal(bulkQueries.length,genreRequests,'Shuffle makes no API requests');
 } finally { Math.random = originalRandom; }
-console.log('Watcha shuffle: selected books, deduplication, repeated clicks, stable updates, filters and no requests passed.');
+console.log('Watcha sorting: recent source order, merged account ranks, shuffle, stable updates, filters and no requests passed.');
 chooseGenre('미분류');
 const pendingGenreBook = genreBook('bGEN005','분류 확인 중',[]); delete pendingGenreBook.info;
 cache.set(WATCHA_PROFILES[0].id,{version:1,storage:'firebase',total:1,books:[pendingGenreBook]});
